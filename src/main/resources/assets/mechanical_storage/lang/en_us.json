@@ -1,0 +1,13 @@
+{
+  "itemGroup.mechanical_storage": "Example Mod Tab",
+  "block.mechanical_storage.example_block": "Example Block",
+  "item.mechanical_storage.example_item": "Example Item",
+
+  "mechanical_storage.configuration.title": "Mechanical Storage Configs",
+  "mechanical_storage.configuration.section.mechanical_storage.common.toml": "Mechanical Storage Configs",
+  "mechanical_storage.configuration.section.mechanical_storage.common.toml.title": "Mechanical Storage Configs",
+  "mechanical_storage.configuration.items": "Item List",
+  "mechanical_storage.configuration.logDirtBlock": "Log Dirt Block",
+  "mechanical_storage.configuration.magicNumberIntroduction": "Magic Number Text",
+  "mechanical_storage.configuration.magicNumber": "Magic Number"
+}
