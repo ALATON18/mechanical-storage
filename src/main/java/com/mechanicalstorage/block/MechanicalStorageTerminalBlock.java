@@ -2,7 +2,6 @@ package com.mechanicalstorage.block;
 
 import com.mechanicalstorage.blockentity.TerminalBlockEntity;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -28,8 +27,8 @@ public class MechanicalStorageTerminalBlock extends DirectionalMachineBlock impl
 
 	@Override
 	protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
-		if (!level.isClientSide && player instanceof ServerPlayer serverPlayer) {
-			serverPlayer.sendSystemMessage(Component.literal("Terminal: placeholder status. Network scan and GUI are next."));
+		if (!level.isClientSide && player instanceof ServerPlayer serverPlayer && level.getBlockEntity(pos) instanceof TerminalBlockEntity terminal) {
+			serverPlayer.sendSystemMessage(terminal.describeNearbyConnectorNetwork());
 		}
 
 		return InteractionResult.SUCCESS;
