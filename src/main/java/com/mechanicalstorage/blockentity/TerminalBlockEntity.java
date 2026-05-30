@@ -5,10 +5,12 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.items.IItemHandler;
+import net.neoforged.neoforge.items.ItemHandlerHelper;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -30,54 +32,102 @@ public class TerminalBlockEntity extends BlockEntity {
 			return Component.literal("Terminal: level is not available.");
 		}
 
-		int connectorsFound = 0;
-		int inventoriesFound = 0;
-		int totalSlots = 0;
-		int occupiedSlots = 0;
-		int totalItems = 0;
-		Map<ResourceLocation, ItemSummary> itemSummary = new LinkedHashMap<>();
+		NetworkSummary networkSummary = collectNetworkSummary();
 
-		BlockPos min = worldPosition.offset(-SCAN_RADIUS, -SCAN_RADIUS, -SCAN_RADIUS);
-		BlockPos max = worldPosition.offset(SCAN_RADIUS, SCAN_RADIUS, SCAN_RADIUS);
-
-		for (BlockPos scanPos : BlockPos.betweenClosed(min, max)) {
-			if (connectorsFound >= MAX_CONNECTORS) {
-				break;
-			}
-
-			BlockEntity blockEntity = level.getBlockEntity(scanPos);
-			if (!(blockEntity instanceof MechanicalStorageConnectorBlockEntity connector)) {
-				continue;
-			}
-
-			connectorsFound++;
-			IItemHandler handler = connector.getTargetItemHandler();
-			if (handler == null) {
-				continue;
-			}
-
-			inventoriesFound++;
-			int slots = handler.getSlots();
-			totalSlots += slots;
-
-			for (int slot = 0; slot < slots; slot++) {
-				ItemStack stack = handler.getStackInSlot(slot);
-				if (!stack.isEmpty()) {
-					occupiedSlots++;
-					totalItems += stack.getCount();
-					addToSummary(itemSummary, stack);
-				}
-			}
-		}
-
-		String message = "Terminal: found " + connectorsFound + " connector(s), " + inventoriesFound + " inventory/inventories, " + occupiedSlots + "/" + totalSlots + " slots used, " + totalItems + " items total.";
-		String summary = formatItemSummary(itemSummary);
+		String message = "Terminal: found " + networkSummary.connectorsFound + " connector(s), " + networkSummary.inventoriesFound + " inventory/inventories, " + networkSummary.occupiedSlots + "/" + networkSummary.totalSlots + " slots used, " + networkSummary.totalItems + " items total.";
+		String summary = formatItemSummary(networkSummary.itemSummary);
 
 		if (!summary.isEmpty()) {
 			message += " Items: " + summary;
 		}
 
 		return Component.literal(message);
+	}
+
+	public Component extractFirstAvailableStack(Player player) {
+		if (level == null) {
+			return Component.literal("Terminal: level is not available.");
+		}
+
+		int connectorsChecked = 0;
+
+		for (MechanicalStorageConnectorBlockEntity connector : findNearbyConnectors()) {
+			connectorsChecked++;
+			IItemHandler handler = connector.getTargetItemHandler();
+			if (handler == null) {
+				continue;
+			}
+
+			for (int slot = 0; slot < handler.getSlots(); slot++) {
+				ItemStack stack = handler.getStackInSlot(slot);
+				if (stack.isEmpty()) {
+					continue;
+				}
+
+				int amountToExtract = Math.min(stack.getMaxStackSize(), stack.getCount());
+				ItemStack extracted = handler.extractItem(slot, amountToExtract, false);
+				if (extracted.isEmpty()) {
+					continue;
+				}
+
+				ItemStack delivered = extracted.copy();
+				ItemHandlerHelper.giveItemToPlayer(player, delivered);
+				return Component.literal("Terminal: withdrew " + extracted.getHoverName().getString() + " x" + extracted.getCount() + ".");
+			}
+		}
+
+		return Component.literal("Terminal: no extractable items found across " + connectorsChecked + " connector(s).");
+	}
+
+	private NetworkSummary collectNetworkSummary() {
+		NetworkSummary networkSummary = new NetworkSummary();
+
+		for (MechanicalStorageConnectorBlockEntity connector : findNearbyConnectors()) {
+			networkSummary.connectorsFound++;
+			IItemHandler handler = connector.getTargetItemHandler();
+			if (handler == null) {
+				continue;
+			}
+
+			networkSummary.inventoriesFound++;
+			int slots = handler.getSlots();
+			networkSummary.totalSlots += slots;
+
+			for (int slot = 0; slot < slots; slot++) {
+				ItemStack stack = handler.getStackInSlot(slot);
+				if (!stack.isEmpty()) {
+					networkSummary.occupiedSlots++;
+					networkSummary.totalItems += stack.getCount();
+					addToSummary(networkSummary.itemSummary, stack);
+				}
+			}
+		}
+
+		return networkSummary;
+	}
+
+	private List<MechanicalStorageConnectorBlockEntity> findNearbyConnectors() {
+		List<MechanicalStorageConnectorBlockEntity> connectors = new ArrayList<>();
+
+		if (level == null) {
+			return connectors;
+		}
+
+		BlockPos min = worldPosition.offset(-SCAN_RADIUS, -SCAN_RADIUS, -SCAN_RADIUS);
+		BlockPos max = worldPosition.offset(SCAN_RADIUS, SCAN_RADIUS, SCAN_RADIUS);
+
+		for (BlockPos scanPos : BlockPos.betweenClosed(min, max)) {
+			if (connectors.size() >= MAX_CONNECTORS) {
+				break;
+			}
+
+			BlockEntity blockEntity = level.getBlockEntity(scanPos);
+			if (blockEntity instanceof MechanicalStorageConnectorBlockEntity connector) {
+				connectors.add(connector);
+			}
+		}
+
+		return connectors;
 	}
 
 	private static void addToSummary(Map<ResourceLocation, ItemSummary> itemSummary, ItemStack stack) {
@@ -115,6 +165,15 @@ public class TerminalBlockEntity extends BlockEntity {
 		}
 
 		return builder.toString();
+	}
+
+	private static class NetworkSummary {
+		private int connectorsFound;
+		private int inventoriesFound;
+		private int totalSlots;
+		private int occupiedSlots;
+		private int totalItems;
+		private final Map<ResourceLocation, ItemSummary> itemSummary = new LinkedHashMap<>();
 	}
 
 	private static class ItemSummary {
