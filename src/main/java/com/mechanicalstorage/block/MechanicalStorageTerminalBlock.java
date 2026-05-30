@@ -7,6 +7,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -39,8 +40,15 @@ public class MechanicalStorageTerminalBlock extends DirectionalMachineBlock impl
 	}
 
 	@Override
-	protected ItemInteractionResult useItemOn(net.minecraft.world.item.ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
-		useWithoutItem(state, level, pos, player, hitResult);
+	protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
+		if (!level.isClientSide && player instanceof ServerPlayer serverPlayer && level.getBlockEntity(pos) instanceof TerminalBlockEntity terminal) {
+			if (!stack.isEmpty()) {
+				serverPlayer.sendSystemMessage(terminal.insertHeldStack(serverPlayer, hand));
+			} else {
+				useWithoutItem(state, level, pos, player, hitResult);
+			}
+		}
+
 		return ItemInteractionResult.SUCCESS;
 	}
 }
