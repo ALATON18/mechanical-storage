@@ -69,7 +69,7 @@ public class TerminalMenu extends AbstractContainerMenu {
 		ItemStack originalStack = clickedStack.copy();
 
 		if (isNetworkSlot(index)) {
-			ItemStack extracted = extractDisplayedStack(clickedStack, clickedStack.getMaxStackSize(), player);
+			ItemStack extracted = extractDisplayedStackToInventory(clickedStack, clickedStack.getMaxStackSize(), player);
 			refreshDisplay();
 			return extracted.isEmpty() ? ItemStack.EMPTY : originalStack;
 		}
@@ -100,8 +100,13 @@ public class TerminalMenu extends AbstractContainerMenu {
 			Slot slot = this.slots.get(slotId);
 			ItemStack displayedStack = slot.getItem();
 			if (!displayedStack.isEmpty()) {
-				int amount = button == 1 ? Math.max(1, Math.min(displayedStack.getCount(), displayedStack.getMaxStackSize()) / 2) : Math.min(displayedStack.getCount(), displayedStack.getMaxStackSize());
-				extractDisplayedStack(displayedStack, amount, player);
+				if (clickType == ClickType.QUICK_MOVE) {
+					extractDisplayedStackToInventory(displayedStack, displayedStack.getMaxStackSize(), player);
+				} else if (clickType == ClickType.PICKUP) {
+					int amount = button == 1 ? Math.max(1, Math.min(displayedStack.getCount(), displayedStack.getMaxStackSize()) / 2) : Math.min(displayedStack.getCount(), displayedStack.getMaxStackSize());
+					extractDisplayedStackToCursor(displayedStack, amount);
+				}
+
 				refreshDisplay();
 				broadcastChanges();
 			}
@@ -174,12 +179,41 @@ public class TerminalMenu extends AbstractContainerMenu {
 		}
 	}
 
-	private ItemStack extractDisplayedStack(ItemStack displayedStack, int amount, Player player) {
+	private ItemStack extractDisplayedStackToInventory(ItemStack displayedStack, int amount, Player player) {
 		if (terminal == null || displayedStack.isEmpty()) {
 			return ItemStack.EMPTY;
 		}
 
 		return terminal.extractMatchingStackToPlayer(displayedStack, amount, player);
+	}
+
+	private void extractDisplayedStackToCursor(ItemStack displayedStack, int amount) {
+		if (terminal == null || displayedStack.isEmpty() || amount <= 0) {
+			return;
+		}
+
+		ItemStack carried = getCarried();
+		if (!carried.isEmpty() && !ItemStack.isSameItemSameComponents(carried, displayedStack)) {
+			return;
+		}
+
+		int space = carried.isEmpty() ? displayedStack.getMaxStackSize() : carried.getMaxStackSize() - carried.getCount();
+		int amountToExtract = Math.min(amount, space);
+		if (amountToExtract <= 0) {
+			return;
+		}
+
+		ItemStack extracted = terminal.extractMatchingStack(displayedStack, amountToExtract);
+		if (extracted.isEmpty()) {
+			return;
+		}
+
+		if (carried.isEmpty()) {
+			setCarried(extracted.copy());
+		} else {
+			carried.grow(extracted.getCount());
+			setCarried(carried);
+		}
 	}
 
 	private ItemStack insertIntoNetwork(ItemStack stack) {
