@@ -5,6 +5,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -77,6 +78,46 @@ public class TerminalBlockEntity extends BlockEntity {
 		}
 
 		return Component.literal("Terminal: no extractable items found across " + connectorsChecked + " connector(s).");
+	}
+
+	public Component insertHeldStack(Player player, InteractionHand hand) {
+		if (level == null) {
+			return Component.literal("Terminal: level is not available.");
+		}
+
+		ItemStack heldStack = player.getItemInHand(hand);
+		if (heldStack.isEmpty()) {
+			return describeNearbyConnectorNetwork();
+		}
+
+		String displayName = heldStack.getHoverName().getString();
+		ItemStack remaining = heldStack.copy();
+		int startingCount = remaining.getCount();
+		int inventoriesChecked = 0;
+
+		for (MechanicalStorageConnectorBlockEntity connector : findNearbyConnectors()) {
+			IItemHandler handler = connector.getTargetItemHandler();
+			if (handler == null) {
+				continue;
+			}
+
+			inventoriesChecked++;
+			for (int slot = 0; slot < handler.getSlots(); slot++) {
+				remaining = handler.insertItem(slot, remaining, false);
+				if (remaining.isEmpty()) {
+					player.setItemInHand(hand, ItemStack.EMPTY);
+					return Component.literal("Terminal: inserted " + displayName + " x" + startingCount + ".");
+				}
+			}
+		}
+
+		int inserted = startingCount - remaining.getCount();
+		if (inserted > 0) {
+			player.setItemInHand(hand, remaining.copy());
+			return Component.literal("Terminal: inserted " + displayName + " x" + inserted + ", " + remaining.getCount() + " left in hand.");
+		}
+
+		return Component.literal("Terminal: no room for " + displayName + " across " + inventoriesChecked + " inventory/inventories.");
 	}
 
 	private NetworkSummary collectNetworkSummary() {
