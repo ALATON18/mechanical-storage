@@ -1,5 +1,6 @@
 {
 	"itemGroup.mechanical_storage": "Mechanical Storage",
 	"block.mechanical_storage.mechanical_storage_connector": "Mechanical Storage Connector",
-	"block.mechanical_storage.mechanical_storage_terminal": "Mechanical Storage Terminal"
+	"block.mechanical_storage.mechanical_storage_terminal": "Mechanical Storage Terminal",
+	"container.mechanical_storage.terminal": "Mechanical Storage Terminal"
 }
