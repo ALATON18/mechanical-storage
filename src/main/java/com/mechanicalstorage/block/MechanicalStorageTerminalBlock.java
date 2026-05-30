@@ -28,7 +28,11 @@ public class MechanicalStorageTerminalBlock extends DirectionalMachineBlock impl
 	@Override
 	protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
 		if (!level.isClientSide && player instanceof ServerPlayer serverPlayer && level.getBlockEntity(pos) instanceof TerminalBlockEntity terminal) {
-			serverPlayer.sendSystemMessage(terminal.describeNearbyConnectorNetwork());
+			if (serverPlayer.isShiftKeyDown()) {
+				serverPlayer.sendSystemMessage(terminal.extractFirstAvailableStack(serverPlayer));
+			} else {
+				serverPlayer.sendSystemMessage(terminal.describeNearbyConnectorNetwork());
+			}
 		}
 
 		return InteractionResult.SUCCESS;
