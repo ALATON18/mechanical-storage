@@ -1,17 +1,22 @@
 package com.mechanicalstorage.blockentity;
 
 import com.mechanicalstorage.MechanicalStorage;
+import com.mechanicalstorage.menu.TerminalMenu;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -19,13 +24,24 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class TerminalBlockEntity extends BlockEntity {
+public class TerminalBlockEntity extends BlockEntity implements MenuProvider {
 	private static final int SCAN_RADIUS = 32;
 	private static final int MAX_CONNECTORS = 64;
 	private static final int MAX_SUMMARY_ITEMS = 8;
 
 	public TerminalBlockEntity(BlockPos pos, BlockState blockState) {
 		super(MechanicalStorage.MECHANICAL_STORAGE_TERMINAL_BLOCK_ENTITY.get(), pos, blockState);
+	}
+
+	@Override
+	public Component getDisplayName() {
+		return Component.translatable("container.mechanical_storage.terminal");
+	}
+
+	@Nullable
+	@Override
+	public AbstractContainerMenu createMenu(int containerId, Inventory inventory, Player player) {
+		return new TerminalMenu(containerId, inventory, this);
 	}
 
 	public Component describeNearbyConnectorNetwork() {
@@ -43,6 +59,75 @@ public class TerminalBlockEntity extends BlockEntity {
 		}
 
 		return Component.literal(message);
+	}
+
+	public List<ItemStack> getNetworkDisplayStacks(int limit) {
+		NetworkSummary networkSummary = collectNetworkSummary();
+		List<Map.Entry<ResourceLocation, ItemSummary>> entries = new ArrayList<>(networkSummary.itemSummary.entrySet());
+		entries.sort(Comparator.<Map.Entry<ResourceLocation, ItemSummary>>comparingInt(entry -> entry.getValue().count).reversed());
+
+		List<ItemStack> stacks = new ArrayList<>();
+		for (Map.Entry<ResourceLocation, ItemSummary> entry : entries) {
+			if (stacks.size() >= limit) {
+				break;
+			}
+
+			ItemStack displayStack = entry.getValue().representative.copy();
+			displayStack.setCount(Math.min(displayStack.getMaxStackSize(), entry.getValue().count));
+			stacks.add(displayStack);
+		}
+
+		return stacks;
+	}
+
+	public ItemStack extractMatchingStackToPlayer(ItemStack filterStack, int amount, Player player) {
+		ItemStack extracted = extractMatchingStack(filterStack, amount);
+		if (!extracted.isEmpty()) {
+			ItemHandlerHelper.giveItemToPlayer(player, extracted.copy());
+		}
+
+		return extracted;
+	}
+
+	public ItemStack extractMatchingStack(ItemStack filterStack, int amount) {
+		if (level == null || filterStack.isEmpty() || amount <= 0) {
+			return ItemStack.EMPTY;
+		}
+
+		ItemStack collected = ItemStack.EMPTY;
+		int remainingAmount = amount;
+
+		for (MechanicalStorageConnectorBlockEntity connector : findNearbyConnectors()) {
+			IItemHandler handler = connector.getTargetItemHandler();
+			if (handler == null) {
+				continue;
+			}
+
+			for (int slot = 0; slot < handler.getSlots(); slot++) {
+				ItemStack stack = handler.getStackInSlot(slot);
+				if (stack.isEmpty() || !sameDisplayGroup(stack, filterStack)) {
+					continue;
+				}
+
+				ItemStack extracted = handler.extractItem(slot, remainingAmount, false);
+				if (extracted.isEmpty()) {
+					continue;
+				}
+
+				if (collected.isEmpty()) {
+					collected = extracted.copy();
+				} else {
+					collected.grow(extracted.getCount());
+				}
+
+				remainingAmount -= extracted.getCount();
+				if (remainingAmount <= 0) {
+					return collected;
+				}
+			}
+		}
+
+		return collected;
 	}
 
 	public Component extractFirstAvailableStack(Player player) {
@@ -91,24 +176,12 @@ public class TerminalBlockEntity extends BlockEntity {
 		}
 
 		String displayName = heldStack.getHoverName().getString();
-		ItemStack remaining = heldStack.copy();
-		int startingCount = remaining.getCount();
-		int inventoriesChecked = 0;
+		int startingCount = heldStack.getCount();
+		ItemStack remaining = insertStackIntoNetwork(heldStack.copy());
 
-		for (MechanicalStorageConnectorBlockEntity connector : findNearbyConnectors()) {
-			IItemHandler handler = connector.getTargetItemHandler();
-			if (handler == null) {
-				continue;
-			}
-
-			inventoriesChecked++;
-			for (int slot = 0; slot < handler.getSlots(); slot++) {
-				remaining = handler.insertItem(slot, remaining, false);
-				if (remaining.isEmpty()) {
-					player.setItemInHand(hand, ItemStack.EMPTY);
-					return Component.literal("Terminal: inserted " + displayName + " x" + startingCount + ".");
-				}
-			}
+		if (remaining.isEmpty()) {
+			player.setItemInHand(hand, ItemStack.EMPTY);
+			return Component.literal("Terminal: inserted " + displayName + " x" + startingCount + ".");
 		}
 
 		int inserted = startingCount - remaining.getCount();
@@ -117,7 +190,31 @@ public class TerminalBlockEntity extends BlockEntity {
 			return Component.literal("Terminal: inserted " + displayName + " x" + inserted + ", " + remaining.getCount() + " left in hand.");
 		}
 
-		return Component.literal("Terminal: no room for " + displayName + " across " + inventoriesChecked + " inventory/inventories.");
+		return Component.literal("Terminal: no room for " + displayName + ".");
+	}
+
+	public ItemStack insertStackIntoNetwork(ItemStack stack) {
+		if (level == null || stack.isEmpty()) {
+			return stack;
+		}
+
+		ItemStack remaining = stack.copy();
+
+		for (MechanicalStorageConnectorBlockEntity connector : findNearbyConnectors()) {
+			IItemHandler handler = connector.getTargetItemHandler();
+			if (handler == null) {
+				continue;
+			}
+
+			for (int slot = 0; slot < handler.getSlots(); slot++) {
+				remaining = handler.insertItem(slot, remaining, false);
+				if (remaining.isEmpty()) {
+					return ItemStack.EMPTY;
+				}
+			}
+		}
+
+		return remaining;
 	}
 
 	private NetworkSummary collectNetworkSummary() {
@@ -173,8 +270,12 @@ public class TerminalBlockEntity extends BlockEntity {
 
 	private static void addToSummary(Map<ResourceLocation, ItemSummary> itemSummary, ItemStack stack) {
 		ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
-		ItemSummary summary = itemSummary.computeIfAbsent(itemId, ignored -> new ItemSummary(stack.getHoverName().getString()));
+		ItemSummary summary = itemSummary.computeIfAbsent(itemId, ignored -> new ItemSummary(stack));
 		summary.count += stack.getCount();
+	}
+
+	private static boolean sameDisplayGroup(ItemStack first, ItemStack second) {
+		return ItemStack.isSameItemSameComponents(first, second);
 	}
 
 	private static String formatItemSummary(Map<ResourceLocation, ItemSummary> itemSummary) {
@@ -218,11 +319,14 @@ public class TerminalBlockEntity extends BlockEntity {
 	}
 
 	private static class ItemSummary {
+		private final ItemStack representative;
 		private final String displayName;
 		private int count;
 
-		private ItemSummary(String displayName) {
-			this.displayName = displayName;
+		private ItemSummary(ItemStack stack) {
+			this.representative = stack.copy();
+			this.representative.setCount(1);
+			this.displayName = stack.getHoverName().getString();
 		}
 	}
 }
