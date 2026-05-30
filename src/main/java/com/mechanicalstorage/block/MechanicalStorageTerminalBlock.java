@@ -29,11 +29,7 @@ public class MechanicalStorageTerminalBlock extends DirectionalMachineBlock impl
 	@Override
 	protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
 		if (!level.isClientSide && player instanceof ServerPlayer serverPlayer && level.getBlockEntity(pos) instanceof TerminalBlockEntity terminal) {
-			if (serverPlayer.isShiftKeyDown()) {
-				serverPlayer.sendSystemMessage(terminal.extractFirstAvailableStack(serverPlayer));
-			} else {
-				serverPlayer.sendSystemMessage(terminal.describeNearbyConnectorNetwork());
-			}
+			serverPlayer.openMenu(terminal, buffer -> buffer.writeBlockPos(pos));
 		}
 
 		return InteractionResult.SUCCESS;
@@ -41,14 +37,7 @@ public class MechanicalStorageTerminalBlock extends DirectionalMachineBlock impl
 
 	@Override
 	protected ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
-		if (!level.isClientSide && player instanceof ServerPlayer serverPlayer && level.getBlockEntity(pos) instanceof TerminalBlockEntity terminal) {
-			if (!stack.isEmpty()) {
-				serverPlayer.sendSystemMessage(terminal.insertHeldStack(serverPlayer, hand));
-			} else {
-				useWithoutItem(state, level, pos, player, hitResult);
-			}
-		}
-
+		useWithoutItem(state, level, pos, player, hitResult);
 		return ItemInteractionResult.SUCCESS;
 	}
 }
