@@ -73,7 +73,7 @@ public class TerminalBlockEntity extends BlockEntity implements MenuProvider {
 			}
 
 			ItemStack displayStack = entry.getValue().representative.copy();
-			displayStack.setCount(Math.min(displayStack.getMaxStackSize(), entry.getValue().count));
+			displayStack.setCount(entry.getValue().count);
 			stacks.add(displayStack);
 		}
 
