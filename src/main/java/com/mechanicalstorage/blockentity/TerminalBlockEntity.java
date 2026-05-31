@@ -3,7 +3,6 @@ package com.mechanicalstorage.blockentity;
 import com.mechanicalstorage.MechanicalStorage;
 import com.mechanicalstorage.menu.TerminalMenu;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -322,12 +321,10 @@ public class TerminalBlockEntity extends BlockEntity implements MenuProvider {
 		}
 
 		String normalizedSearch = searchText.toLowerCase(Locale.ROOT);
-		for (Holder<Item> holder : stack.getTags().toList()) {
-			for (TagKey<Item> tagKey : holder.tags().toList()) {
-				String tag = tagKey.location().toString().toLowerCase(Locale.ROOT);
-				if (tag.contains(normalizedSearch)) {
-					return true;
-				}
+		for (TagKey<Item> tagKey : stack.getTags().toList()) {
+			String tag = tagKey.location().toString().toLowerCase(Locale.ROOT);
+			if (tag.contains(normalizedSearch)) {
+				return true;
 			}
 		}
 
