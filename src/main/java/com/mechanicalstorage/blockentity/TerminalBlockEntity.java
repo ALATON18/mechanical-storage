@@ -69,9 +69,25 @@ public class TerminalBlockEntity extends BlockEntity implements MenuProvider {
 	}
 
 	public List<ItemStack> getNetworkDisplayStacks(int limit, String searchText) {
+		return getNetworkDisplayStacks(limit, searchText, "COUNT", true);
+	}
+
+	public List<ItemStack> getNetworkDisplayStacks(int limit, String searchText, String sortMode, boolean descending) {
 		NetworkSummary networkSummary = collectNetworkSummary();
 		List<Map.Entry<ResourceLocation, ItemSummary>> entries = new ArrayList<>(networkSummary.itemSummary.entrySet());
-		entries.sort(Comparator.<Map.Entry<ResourceLocation, ItemSummary>>comparingInt(entry -> entry.getValue().count).reversed());
+		Comparator<Map.Entry<ResourceLocation, ItemSummary>> comparator;
+
+		if ("NAME".equals(sortMode)) {
+			comparator = Comparator.comparing(entry -> entry.getValue().displayName.toLowerCase(Locale.ROOT));
+		} else {
+			comparator = Comparator.<Map.Entry<ResourceLocation, ItemSummary>>comparingInt(entry -> entry.getValue().count);
+		}
+
+		if (descending) {
+			comparator = comparator.reversed();
+		}
+
+		entries.sort(comparator);
 
 		String normalizedSearch = normalizeSearch(searchText);
 		List<ItemStack> stacks = new ArrayList<>();
