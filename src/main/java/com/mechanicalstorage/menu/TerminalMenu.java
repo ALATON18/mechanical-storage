@@ -21,6 +21,10 @@ public class TerminalMenu extends AbstractContainerMenu {
 	public static final int GRID_COLUMNS = 9;
 	public static final int GRID_ROWS = 6;
 	public static final int NETWORK_SLOTS = GRID_COLUMNS * GRID_ROWS;
+	public static final int SEARCH_CLEAR_BUTTON = 100000;
+	public static final int SEARCH_BACKSPACE_BUTTON = 100001;
+	public static final int SEARCH_CHAR_BASE_BUTTON = 200000;
+	public static final int SEARCH_MAX_LENGTH = 64;
 
 	private static final int PLAYER_INVENTORY_START = NETWORK_SLOTS;
 	private static final int PLAYER_INVENTORY_SLOTS = 27;
@@ -32,6 +36,7 @@ public class TerminalMenu extends AbstractContainerMenu {
 	private final BlockPos terminalPos;
 	@Nullable
 	private final TerminalBlockEntity terminal;
+	private String searchText = "";
 	private int refreshCooldown;
 
 	public TerminalMenu(int containerId, Inventory playerInventory, RegistryFriendlyByteBuf buffer) {
@@ -56,6 +61,34 @@ public class TerminalMenu extends AbstractContainerMenu {
 	@Override
 	public boolean stillValid(Player player) {
 		return AbstractContainerMenu.stillValid(ContainerLevelAccess.create(player.level(), terminalPos), player, MechanicalStorage.MECHANICAL_STORAGE_TERMINAL.get());
+	}
+
+	@Override
+	public boolean clickMenuButton(Player player, int id) {
+		if (id == SEARCH_CLEAR_BUTTON) {
+			searchText = "";
+			refreshAfterSearchChange();
+			return true;
+		}
+
+		if (id == SEARCH_BACKSPACE_BUTTON) {
+			if (!searchText.isEmpty()) {
+				searchText = searchText.substring(0, searchText.length() - 1);
+				refreshAfterSearchChange();
+			}
+			return true;
+		}
+
+		if (id >= SEARCH_CHAR_BASE_BUTTON && id <= SEARCH_CHAR_BASE_BUTTON + Character.MAX_VALUE) {
+			char character = (char) (id - SEARCH_CHAR_BASE_BUTTON);
+			if (searchText.length() < SEARCH_MAX_LENGTH && isAllowedSearchCharacter(character)) {
+				searchText += character;
+				refreshAfterSearchChange();
+			}
+			return true;
+		}
+
+		return super.clickMenuButton(player, id);
 	}
 
 	@Override
@@ -97,6 +130,14 @@ public class TerminalMenu extends AbstractContainerMenu {
 	@Override
 	public void clicked(int slotId, int button, ClickType clickType, Player player) {
 		if (isNetworkSlot(slotId)) {
+			ItemStack carried = getCarried();
+			if (!carried.isEmpty()) {
+				depositCarriedStack();
+				refreshDisplay();
+				broadcastChanges();
+				return;
+			}
+
 			Slot slot = this.slots.get(slotId);
 			ItemStack displayedStack = slot.getItem();
 			if (!displayedStack.isEmpty()) {
@@ -131,7 +172,7 @@ public class TerminalMenu extends AbstractContainerMenu {
 
 	private void addNetworkSlots() {
 		int startX = 8;
-		int startY = 18;
+		int startY = 38;
 
 		for (int row = 0; row < GRID_ROWS; row++) {
 			for (int column = 0; column < GRID_COLUMNS; column++) {
@@ -143,7 +184,7 @@ public class TerminalMenu extends AbstractContainerMenu {
 
 	private void addPlayerInventorySlots(Inventory inventory) {
 		int startX = 8;
-		int startY = 140;
+		int startY = 160;
 
 		for (int row = 0; row < 3; row++) {
 			for (int column = 0; column < 9; column++) {
@@ -152,7 +193,7 @@ public class TerminalMenu extends AbstractContainerMenu {
 		}
 
 		for (int column = 0; column < 9; column++) {
-			this.addSlot(new Slot(inventory, column, startX + column * 18, 198));
+			this.addSlot(new Slot(inventory, column, startX + column * 18, 218));
 		}
 	}
 
@@ -173,10 +214,15 @@ public class TerminalMenu extends AbstractContainerMenu {
 			return;
 		}
 
-		List<ItemStack> stacks = terminal.getNetworkDisplayStacks(NETWORK_SLOTS);
+		List<ItemStack> stacks = terminal.getNetworkDisplayStacks(NETWORK_SLOTS, searchText);
 		for (int slot = 0; slot < Math.min(NETWORK_SLOTS, stacks.size()); slot++) {
 			displayItems.setStackInSlot(slot, stacks.get(slot));
 		}
+	}
+
+	private void refreshAfterSearchChange() {
+		refreshDisplay();
+		broadcastChanges();
 	}
 
 	private ItemStack extractDisplayedStackToInventory(ItemStack displayedStack, int amount, Player player) {
@@ -216,12 +262,26 @@ public class TerminalMenu extends AbstractContainerMenu {
 		}
 	}
 
+	private void depositCarriedStack() {
+		ItemStack carried = getCarried();
+		if (carried.isEmpty()) {
+			return;
+		}
+
+		ItemStack remaining = insertIntoNetwork(carried.copy());
+		setCarried(remaining);
+	}
+
 	private ItemStack insertIntoNetwork(ItemStack stack) {
 		if (terminal == null || stack.isEmpty()) {
 			return stack;
 		}
 
 		return terminal.insertStackIntoNetwork(stack);
+	}
+
+	private static boolean isAllowedSearchCharacter(char character) {
+		return character >= 32 && character != 127;
 	}
 
 	private static class NetworkDisplaySlot extends SlotItemHandler {
