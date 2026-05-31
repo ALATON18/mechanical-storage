@@ -23,6 +23,7 @@ public class TerminalMenu extends AbstractContainerMenu {
 	public static final int NETWORK_SLOTS = GRID_COLUMNS * GRID_ROWS;
 	public static final int SEARCH_CLEAR_BUTTON = 100000;
 	public static final int SEARCH_BACKSPACE_BUTTON = 100001;
+	public static final int SEARCH_APPLY_BUTTON = 100002;
 	public static final int SEARCH_CHAR_BASE_BUTTON = 200000;
 	public static final int SEARCH_MAX_LENGTH = 64;
 
@@ -67,7 +68,6 @@ public class TerminalMenu extends AbstractContainerMenu {
 	public boolean clickMenuButton(Player player, int id) {
 		if (id == SEARCH_CLEAR_BUTTON) {
 			searchText = "";
-			refreshAfterSearchChange();
 			return true;
 		}
 
@@ -79,11 +79,15 @@ public class TerminalMenu extends AbstractContainerMenu {
 			return true;
 		}
 
+		if (id == SEARCH_APPLY_BUTTON) {
+			refreshAfterSearchChange();
+			return true;
+		}
+
 		if (id >= SEARCH_CHAR_BASE_BUTTON && id <= SEARCH_CHAR_BASE_BUTTON + Character.MAX_VALUE) {
 			char character = (char) (id - SEARCH_CHAR_BASE_BUTTON);
 			if (searchText.length() < SEARCH_MAX_LENGTH && isAllowedSearchCharacter(character)) {
 				searchText += character;
-				refreshAfterSearchChange();
 			}
 			return true;
 		}
