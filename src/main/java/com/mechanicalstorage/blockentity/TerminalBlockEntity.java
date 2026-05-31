@@ -300,19 +300,17 @@ public class TerminalBlockEntity extends BlockEntity implements MenuProvider {
 		}
 
 		String displayName = itemSummary.displayName.toLowerCase(Locale.ROOT);
-		String namespace = itemId.getNamespace().toLowerCase(Locale.ROOT);
 		String path = itemId.getPath().toLowerCase(Locale.ROOT);
-		String fullId = itemId.toString().toLowerCase(Locale.ROOT);
 
 		if (searchText.startsWith("@")) {
-			return namespace.contains(searchText.substring(1));
+			return itemId.getNamespace().toLowerCase(Locale.ROOT).contains(searchText.substring(1));
 		}
 
 		if (searchText.startsWith("#")) {
 			return matchesTagSearch(itemSummary.representative, searchText.substring(1));
 		}
 
-		return displayName.contains(searchText) || namespace.contains(searchText) || path.contains(searchText) || fullId.contains(searchText) || matchesTagSearch(itemSummary.representative, searchText);
+		return displayName.contains(searchText) || path.contains(searchText);
 	}
 
 	private static boolean matchesTagSearch(ItemStack stack, String searchText) {
