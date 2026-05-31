@@ -35,7 +35,6 @@ public class TerminalMenu extends AbstractContainerMenu {
 	private static final int HOTBAR_SLOTS = 9;
 
 	private final ItemStackHandler displayItems = new ItemStackHandler(NETWORK_SLOTS);
-	private final int[] displayCounts = new int[NETWORK_SLOTS];
 	private final Inventory playerInventory;
 	private final BlockPos terminalPos;
 	@Nullable
@@ -208,12 +207,12 @@ public class TerminalMenu extends AbstractContainerMenu {
 			return 0;
 		}
 
-		return displayCounts[slot];
+		return displayItems.getStackInSlot(slot).getCount();
 	}
 
 	private void addNetworkSlots() {
 		int startX = 32;
-		int startY = 58;
+		int startY = 54;
 
 		for (int row = 0; row < GRID_ROWS; row++) {
 			for (int column = 0; column < GRID_COLUMNS; column++) {
@@ -225,7 +224,7 @@ public class TerminalMenu extends AbstractContainerMenu {
 
 	private void addPlayerInventorySlots(Inventory inventory) {
 		int startX = 32;
-		int startY = 180;
+		int startY = 176;
 
 		for (int row = 0; row < 3; row++) {
 			for (int column = 0; column < 9; column++) {
@@ -234,7 +233,7 @@ public class TerminalMenu extends AbstractContainerMenu {
 		}
 
 		for (int column = 0; column < 9; column++) {
-			this.addSlot(new Slot(inventory, column, startX + column * 18, 238));
+			this.addSlot(new Slot(inventory, column, startX + column * 18, 234));
 		}
 	}
 
@@ -248,7 +247,6 @@ public class TerminalMenu extends AbstractContainerMenu {
 
 	private void refreshDisplay() {
 		for (int slot = 0; slot < NETWORK_SLOTS; slot++) {
-			displayCounts[slot] = 0;
 			displayItems.setStackInSlot(slot, ItemStack.EMPTY);
 		}
 
@@ -258,10 +256,7 @@ public class TerminalMenu extends AbstractContainerMenu {
 
 		List<ItemStack> stacks = terminal.getNetworkDisplayStacks(NETWORK_SLOTS, searchText, sortMode.name(), sortDescending);
 		for (int slot = 0; slot < Math.min(NETWORK_SLOTS, stacks.size()); slot++) {
-			ItemStack displayStack = stacks.get(slot).copy();
-			displayCounts[slot] = displayStack.getCount();
-			displayStack.setCount(1);
-			displayItems.setStackInSlot(slot, displayStack);
+			displayItems.setStackInSlot(slot, stacks.get(slot).copy());
 		}
 	}
 
