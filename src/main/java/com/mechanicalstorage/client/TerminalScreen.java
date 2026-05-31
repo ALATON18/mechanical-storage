@@ -8,32 +8,39 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
 
 public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
+	private static final int BG = 0xFFC6C6C6;
+	private static final int BG_DARK = 0xFF8B8B8B;
+	private static final int SLOT_OUTLINE = 0xFF373737;
+	private static final int SLOT = 0xFF8B8B8B;
+	private static final int TEXT = 0xFF404040;
+
 	private EditBox searchBox;
 
 	public TerminalScreen(TerminalMenu menu, Inventory playerInventory, Component title) {
 		super(menu, playerInventory, title);
 		this.imageWidth = 200;
-		this.imageHeight = 262;
+		this.imageHeight = 258;
+		this.titleLabelX = 32;
+		this.titleLabelY = 20;
 		this.inventoryLabelX = 32;
-		this.inventoryLabelY = 168;
+		this.inventoryLabelY = 164;
 	}
 
 	@Override
 	protected void init() {
 		super.init();
-		searchBox = new EditBox(this.font, this.leftPos + 32, this.topPos + 17, 160, 16, Component.translatable("container.mechanical_storage.search"));
+		searchBox = new EditBox(this.font, this.leftPos + 84, this.topPos + 16, 108, 16, Component.translatable("container.mechanical_storage.search"));
 		searchBox.setMaxLength(TerminalMenu.SEARCH_MAX_LENGTH);
-		searchBox.setHint(Component.literal("Search items, @mod, #tag"));
+		searchBox.setHint(Component.literal("Search"));
 		searchBox.setResponder(this::onSearchChanged);
 		searchBox.setFocused(false);
 		addRenderableWidget(searchBox);
 
-		addSideButton(0, "A-Z", TerminalMenu.SORT_NAME_BUTTON);
-		addSideButton(1, "Qty", TerminalMenu.SORT_COUNT_BUTTON);
-		addSideButton(2, "@", TerminalMenu.SORT_COUNT_BUTTON);
-		addSideButton(3, "#", TerminalMenu.SORT_NAME_BUTTON);
+		addSideButton(0, "AZ", TerminalMenu.SORT_NAME_BUTTON);
+		addSideButton(1, "Qt", TerminalMenu.SORT_COUNT_BUTTON);
 	}
 
 	@Override
@@ -41,28 +48,42 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 		int x = this.leftPos;
 		int y = this.topPos;
 
-		guiGraphics.fill(x, y, x + imageWidth, y + imageHeight, 0xFF2B2118);
-		guiGraphics.fill(x + 4, y + 14, x + imageWidth - 4, y + 34, 0xFF3B3024);
-		guiGraphics.fill(x + 4, y + 36, x + 28, y + 166, 0xFF3B3024);
-		guiGraphics.fill(x + 28, y + 36, x + imageWidth - 4, y + 166, 0xFF3B3024);
-		guiGraphics.fill(x + 28, y + 176, x + imageWidth - 4, y + imageHeight - 4, 0xFF3B3024);
+		guiGraphics.fill(x + 24, y + 10, x + imageWidth - 4, y + imageHeight - 4, BG);
+		guiGraphics.fill(x + 28, y + 38, x + imageWidth - 8, y + 158, BG_DARK);
+		guiGraphics.fill(x + 28, y + 172, x + imageWidth - 8, y + imageHeight - 8, BG_DARK);
 
-		drawSlotBackgrounds(guiGraphics, x + 31, y + 57, TerminalMenu.GRID_COLUMNS, TerminalMenu.GRID_ROWS);
-		drawSlotBackgrounds(guiGraphics, x + 31, y + 179, 9, 3);
-		drawSlotBackgrounds(guiGraphics, x + 31, y + 237, 9, 1);
+		drawSlotBackgrounds(guiGraphics, x + 31, y + 53, TerminalMenu.GRID_COLUMNS, TerminalMenu.GRID_ROWS);
+		drawSlotBackgrounds(guiGraphics, x + 31, y + 175, 9, 3);
+		drawSlotBackgrounds(guiGraphics, x + 31, y + 233, 9, 1);
+	}
+
+	@Override
+	protected void renderSlot(GuiGraphics guiGraphics, Slot slot) {
+		if (slot.index >= 0 && slot.index < TerminalMenu.NETWORK_SLOTS) {
+			ItemStack stack = slot.getItem();
+			if (!stack.isEmpty()) {
+				int count = stack.getCount();
+				ItemStack renderStack = stack.copy();
+				renderStack.setCount(1);
+				guiGraphics.renderItem(renderStack, slot.x, slot.y);
+				guiGraphics.renderItemDecorations(this.font, renderStack, slot.x, slot.y, count > 1 ? formatCount(count) : null);
+				return;
+			}
+		}
+
+		super.renderSlot(guiGraphics, slot);
 	}
 
 	@Override
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
 		super.render(guiGraphics, mouseX, mouseY, partialTick);
-		renderNetworkCounts(guiGraphics);
 		this.renderTooltip(guiGraphics, mouseX, mouseY);
 	}
 
 	@Override
 	protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-		guiGraphics.drawString(this.font, this.title, this.titleLabelX, this.titleLabelY, 0xE8D9B5, false);
-		guiGraphics.drawString(this.font, this.playerInventoryTitle, this.inventoryLabelX, this.inventoryLabelY, 0xE8D9B5, false);
+		guiGraphics.drawString(this.font, Component.literal("Terminal"), this.titleLabelX, this.titleLabelY, TEXT, false);
+		guiGraphics.drawString(this.font, this.playerInventoryTitle, this.inventoryLabelX, this.inventoryLabelY, TEXT, false);
 	}
 
 	@Override
@@ -101,7 +122,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 
 	private void addSideButton(int row, String label, int buttonId) {
 		addRenderableWidget(Button.builder(Component.literal(label), button -> sendMenuButton(buttonId))
-				.bounds(this.leftPos + 7, this.topPos + 38 + row * 24, 20, 20)
+				.bounds(this.leftPos + 4, this.topPos + 54 + row * 23, 22, 18)
 				.build());
 	}
 
@@ -128,25 +149,6 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 		return searchBox != null && mouseX >= searchBox.getX() && mouseX < searchBox.getX() + searchBox.getWidth() && mouseY >= searchBox.getY() && mouseY < searchBox.getY() + searchBox.getHeight();
 	}
 
-	private void renderNetworkCounts(GuiGraphics guiGraphics) {
-		for (int slotIndex = 0; slotIndex < TerminalMenu.NETWORK_SLOTS && slotIndex < this.menu.slots.size(); slotIndex++) {
-			Slot slot = this.menu.slots.get(slotIndex);
-			if (!slot.hasItem()) {
-				continue;
-			}
-
-			int count = this.menu.getNetworkSlotCount(slotIndex);
-			if (count <= 1) {
-				continue;
-			}
-
-			String countText = formatCount(count);
-			int textX = this.leftPos + slot.x + 17 - this.font.width(countText);
-			int textY = this.topPos + slot.y + 9;
-			guiGraphics.drawString(this.font, countText, textX, textY, 0xFFFFFF, true);
-		}
-	}
-
 	private static String formatCount(int count) {
 		if (count >= 1_000_000) {
 			return count / 1_000_000 + "M";
@@ -164,9 +166,8 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 			for (int column = 0; column < columns; column++) {
 				int x = startX + column * 18;
 				int y = startY + row * 18;
-				guiGraphics.fill(x, y, x + 18, y + 18, 0xFF1A1510);
-				guiGraphics.fill(x + 1, y + 1, x + 17, y + 17, 0xFF5A4734);
-				guiGraphics.fill(x + 2, y + 2, x + 16, y + 16, 0xFF2F261D);
+				guiGraphics.fill(x, y, x + 18, y + 18, SLOT_OUTLINE);
+				guiGraphics.fill(x + 1, y + 1, x + 17, y + 17, SLOT);
 			}
 		}
 	}
