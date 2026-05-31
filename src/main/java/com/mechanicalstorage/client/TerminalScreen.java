@@ -25,6 +25,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 		searchBox.setHint(Component.literal("Search items, @mod, #tag"));
 		searchBox.setResponder(this::onSearchChanged);
 		addRenderableWidget(searchBox);
+		setInitialFocus(searchBox);
 	}
 
 	@Override
@@ -57,8 +58,14 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 
 	@Override
 	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-		if (searchBox != null && searchBox.keyPressed(keyCode, scanCode, modifiers)) {
-			return true;
+		if (searchBox != null && searchBox.isFocused()) {
+			if (this.minecraft != null && this.minecraft.options.keyInventory.matches(keyCode, scanCode)) {
+				return true;
+			}
+
+			if (searchBox.keyPressed(keyCode, scanCode, modifiers)) {
+				return true;
+			}
 		}
 
 		return super.keyPressed(keyCode, scanCode, modifiers);
@@ -83,6 +90,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 			char character = searchText.charAt(index);
 			this.minecraft.gameMode.handleInventoryButtonClick(this.menu.containerId, TerminalMenu.SEARCH_CHAR_BASE_BUTTON + character);
 		}
+		this.minecraft.gameMode.handleInventoryButtonClick(this.menu.containerId, TerminalMenu.SEARCH_APPLY_BUTTON);
 	}
 
 	private void drawSlotBackgrounds(GuiGraphics guiGraphics, int startX, int startY, int columns, int rows) {
