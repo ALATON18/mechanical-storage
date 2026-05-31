@@ -24,6 +24,8 @@ public class TerminalMenu extends AbstractContainerMenu {
 	public static final int SEARCH_CLEAR_BUTTON = 100000;
 	public static final int SEARCH_BACKSPACE_BUTTON = 100001;
 	public static final int SEARCH_APPLY_BUTTON = 100002;
+	public static final int SORT_NAME_BUTTON = 100003;
+	public static final int SORT_COUNT_BUTTON = 100004;
 	public static final int SEARCH_CHAR_BASE_BUTTON = 200000;
 	public static final int SEARCH_MAX_LENGTH = 64;
 
@@ -38,6 +40,8 @@ public class TerminalMenu extends AbstractContainerMenu {
 	@Nullable
 	private final TerminalBlockEntity terminal;
 	private String searchText = "";
+	private SortMode sortMode = SortMode.COUNT;
+	private boolean sortDescending = true;
 	private int refreshCooldown;
 
 	public TerminalMenu(int containerId, Inventory playerInventory, RegistryFriendlyByteBuf buffer) {
@@ -80,6 +84,28 @@ public class TerminalMenu extends AbstractContainerMenu {
 		}
 
 		if (id == SEARCH_APPLY_BUTTON) {
+			refreshAfterSearchChange();
+			return true;
+		}
+
+		if (id == SORT_NAME_BUTTON) {
+			if (sortMode == SortMode.NAME) {
+				sortDescending = !sortDescending;
+			} else {
+				sortMode = SortMode.NAME;
+				sortDescending = false;
+			}
+			refreshAfterSearchChange();
+			return true;
+		}
+
+		if (id == SORT_COUNT_BUTTON) {
+			if (sortMode == SortMode.COUNT) {
+				sortDescending = !sortDescending;
+			} else {
+				sortMode = SortMode.COUNT;
+				sortDescending = true;
+			}
 			refreshAfterSearchChange();
 			return true;
 		}
@@ -218,7 +244,7 @@ public class TerminalMenu extends AbstractContainerMenu {
 			return;
 		}
 
-		List<ItemStack> stacks = terminal.getNetworkDisplayStacks(NETWORK_SLOTS, searchText);
+		List<ItemStack> stacks = terminal.getNetworkDisplayStacks(NETWORK_SLOTS, searchText, sortMode.name(), sortDescending);
 		for (int slot = 0; slot < Math.min(NETWORK_SLOTS, stacks.size()); slot++) {
 			displayItems.setStackInSlot(slot, stacks.get(slot));
 		}
@@ -286,6 +312,11 @@ public class TerminalMenu extends AbstractContainerMenu {
 
 	private static boolean isAllowedSearchCharacter(char character) {
 		return character >= 32 && character != 127;
+	}
+
+	private enum SortMode {
+		NAME,
+		COUNT
 	}
 
 	private static class NetworkDisplaySlot extends SlotItemHandler {
