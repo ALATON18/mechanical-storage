@@ -3,14 +3,17 @@ package com.mechanicalstorage.blockentity;
 import com.mechanicalstorage.MechanicalStorage;
 import com.mechanicalstorage.menu.TerminalMenu;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -22,6 +25,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class TerminalBlockEntity extends BlockEntity implements MenuProvider {
@@ -62,14 +66,23 @@ public class TerminalBlockEntity extends BlockEntity implements MenuProvider {
 	}
 
 	public List<ItemStack> getNetworkDisplayStacks(int limit) {
+		return getNetworkDisplayStacks(limit, "");
+	}
+
+	public List<ItemStack> getNetworkDisplayStacks(int limit, String searchText) {
 		NetworkSummary networkSummary = collectNetworkSummary();
 		List<Map.Entry<ResourceLocation, ItemSummary>> entries = new ArrayList<>(networkSummary.itemSummary.entrySet());
 		entries.sort(Comparator.<Map.Entry<ResourceLocation, ItemSummary>>comparingInt(entry -> entry.getValue().count).reversed());
 
+		String normalizedSearch = normalizeSearch(searchText);
 		List<ItemStack> stacks = new ArrayList<>();
 		for (Map.Entry<ResourceLocation, ItemSummary> entry : entries) {
 			if (stacks.size() >= limit) {
 				break;
+			}
+
+			if (!matchesSearch(entry.getKey(), entry.getValue(), normalizedSearch)) {
+				continue;
 			}
 
 			ItemStack displayStack = entry.getValue().representative.copy();
@@ -276,6 +289,49 @@ public class TerminalBlockEntity extends BlockEntity implements MenuProvider {
 
 	private static boolean sameDisplayGroup(ItemStack first, ItemStack second) {
 		return ItemStack.isSameItemSameComponents(first, second);
+	}
+
+	private static String normalizeSearch(String searchText) {
+		return searchText == null ? "" : searchText.trim().toLowerCase(Locale.ROOT);
+	}
+
+	private static boolean matchesSearch(ResourceLocation itemId, ItemSummary itemSummary, String searchText) {
+		if (searchText.isEmpty()) {
+			return true;
+		}
+
+		String displayName = itemSummary.displayName.toLowerCase(Locale.ROOT);
+		String namespace = itemId.getNamespace().toLowerCase(Locale.ROOT);
+		String path = itemId.getPath().toLowerCase(Locale.ROOT);
+		String fullId = itemId.toString().toLowerCase(Locale.ROOT);
+
+		if (searchText.startsWith("@")) {
+			return namespace.contains(searchText.substring(1));
+		}
+
+		if (searchText.startsWith("#")) {
+			return matchesTagSearch(itemSummary.representative, searchText.substring(1));
+		}
+
+		return displayName.contains(searchText) || namespace.contains(searchText) || path.contains(searchText) || fullId.contains(searchText) || matchesTagSearch(itemSummary.representative, searchText);
+	}
+
+	private static boolean matchesTagSearch(ItemStack stack, String searchText) {
+		if (searchText.isBlank()) {
+			return false;
+		}
+
+		String normalizedSearch = searchText.toLowerCase(Locale.ROOT);
+		for (Holder<Item> holder : stack.getTags().toList()) {
+			for (TagKey<Item> tagKey : holder.tags().toList()) {
+				String tag = tagKey.location().toString().toLowerCase(Locale.ROOT);
+				if (tag.contains(normalizedSearch)) {
+					return true;
+				}
+			}
+		}
+
+		return false;
 	}
 
 	private static String formatItemSummary(Map<ResourceLocation, ItemSummary> itemSummary) {
