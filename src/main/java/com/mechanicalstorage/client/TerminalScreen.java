@@ -59,10 +59,11 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 
 	@Override
 	protected void renderSlot(GuiGraphics guiGraphics, Slot slot) {
-		if (slot.index >= 0 && slot.index < TerminalMenu.NETWORK_SLOTS) {
+		int menuSlotIndex = this.menu.slots.indexOf(slot);
+		if (menuSlotIndex >= 0 && menuSlotIndex < TerminalMenu.NETWORK_SLOTS) {
 			ItemStack stack = slot.getItem();
 			if (!stack.isEmpty()) {
-				int count = stack.getCount();
+				int count = this.menu.getNetworkSlotCount(menuSlotIndex);
 				ItemStack renderStack = stack.copy();
 				renderStack.setCount(1);
 				guiGraphics.renderItem(renderStack, slot.x, slot.y);
@@ -122,7 +123,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 
 	private void addSideButton(int row, String label, int buttonId) {
 		addRenderableWidget(Button.builder(Component.literal(label), button -> sendMenuButton(buttonId))
-				.bounds(this.leftPos + 4, this.topPos + 54 + row * 23, 22, 18)
+				.bounds(this.leftPos, this.topPos + 54 + row * 23, 22, 18)
 				.build());
 	}
 
