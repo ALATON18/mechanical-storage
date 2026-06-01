@@ -19,8 +19,7 @@ public class MechanicalStorageConnectorBlockEntity extends BlockEntity {
 
 	public Component describeTargetInventory() {
 		IItemHandler handler = getTargetItemHandler();
-		Direction facing = getBlockState().getValue(DirectionalMachineBlock.FACING);
-		BlockPos targetPos = worldPosition.relative(facing);
+		BlockPos targetPos = getTargetPos();
 
 		if (handler == null) {
 			return Component.literal("Connector: no item inventory found at " + formatPos(targetPos) + ".");
@@ -41,6 +40,11 @@ public class MechanicalStorageConnectorBlockEntity extends BlockEntity {
 		return Component.literal("Connector: found item inventory at " + formatPos(targetPos) + " (" + occupiedSlots + "/" + slots + " slots used, " + totalItems + " items).");
 	}
 
+	public BlockPos getTargetPos() {
+		Direction facing = getBlockState().getValue(DirectionalMachineBlock.FACING);
+		return worldPosition.relative(facing);
+	}
+
 	@Nullable
 	public IItemHandler getTargetItemHandler() {
 		if (level == null) {
@@ -48,7 +52,7 @@ public class MechanicalStorageConnectorBlockEntity extends BlockEntity {
 		}
 
 		Direction facing = getBlockState().getValue(DirectionalMachineBlock.FACING);
-		BlockPos targetPos = worldPosition.relative(facing);
+		BlockPos targetPos = getTargetPos();
 		BlockState targetState = level.getBlockState(targetPos);
 		BlockEntity targetBlockEntity = level.getBlockEntity(targetPos);
 
