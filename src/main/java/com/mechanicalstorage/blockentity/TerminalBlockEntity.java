@@ -22,10 +22,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 public class TerminalBlockEntity extends BlockEntity implements MenuProvider {
 	private static final int SCAN_RADIUS = 32;
@@ -274,6 +276,7 @@ public class TerminalBlockEntity extends BlockEntity implements MenuProvider {
 
 	private List<MechanicalStorageConnectorBlockEntity> findNearbyConnectors() {
 		List<MechanicalStorageConnectorBlockEntity> connectors = new ArrayList<>();
+		Set<BlockPos> seenTargets = new HashSet<>();
 
 		if (level == null) {
 			return connectors;
@@ -288,7 +291,7 @@ public class TerminalBlockEntity extends BlockEntity implements MenuProvider {
 			}
 
 			BlockEntity blockEntity = level.getBlockEntity(scanPos);
-			if (blockEntity instanceof MechanicalStorageConnectorBlockEntity connector) {
+			if (blockEntity instanceof MechanicalStorageConnectorBlockEntity connector && seenTargets.add(connector.getTargetPos())) {
 				connectors.add(connector);
 			}
 		}
