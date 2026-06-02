@@ -12,7 +12,7 @@ import net.minecraft.world.item.ItemStack;
 
 public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 	private static final int BG = 0xFFC6C6C6;
-	private static final int BG_LIGHT = 0xFFE0E0E0;
+	private static final int BG_LIGHT = 0xFFE8E8E8;
 	private static final int BG_BORDER = 0xFF5F5F5F;
 	private static final int BG_SHADOW = 0xFF242424;
 	private static final int BG_DARK = 0xFF8B8B8B;
@@ -24,7 +24,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 
 	public TerminalScreen(TerminalMenu menu, Inventory playerInventory, Component title) {
 		super(menu, playerInventory, title);
-		this.imageWidth = 200;
+		this.imageWidth = 204;
 		this.imageHeight = 258;
 		this.titleLabelX = 32;
 		this.titleLabelY = 20;
@@ -58,7 +58,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 		int networkGridHeight = TerminalMenu.GRID_ROWS * 18;
 		int hotbarGridHeight = 18;
 
-		drawCutPanel(guiGraphics, x + 24, y + 10, x + imageWidth - 4, y + imageHeight - 4);
+		drawModernPanel(guiGraphics, x + 24, y + 10, x + imageWidth - 4, y + imageHeight - 4);
 		drawInsetPanel(guiGraphics, gridX - 2, networkGridY - 2, gridX + gridWidth + 2, networkGridY + networkGridHeight + 2);
 		drawInsetPanel(guiGraphics, gridX - 2, inventoryGridY - 2, gridX + gridWidth + 2, hotbarGridY + hotbarGridHeight + 2);
 
@@ -164,17 +164,15 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 	}
 
 	private void drawSmallCount(GuiGraphics guiGraphics, String countText, int slotX, int slotY) {
-		float scale = countText.length() >= 4 ? 0.58F : 0.64F;
 		int textWidth = this.font.width(countText);
-		float targetX = slotX + 15.0F - textWidth * scale;
-		float targetY = slotY + 10.0F;
-		int scaledX = Math.round(targetX / scale);
-		int scaledY = Math.round(targetY / scale);
+		float scale = Math.min(0.72F, 15.0F / Math.max(1, textWidth));
+		float targetX = slotX + 16.0F - textWidth * scale;
+		float targetY = slotY + 16.0F - this.font.lineHeight * scale;
 
 		guiGraphics.pose().pushPose();
-		guiGraphics.pose().translate(0.0F, 0.0F, 200.0F);
+		guiGraphics.pose().translate(targetX, targetY, 200.0F);
 		guiGraphics.pose().scale(scale, scale, 1.0F);
-		guiGraphics.drawString(this.font, countText, scaledX, scaledY, 0xFFFFFF, true);
+		guiGraphics.drawString(this.font, countText, 0, 0, 0xFFFFFF, true);
 		guiGraphics.pose().popPose();
 	}
 
@@ -190,13 +188,18 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 		return Integer.toString(count);
 	}
 
-	private void drawCutPanel(GuiGraphics guiGraphics, int left, int top, int right, int bottom) {
-		guiGraphics.fill(left + 3, top + 2, right - 1, bottom, BG_SHADOW);
-		guiGraphics.fill(left + 2, top, right - 2, bottom, BG_BORDER);
-		guiGraphics.fill(left, top + 2, right, bottom - 2, BG_BORDER);
-		guiGraphics.fill(left + 3, top + 1, right - 3, bottom - 1, BG);
-		guiGraphics.fill(left + 1, top + 3, right - 1, bottom - 3, BG);
-		guiGraphics.fill(left + 3, top + 3, right - 3, top + 4, BG_LIGHT);
+	private void drawModernPanel(GuiGraphics guiGraphics, int left, int top, int right, int bottom) {
+		guiGraphics.fill(left + 3, top + 3, right + 2, bottom + 2, BG_SHADOW);
+
+		guiGraphics.fill(left + 1, top, right - 1, top + 1, BG_BORDER);
+		guiGraphics.fill(left, top + 1, right, bottom - 1, BG_BORDER);
+		guiGraphics.fill(left + 1, bottom - 1, right - 1, bottom, BG_BORDER);
+
+		guiGraphics.fill(left + 2, top + 1, right - 2, bottom - 1, BG);
+		guiGraphics.fill(left + 1, top + 2, right - 1, bottom - 2, BG);
+
+		guiGraphics.fill(left + 2, top + 1, right - 2, top + 2, BG_LIGHT);
+		guiGraphics.fill(left + 1, top + 2, left + 2, bottom - 2, BG_LIGHT);
 	}
 
 	private void drawInsetPanel(GuiGraphics guiGraphics, int left, int top, int right, int bottom) {
