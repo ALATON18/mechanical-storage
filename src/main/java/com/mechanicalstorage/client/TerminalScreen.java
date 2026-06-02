@@ -12,6 +12,9 @@ import net.minecraft.world.item.ItemStack;
 
 public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 	private static final int BG = 0xFFC6C6C6;
+	private static final int BG_LIGHT = 0xFFE0E0E0;
+	private static final int BG_BORDER = 0xFF5F5F5F;
+	private static final int BG_SHADOW = 0xFF242424;
 	private static final int BG_DARK = 0xFF8B8B8B;
 	private static final int SLOT_OUTLINE = 0xFF373737;
 	private static final int SLOT = 0xFF8B8B8B;
@@ -53,12 +56,11 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 		int hotbarGridY = y + 233;
 		int gridWidth = TerminalMenu.GRID_COLUMNS * 18;
 		int networkGridHeight = TerminalMenu.GRID_ROWS * 18;
-		int inventoryGridHeight = 3 * 18;
 		int hotbarGridHeight = 18;
 
-		guiGraphics.fill(x + 24, y + 10, x + imageWidth - 4, y + imageHeight - 4, BG);
-		guiGraphics.fill(gridX - 2, networkGridY - 2, gridX + gridWidth + 2, networkGridY + networkGridHeight + 2, BG_DARK);
-		guiGraphics.fill(gridX - 2, inventoryGridY - 2, gridX + gridWidth + 2, hotbarGridY + hotbarGridHeight + 2, BG_DARK);
+		drawCutPanel(guiGraphics, x + 24, y + 10, x + imageWidth - 4, y + imageHeight - 4);
+		drawInsetPanel(guiGraphics, gridX - 2, networkGridY - 2, gridX + gridWidth + 2, networkGridY + networkGridHeight + 2);
+		drawInsetPanel(guiGraphics, gridX - 2, inventoryGridY - 2, gridX + gridWidth + 2, hotbarGridY + hotbarGridHeight + 2);
 
 		drawSlotBackgrounds(guiGraphics, gridX, networkGridY, TerminalMenu.GRID_COLUMNS, TerminalMenu.GRID_ROWS);
 		drawSlotBackgrounds(guiGraphics, gridX, inventoryGridY, 9, 3);
@@ -162,10 +164,10 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 	}
 
 	private void drawSmallCount(GuiGraphics guiGraphics, String countText, int slotX, int slotY) {
-		float scale = countText.length() >= 4 ? 0.45F : 0.50F;
+		float scale = countText.length() >= 4 ? 0.58F : 0.64F;
 		int textWidth = this.font.width(countText);
-		int targetX = Math.round(slotX + 17 - textWidth * scale);
-		int targetY = slotY + 12;
+		float targetX = slotX + 15.0F - textWidth * scale;
+		float targetY = slotY + 10.0F;
 		int scaledX = Math.round(targetX / scale);
 		int scaledY = Math.round(targetY / scale);
 
@@ -186,6 +188,20 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 		}
 
 		return Integer.toString(count);
+	}
+
+	private void drawCutPanel(GuiGraphics guiGraphics, int left, int top, int right, int bottom) {
+		guiGraphics.fill(left + 3, top + 2, right - 1, bottom, BG_SHADOW);
+		guiGraphics.fill(left + 2, top, right - 2, bottom, BG_BORDER);
+		guiGraphics.fill(left, top + 2, right, bottom - 2, BG_BORDER);
+		guiGraphics.fill(left + 3, top + 1, right - 3, bottom - 1, BG);
+		guiGraphics.fill(left + 1, top + 3, right - 1, bottom - 3, BG);
+		guiGraphics.fill(left + 3, top + 3, right - 3, top + 4, BG_LIGHT);
+	}
+
+	private void drawInsetPanel(GuiGraphics guiGraphics, int left, int top, int right, int bottom) {
+		guiGraphics.fill(left, top, right, bottom, BG_BORDER);
+		guiGraphics.fill(left + 1, top + 1, right - 1, bottom - 1, BG_DARK);
 	}
 
 	private void drawSlotBackgrounds(GuiGraphics guiGraphics, int startX, int startY, int columns, int rows) {
