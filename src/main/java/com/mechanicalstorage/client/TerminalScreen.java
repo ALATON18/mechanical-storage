@@ -47,14 +47,22 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 	protected void renderBg(GuiGraphics guiGraphics, float partialTick, int mouseX, int mouseY) {
 		int x = this.leftPos;
 		int y = this.topPos;
+		int gridX = x + 31;
+		int networkGridY = y + 53;
+		int inventoryGridY = y + 175;
+		int hotbarGridY = y + 233;
+		int gridWidth = TerminalMenu.GRID_COLUMNS * 18;
+		int networkGridHeight = TerminalMenu.GRID_ROWS * 18;
+		int inventoryGridHeight = 3 * 18;
+		int hotbarGridHeight = 18;
 
 		guiGraphics.fill(x + 24, y + 10, x + imageWidth - 4, y + imageHeight - 4, BG);
-		guiGraphics.fill(x + 28, y + 38, x + imageWidth - 8, y + 158, BG_DARK);
-		guiGraphics.fill(x + 28, y + 172, x + imageWidth - 8, y + imageHeight - 8, BG_DARK);
+		guiGraphics.fill(gridX - 2, networkGridY - 2, gridX + gridWidth + 2, networkGridY + networkGridHeight + 2, BG_DARK);
+		guiGraphics.fill(gridX - 2, inventoryGridY - 2, gridX + gridWidth + 2, hotbarGridY + hotbarGridHeight + 2, BG_DARK);
 
-		drawSlotBackgrounds(guiGraphics, x + 31, y + 53, TerminalMenu.GRID_COLUMNS, TerminalMenu.GRID_ROWS);
-		drawSlotBackgrounds(guiGraphics, x + 31, y + 175, 9, 3);
-		drawSlotBackgrounds(guiGraphics, x + 31, y + 233, 9, 1);
+		drawSlotBackgrounds(guiGraphics, gridX, networkGridY, TerminalMenu.GRID_COLUMNS, TerminalMenu.GRID_ROWS);
+		drawSlotBackgrounds(guiGraphics, gridX, inventoryGridY, 9, 3);
+		drawSlotBackgrounds(guiGraphics, gridX, hotbarGridY, 9, 1);
 	}
 
 	@Override
@@ -67,7 +75,10 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 				ItemStack renderStack = stack.copy();
 				renderStack.setCount(1);
 				guiGraphics.renderItem(renderStack, slot.x, slot.y);
-				guiGraphics.renderItemDecorations(this.font, renderStack, slot.x, slot.y, count > 1 ? formatCount(count) : null);
+				guiGraphics.renderItemDecorations(this.font, renderStack, slot.x, slot.y, null);
+				if (count > 1) {
+					drawSmallCount(guiGraphics, formatCount(count), slot.x, slot.y);
+				}
 				return;
 			}
 		}
@@ -148,6 +159,21 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 
 	private boolean isMouseOverSearchBox(double mouseX, double mouseY) {
 		return searchBox != null && mouseX >= searchBox.getX() && mouseX < searchBox.getX() + searchBox.getWidth() && mouseY >= searchBox.getY() && mouseY < searchBox.getY() + searchBox.getHeight();
+	}
+
+	private void drawSmallCount(GuiGraphics guiGraphics, String countText, int slotX, int slotY) {
+		float scale = countText.length() >= 4 ? 0.45F : 0.50F;
+		int textWidth = this.font.width(countText);
+		int targetX = Math.round(slotX + 17 - textWidth * scale);
+		int targetY = slotY + 12;
+		int scaledX = Math.round(targetX / scale);
+		int scaledY = Math.round(targetY / scale);
+
+		guiGraphics.pose().pushPose();
+		guiGraphics.pose().translate(0.0F, 0.0F, 200.0F);
+		guiGraphics.pose().scale(scale, scale, 1.0F);
+		guiGraphics.drawString(this.font, countText, scaledX, scaledY, 0xFFFFFF, true);
+		guiGraphics.pose().popPose();
 	}
 
 	private static String formatCount(int count) {
