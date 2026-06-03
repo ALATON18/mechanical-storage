@@ -212,7 +212,7 @@ public class TerminalMenu extends AbstractContainerMenu {
 
 	private void addNetworkSlots() {
 		int startX = 32;
-		int startY = 54;
+		int startY = 50;
 
 		for (int row = 0; row < GRID_ROWS; row++) {
 			for (int column = 0; column < GRID_COLUMNS; column++) {
@@ -224,7 +224,7 @@ public class TerminalMenu extends AbstractContainerMenu {
 
 	private void addPlayerInventorySlots(Inventory inventory) {
 		int startX = 32;
-		int startY = 176;
+		int startY = 170;
 
 		for (int row = 0; row < 3; row++) {
 			for (int column = 0; column < 9; column++) {
@@ -233,7 +233,7 @@ public class TerminalMenu extends AbstractContainerMenu {
 		}
 
 		for (int column = 0; column < 9; column++) {
-			this.addSlot(new Slot(inventory, column, startX + column * 18, 234));
+			this.addSlot(new Slot(inventory, column, startX + column * 18, 228));
 		}
 	}
 
