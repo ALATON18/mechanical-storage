@@ -16,7 +16,8 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 	private static final int BG_BORDER = 0xFF5F5F5F;
 	private static final int BG_SHADOW = 0xFF242424;
 	private static final int BG_DARK = 0xFF8B8B8B;
-	private static final int SLOT_OUTLINE = 0xFF373737;
+	private static final int SLOT_DARK = 0xFF373737;
+	private static final int SLOT_LIGHT = 0xFFDCDCDC;
 	private static final int SLOT = 0xFF8B8B8B;
 	private static final int TEXT = 0xFF404040;
 
@@ -51,9 +52,9 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 		int x = this.leftPos;
 		int y = this.topPos;
 		int gridX = x + 31;
-		int networkGridY = y + 49;
-		int inventoryGridY = y + 169;
-		int hotbarGridY = y + 227;
+		int networkGridY = y + 47;
+		int inventoryGridY = y + 170;
+		int hotbarGridY = y + 228;
 		int gridWidth = TerminalMenu.GRID_COLUMNS * 18;
 		int networkGridHeight = TerminalMenu.GRID_ROWS * 18;
 		int inventoryGridHeight = 3 * 18;
@@ -138,7 +139,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 
 	private void addSideButton(int row, String label, int buttonId) {
 		addRenderableWidget(Button.builder(Component.literal(label), button -> sendMenuButton(buttonId))
-				.bounds(this.leftPos, this.topPos + 50 + row * 23, 22, 18)
+				.bounds(this.leftPos, this.topPos + 47 + row * 23, 22, 18)
 				.build());
 	}
 
@@ -192,20 +193,17 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 
 	private void drawModernPanel(GuiGraphics guiGraphics, int left, int top, int right, int bottom) {
 		guiGraphics.fill(left + 3, top + 3, right + 2, bottom + 2, BG_SHADOW);
-
 		guiGraphics.fill(left + 1, top, right - 1, top + 1, BG_BORDER);
 		guiGraphics.fill(left, top + 1, right, bottom - 1, BG_BORDER);
 		guiGraphics.fill(left + 1, bottom - 1, right - 1, bottom, BG_BORDER);
-
 		guiGraphics.fill(left + 2, top + 1, right - 2, bottom - 1, BG);
 		guiGraphics.fill(left + 1, top + 2, right - 1, bottom - 2, BG);
-
 		guiGraphics.fill(left + 2, top + 1, right - 2, top + 2, BG_LIGHT);
 		guiGraphics.fill(left + 1, top + 2, left + 2, bottom - 2, BG_LIGHT);
 	}
 
 	private void drawInsetPanel(GuiGraphics guiGraphics, int left, int top, int right, int bottom) {
-		guiGraphics.fill(left, top, right, bottom, BG_BORDER);
+		guiGraphics.fill(left, top, right, bottom, SLOT_DARK);
 		guiGraphics.fill(left + 1, top + 1, right - 1, bottom - 1, BG_DARK);
 	}
 
@@ -214,9 +212,17 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 			for (int column = 0; column < columns; column++) {
 				int x = startX + column * 18;
 				int y = startY + row * 18;
-				guiGraphics.fill(x, y, x + 18, y + 18, SLOT_OUTLINE);
-				guiGraphics.fill(x + 1, y + 1, x + 17, y + 17, SLOT);
+				drawSlot(guiGraphics, x, y);
 			}
 		}
+	}
+
+	private void drawSlot(GuiGraphics guiGraphics, int x, int y) {
+		guiGraphics.fill(x, y, x + 18, y + 18, SLOT_DARK);
+		guiGraphics.fill(x + 1, y + 1, x + 17, y + 17, SLOT);
+		guiGraphics.fill(x + 1, y + 1, x + 17, y + 2, SLOT_LIGHT);
+		guiGraphics.fill(x + 1, y + 1, x + 2, y + 17, SLOT_LIGHT);
+		guiGraphics.fill(x + 16, y + 2, x + 17, y + 17, SLOT_DARK);
+		guiGraphics.fill(x + 2, y + 16, x + 17, y + 17, SLOT_DARK);
 	}
 }
