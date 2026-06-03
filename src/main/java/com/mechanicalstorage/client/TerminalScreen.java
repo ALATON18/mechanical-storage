@@ -19,6 +19,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 	private static final int SLOT_DARK = 0xFF373737;
 	private static final int SLOT_LIGHT = 0xFFDCDCDC;
 	private static final int SLOT = 0xFF8B8B8B;
+	private static final int SLOT_RAISED = 0xFF929292;
 	private static final int TEXT = 0xFF404040;
 
 	private EditBox searchBox;
@@ -73,6 +74,11 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 	@Override
 	protected void renderSlot(GuiGraphics guiGraphics, Slot slot) {
 		int menuSlotIndex = this.menu.slots.indexOf(slot);
+
+		if (slot.hasItem()) {
+			drawSlot(guiGraphics, slot.x - 1, slot.y - 1, true);
+		}
+
 		if (menuSlotIndex >= 0 && menuSlotIndex < TerminalMenu.NETWORK_SLOTS) {
 			ItemStack stack = slot.getItem();
 			if (!stack.isEmpty()) {
@@ -212,17 +218,34 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 			for (int column = 0; column < columns; column++) {
 				int x = startX + column * 18;
 				int y = startY + row * 18;
-				drawSlot(guiGraphics, x, y);
+				drawSlot(guiGraphics, x, y, false);
 			}
 		}
 	}
 
-	private void drawSlot(GuiGraphics guiGraphics, int x, int y) {
+	private void drawSlot(GuiGraphics guiGraphics, int x, int y, boolean occupied) {
+		if (occupied) {
+			drawRecessedSlot(guiGraphics, x, y);
+		} else {
+			drawRaisedSlot(guiGraphics, x, y);
+		}
+	}
+
+	private void drawRaisedSlot(GuiGraphics guiGraphics, int x, int y) {
 		guiGraphics.fill(x, y, x + 18, y + 18, SLOT_DARK);
+		guiGraphics.fill(x + 1, y + 1, x + 17, y + 17, SLOT_RAISED);
+		guiGraphics.fill(x, y, x + 18, y + 1, SLOT_LIGHT);
+		guiGraphics.fill(x, y, x + 1, y + 18, SLOT_LIGHT);
+		guiGraphics.fill(x, y + 17, x + 18, y + 18, SLOT_DARK);
+		guiGraphics.fill(x + 17, y, x + 18, y + 18, SLOT_DARK);
+	}
+
+	private void drawRecessedSlot(GuiGraphics guiGraphics, int x, int y) {
+		guiGraphics.fill(x, y, x + 18, y + 18, SLOT_LIGHT);
 		guiGraphics.fill(x + 1, y + 1, x + 17, y + 17, SLOT);
-		guiGraphics.fill(x + 1, y + 1, x + 17, y + 2, SLOT_LIGHT);
-		guiGraphics.fill(x + 1, y + 1, x + 2, y + 17, SLOT_LIGHT);
-		guiGraphics.fill(x + 16, y + 2, x + 17, y + 17, SLOT_DARK);
-		guiGraphics.fill(x + 2, y + 16, x + 17, y + 17, SLOT_DARK);
+		guiGraphics.fill(x, y, x + 18, y + 1, SLOT_DARK);
+		guiGraphics.fill(x, y, x + 1, y + 18, SLOT_DARK);
+		guiGraphics.fill(x, y + 17, x + 18, y + 18, SLOT_LIGHT);
+		guiGraphics.fill(x + 17, y, x + 18, y + 18, SLOT_LIGHT);
 	}
 }
