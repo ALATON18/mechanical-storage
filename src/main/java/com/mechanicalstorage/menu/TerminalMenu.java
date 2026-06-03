@@ -212,7 +212,7 @@ public class TerminalMenu extends AbstractContainerMenu {
 
 	private void addNetworkSlots() {
 		int startX = 32;
-		int startY = 50;
+		int startY = 47;
 
 		for (int row = 0; row < GRID_ROWS; row++) {
 			for (int column = 0; column < GRID_COLUMNS; column++) {
