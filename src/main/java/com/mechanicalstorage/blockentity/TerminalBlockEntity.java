@@ -2,6 +2,7 @@ package com.mechanicalstorage.blockentity;
 
 import com.mechanicalstorage.MechanicalStorage;
 import com.mechanicalstorage.menu.TerminalMenu;
+import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
@@ -29,13 +30,17 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
-public class TerminalBlockEntity extends BlockEntity implements MenuProvider {
+public class TerminalBlockEntity extends KineticBlockEntity implements MenuProvider {
 	private static final int SCAN_RADIUS = 32;
 	private static final int MAX_CONNECTORS = 64;
 	private static final int MAX_SUMMARY_ITEMS = 8;
 
 	public TerminalBlockEntity(BlockPos pos, BlockState blockState) {
 		super(MechanicalStorage.MECHANICAL_STORAGE_TERMINAL_BLOCK_ENTITY.get(), pos, blockState);
+	}
+
+	public boolean isOnline() {
+		return getSpeed() != 0 && hasNetwork();
 	}
 
 	@Override
@@ -54,9 +59,13 @@ public class TerminalBlockEntity extends BlockEntity implements MenuProvider {
 			return Component.literal("Terminal: level is not available.");
 		}
 
+		if (!isOnline()) {
+			return Component.literal("Terminal: offline. Add rotation from the Create kinetic network.");
+		}
+
 		NetworkSummary networkSummary = collectNetworkSummary();
 
-		String message = "Terminal: found " + networkSummary.connectorsFound + " connector(s), " + networkSummary.inventoriesFound + " inventory/inventories, " + networkSummary.occupiedSlots + "/" + networkSummary.totalSlots + " slots used, " + networkSummary.totalItems + " items total.";
+		String message = "Terminal: online at " + Math.abs(getSpeed()) + " RPM, found " + networkSummary.connectorsFound + " connector(s), " + networkSummary.inventoriesFound + " inventory/inventories, " + networkSummary.occupiedSlots + "/" + networkSummary.totalSlots + " slots used, " + networkSummary.totalItems + " items total.";
 		String summary = formatItemSummary(networkSummary.itemSummary);
 
 		if (!summary.isEmpty()) {
@@ -120,7 +129,7 @@ public class TerminalBlockEntity extends BlockEntity implements MenuProvider {
 	}
 
 	public ItemStack extractMatchingStack(ItemStack filterStack, int amount) {
-		if (level == null || filterStack.isEmpty() || amount <= 0) {
+		if (level == null || filterStack.isEmpty() || amount <= 0 || !isOnline()) {
 			return ItemStack.EMPTY;
 		}
 
@@ -165,6 +174,10 @@ public class TerminalBlockEntity extends BlockEntity implements MenuProvider {
 			return Component.literal("Terminal: level is not available.");
 		}
 
+		if (!isOnline()) {
+			return Component.literal("Terminal: offline. Add rotation from the Create kinetic network.");
+		}
+
 		int connectorsChecked = 0;
 
 		for (MechanicalStorageConnectorBlockEntity connector : findNearbyConnectors()) {
@@ -200,6 +213,10 @@ public class TerminalBlockEntity extends BlockEntity implements MenuProvider {
 			return Component.literal("Terminal: level is not available.");
 		}
 
+		if (!isOnline()) {
+			return Component.literal("Terminal: offline. Add rotation from the Create kinetic network.");
+		}
+
 		ItemStack heldStack = player.getItemInHand(hand);
 		if (heldStack.isEmpty()) {
 			return describeNearbyConnectorNetwork();
@@ -224,7 +241,7 @@ public class TerminalBlockEntity extends BlockEntity implements MenuProvider {
 	}
 
 	public ItemStack insertStackIntoNetwork(ItemStack stack) {
-		if (level == null || stack.isEmpty()) {
+		if (level == null || stack.isEmpty() || !isOnline()) {
 			return stack;
 		}
 
@@ -249,6 +266,10 @@ public class TerminalBlockEntity extends BlockEntity implements MenuProvider {
 
 	private NetworkSummary collectNetworkSummary() {
 		NetworkSummary networkSummary = new NetworkSummary();
+
+		if (!isOnline()) {
+			return networkSummary;
+		}
 
 		for (MechanicalStorageConnectorBlockEntity connector : findNearbyConnectors()) {
 			networkSummary.connectorsFound++;
@@ -278,7 +299,7 @@ public class TerminalBlockEntity extends BlockEntity implements MenuProvider {
 		List<MechanicalStorageConnectorBlockEntity> connectors = new ArrayList<>();
 		Set<BlockPos> seenTargets = new HashSet<>();
 
-		if (level == null) {
+		if (level == null || !isOnline()) {
 			return connectors;
 		}
 
@@ -291,7 +312,7 @@ public class TerminalBlockEntity extends BlockEntity implements MenuProvider {
 			}
 
 			BlockEntity blockEntity = level.getBlockEntity(scanPos);
-			if (blockEntity instanceof MechanicalStorageConnectorBlockEntity connector && seenTargets.add(connector.getTargetPos())) {
+			if (blockEntity instanceof MechanicalStorageConnectorBlockEntity connector && connector.isOnSameNetwork(this) && seenTargets.add(connector.getTargetPos())) {
 				connectors.add(connector);
 			}
 		}
