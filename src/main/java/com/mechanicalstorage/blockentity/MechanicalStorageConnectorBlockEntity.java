@@ -2,6 +2,7 @@ package com.mechanicalstorage.blockentity;
 
 import com.mechanicalstorage.MechanicalStorage;
 import com.mechanicalstorage.block.DirectionalMachineBlock;
+import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -12,12 +13,24 @@ import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.items.IItemHandler;
 import org.jetbrains.annotations.Nullable;
 
-public class MechanicalStorageConnectorBlockEntity extends BlockEntity {
+public class MechanicalStorageConnectorBlockEntity extends KineticBlockEntity {
 	public MechanicalStorageConnectorBlockEntity(BlockPos pos, BlockState blockState) {
 		super(MechanicalStorage.MECHANICAL_STORAGE_CONNECTOR_BLOCK_ENTITY.get(), pos, blockState);
 	}
 
+	public boolean isOnline() {
+		return getSpeed() != 0 && hasNetwork();
+	}
+
+	public boolean isOnSameNetwork(TerminalBlockEntity terminal) {
+		return isOnline() && terminal.isOnline() && network != null && network.equals(terminal.network);
+	}
+
 	public Component describeTargetInventory() {
+		if (!isOnline()) {
+			return Component.literal("Connector: offline. Add rotation from the Create kinetic network.");
+		}
+
 		IItemHandler handler = getTargetItemHandler();
 		BlockPos targetPos = getTargetPos();
 
@@ -37,7 +50,7 @@ public class MechanicalStorageConnectorBlockEntity extends BlockEntity {
 			}
 		}
 
-		return Component.literal("Connector: found item inventory at " + formatPos(targetPos) + " (" + occupiedSlots + "/" + slots + " slots used, " + totalItems + " items).");
+		return Component.literal("Connector: online at " + Math.abs(getSpeed()) + " RPM, inventory at " + formatPos(targetPos) + " (" + occupiedSlots + "/" + slots + " slots used, " + totalItems + " items).");
 	}
 
 	public BlockPos getTargetPos() {
@@ -47,7 +60,7 @@ public class MechanicalStorageConnectorBlockEntity extends BlockEntity {
 
 	@Nullable
 	public IItemHandler getTargetItemHandler() {
-		if (level == null) {
+		if (level == null || !isOnline()) {
 			return null;
 		}
 
