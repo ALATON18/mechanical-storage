@@ -29,7 +29,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 		this.titleLabelX = 32;
 		this.titleLabelY = 20;
 		this.inventoryLabelX = 32;
-		this.inventoryLabelY = 164;
+		this.inventoryLabelY = 158;
 	}
 
 	@Override
@@ -51,16 +51,18 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 		int x = this.leftPos;
 		int y = this.topPos;
 		int gridX = x + 31;
-		int networkGridY = y + 53;
-		int inventoryGridY = y + 175;
-		int hotbarGridY = y + 233;
+		int networkGridY = y + 49;
+		int inventoryGridY = y + 169;
+		int hotbarGridY = y + 227;
 		int gridWidth = TerminalMenu.GRID_COLUMNS * 18;
 		int networkGridHeight = TerminalMenu.GRID_ROWS * 18;
+		int inventoryGridHeight = 3 * 18;
 		int hotbarGridHeight = 18;
 
 		drawModernPanel(guiGraphics, x + 24, y + 10, x + imageWidth - 4, y + imageHeight - 4);
-		drawInsetPanel(guiGraphics, gridX - 2, networkGridY - 2, gridX + gridWidth + 2, networkGridY + networkGridHeight + 2);
-		drawInsetPanel(guiGraphics, gridX - 2, inventoryGridY - 2, gridX + gridWidth + 2, hotbarGridY + hotbarGridHeight + 2);
+		drawInsetPanel(guiGraphics, gridX, networkGridY, gridX + gridWidth, networkGridY + networkGridHeight);
+		drawInsetPanel(guiGraphics, gridX, inventoryGridY, gridX + gridWidth, inventoryGridY + inventoryGridHeight);
+		drawInsetPanel(guiGraphics, gridX, hotbarGridY, gridX + gridWidth, hotbarGridY + hotbarGridHeight);
 
 		drawSlotBackgrounds(guiGraphics, gridX, networkGridY, TerminalMenu.GRID_COLUMNS, TerminalMenu.GRID_ROWS);
 		drawSlotBackgrounds(guiGraphics, gridX, inventoryGridY, 9, 3);
@@ -136,7 +138,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 
 	private void addSideButton(int row, String label, int buttonId) {
 		addRenderableWidget(Button.builder(Component.literal(label), button -> sendMenuButton(buttonId))
-				.bounds(this.leftPos, this.topPos + 54 + row * 23, 22, 18)
+				.bounds(this.leftPos, this.topPos + 50 + row * 23, 22, 18)
 				.build());
 	}
 
@@ -167,7 +169,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 		int textWidth = this.font.width(countText);
 		float scale = Math.min(0.72F, 15.0F / Math.max(1, textWidth));
 		float targetX = slotX + 16.0F - textWidth * scale;
-		float targetY = slotY + 16.0F - this.font.lineHeight * scale;
+		float targetY = slotY + 17.0F - this.font.lineHeight * scale;
 
 		guiGraphics.pose().pushPose();
 		guiGraphics.pose().translate(targetX, targetY, 200.0F);
