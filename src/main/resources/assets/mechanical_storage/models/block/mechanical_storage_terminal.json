@@ -1,6 +1,7 @@
 {
-	"parent": "minecraft:block/cube_all",
+	"parent": "minecraft:block/cube_column",
 	"textures": {
-		"all": "create:block/andesite_casing"
+		"end": "create:block/copper_casing",
+		"side": "create:block/andesite_casing"
 	}
 }
