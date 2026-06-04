@@ -1,8 +1,78 @@
 {
-	"parent": "minecraft:block/orientable",
+	"parent": "minecraft:block/block",
 	"textures": {
-		"front": "minecraft:block/chiseled_copper",
-		"side": "minecraft:block/andesite",
-		"top": "minecraft:block/andesite"
-	}
+		"particle": "create:block/andesite_casing",
+		"casing": "create:block/andesite_casing",
+		"copper": "create:block/copper_casing",
+		"brass": "create:block/brass_casing",
+		"dark": "minecraft:block/deepslate_tiles"
+	},
+	"elements": [
+		{
+			"from": [0, 0, 0],
+			"to": [16, 16, 16],
+			"faces": {
+				"down": { "texture": "#casing", "cullface": "down" },
+				"up": { "texture": "#casing", "cullface": "up" },
+				"north": { "texture": "#casing", "cullface": "north" },
+				"south": { "texture": "#casing", "cullface": "south" },
+				"west": { "texture": "#casing", "cullface": "west" },
+				"east": { "texture": "#casing", "cullface": "east" }
+			}
+		},
+		{
+			"from": [1, 1, -0.5],
+			"to": [15, 15, 0],
+			"faces": {
+				"north": { "texture": "#copper" },
+				"up": { "texture": "#copper" },
+				"down": { "texture": "#copper" },
+				"west": { "texture": "#copper" },
+				"east": { "texture": "#copper" }
+			}
+		},
+		{
+			"from": [4, 4, -0.75],
+			"to": [12, 12, -0.5],
+			"faces": {
+				"north": { "texture": "#dark" }
+			}
+		},
+		{
+			"from": [5, 5, 16],
+			"to": [11, 11, 17],
+			"faces": {
+				"south": { "texture": "#brass" },
+				"up": { "texture": "#brass" },
+				"down": { "texture": "#brass" },
+				"west": { "texture": "#brass" },
+				"east": { "texture": "#brass" }
+			}
+		},
+		{
+			"from": [6, 6, 17],
+			"to": [10, 10, 19],
+			"faces": {
+				"south": { "texture": "#dark" },
+				"up": { "texture": "#dark" },
+				"down": { "texture": "#dark" },
+				"west": { "texture": "#dark" },
+				"east": { "texture": "#dark" }
+			}
+		},
+		{
+			"from": [2, 13, -0.8],
+			"to": [14, 14, -0.5],
+			"faces": {
+				"north": { "texture": "#brass" }
+			}
+		},
+		{
+			"from": [2, 2, -0.8],
+			"to": [14, 3, -0.5],
+			"faces": {
+				"north": { "texture": "#brass" }
+			}
+		}
+	]
 }
