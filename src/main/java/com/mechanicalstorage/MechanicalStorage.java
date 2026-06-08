@@ -4,6 +4,7 @@ import com.mechanicalstorage.block.MechanicalStorageConnectorBlock;
 import com.mechanicalstorage.block.MechanicalStorageTerminalBlock;
 import com.mechanicalstorage.blockentity.MechanicalStorageConnectorBlockEntity;
 import com.mechanicalstorage.blockentity.TerminalBlockEntity;
+import com.mechanicalstorage.client.MechanicalStorageClient;
 import com.mechanicalstorage.menu.TerminalMenu;
 import com.mojang.logging.LogUtils;
 import net.minecraft.core.registries.Registries;
@@ -18,7 +19,9 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
+import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.DistExecutor;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.neoforge.common.extensions.IMenuTypeExtension;
@@ -72,6 +75,8 @@ public class MechanicalStorage {
 		BLOCK_ENTITY_TYPES.register(modEventBus);
 		MENU_TYPES.register(modEventBus);
 		CREATIVE_MODE_TABS.register(modEventBus);
+
+		DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> MechanicalStorageClient.register(modEventBus));
 
 		LOGGER.info("Mechanical Storage loaded");
 	}
