@@ -1,7 +1,6 @@
 package com.mechanicalstorage.client;
 
 import com.mechanicalstorage.MechanicalStorage;
-import com.simibubi.create.content.kinetics.base.ShaftRenderer;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
@@ -20,7 +19,7 @@ public final class MechanicalStorageClient {
 	}
 
 	private static void registerBlockEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
-		event.registerBlockEntityRenderer(MechanicalStorage.MECHANICAL_STORAGE_CONNECTOR_BLOCK_ENTITY.get(), ShaftRenderer::new);
-		event.registerBlockEntityRenderer(MechanicalStorage.MECHANICAL_STORAGE_TERMINAL_BLOCK_ENTITY.get(), ShaftRenderer::new);
+		event.registerBlockEntityRenderer(MechanicalStorage.MECHANICAL_STORAGE_CONNECTOR_BLOCK_ENTITY.get(), MechanicalStorageShaftRenderer::new);
+		event.registerBlockEntityRenderer(MechanicalStorage.MECHANICAL_STORAGE_TERMINAL_BLOCK_ENTITY.get(), MechanicalStorageShaftRenderer::new);
 	}
 }
