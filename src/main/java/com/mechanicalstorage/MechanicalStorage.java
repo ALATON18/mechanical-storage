@@ -21,9 +21,9 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.fml.DistExecutor;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.common.extensions.IMenuTypeExtension;
 import net.neoforged.neoforge.registries.DeferredBlock;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -76,7 +76,9 @@ public class MechanicalStorage {
 		MENU_TYPES.register(modEventBus);
 		CREATIVE_MODE_TABS.register(modEventBus);
 
-		DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> MechanicalStorageClient.register(modEventBus));
+		if (FMLEnvironment.dist == Dist.CLIENT) {
+			MechanicalStorageClient.register(modEventBus);
+		}
 
 		LOGGER.info("Mechanical Storage loaded");
 	}
