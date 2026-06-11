@@ -13,6 +13,7 @@ import com.simibubi.create.content.kinetics.base.OrientedRotatingVisual;
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.tterrag.registrate.util.entry.BlockEntityEntry;
 import com.tterrag.registrate.util.entry.BlockEntry;
+import com.tterrag.registrate.util.nullness.NonNullFunction;
 import dev.engine_room.flywheel.lib.visualization.SimpleBlockEntityVisualizer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -100,7 +101,7 @@ public class MechanicalStorage {
 	}
 
 	@SuppressWarnings({"rawtypes", "unchecked"})
-	private static BlockEntityRendererProvider<BlockEntity> backShaftRenderer() {
+	private static NonNullFunction<BlockEntityRendererProvider.Context, BlockEntityRenderer<? super BlockEntity>> backShaftRenderer() {
 		return context -> (BlockEntityRenderer) new MechanicalStorageShaftRenderer(context);
 	}
 
