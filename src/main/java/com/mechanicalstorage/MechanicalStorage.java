@@ -9,6 +9,7 @@ import com.mechanicalstorage.client.MechanicalStorageShaftRenderer;
 import com.mechanicalstorage.menu.TerminalMenu;
 import com.mojang.logging.LogUtils;
 import com.simibubi.create.AllPartialModels;
+import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import com.simibubi.create.content.kinetics.base.OrientedRotatingVisual;
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.tterrag.registrate.util.entry.BlockEntityEntry;
@@ -23,7 +24,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.level.block.SoundType;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
 import net.neoforged.api.distmarker.Dist;
@@ -59,16 +59,16 @@ public class MechanicalStorage {
 
 	public static final BlockEntityEntry<MechanicalStorageConnectorBlockEntity> MECHANICAL_STORAGE_CONNECTOR_BLOCK_ENTITY = REGISTRATE
 			.blockEntity("mechanical_storage_connector", (type, pos, state) -> new MechanicalStorageConnectorBlockEntity(pos, state))
-			.visual(MechanicalStorage::backShaftVisual, false)
+			.visual(() -> MechanicalStorage.<MechanicalStorageConnectorBlockEntity>backShaftVisual(), false)
 			.validBlocks(MECHANICAL_STORAGE_CONNECTOR)
-			.renderer(MechanicalStorage::backShaftRenderer)
+			.renderer(() -> MechanicalStorage.<MechanicalStorageConnectorBlockEntity>backShaftRenderer())
 			.register();
 
 	public static final BlockEntityEntry<TerminalBlockEntity> MECHANICAL_STORAGE_TERMINAL_BLOCK_ENTITY = REGISTRATE
 			.blockEntity("mechanical_storage_terminal", (type, pos, state) -> new TerminalBlockEntity(pos, state))
-			.visual(MechanicalStorage::backShaftVisual, false)
+			.visual(() -> MechanicalStorage.<TerminalBlockEntity>backShaftVisual(), false)
 			.validBlocks(MECHANICAL_STORAGE_TERMINAL)
-			.renderer(MechanicalStorage::backShaftRenderer)
+			.renderer(() -> MechanicalStorage.<TerminalBlockEntity>backShaftRenderer())
 			.register();
 
 	public static final DeferredHolder<MenuType<?>, MenuType<TerminalMenu>> TERMINAL_MENU = MENU_TYPES.register("terminal", () ->
@@ -96,13 +96,12 @@ public class MechanicalStorage {
 	}
 
 	@SuppressWarnings({"rawtypes", "unchecked"})
-	private static SimpleBlockEntityVisualizer.Factory<BlockEntity> backShaftVisual() {
-		return (SimpleBlockEntityVisualizer.Factory) OrientedRotatingVisual.backHorizontal(AllPartialModels.SHAFT_HALF);
+	private static <T extends KineticBlockEntity> SimpleBlockEntityVisualizer.Factory<T> backShaftVisual() {
+		return (SimpleBlockEntityVisualizer.Factory<T>) OrientedRotatingVisual.backHorizontal(AllPartialModels.SHAFT_HALF);
 	}
 
-	@SuppressWarnings({"rawtypes", "unchecked"})
-	private static NonNullFunction<BlockEntityRendererProvider.Context, BlockEntityRenderer<? super BlockEntity>> backShaftRenderer() {
-		return context -> (BlockEntityRenderer) new MechanicalStorageShaftRenderer(context);
+	private static <T extends KineticBlockEntity> NonNullFunction<BlockEntityRendererProvider.Context, BlockEntityRenderer<? super T>> backShaftRenderer() {
+		return context -> new MechanicalStorageShaftRenderer<T>(context);
 	}
 
 	private static BlockBehaviour.Properties machineProperties(MapColor mapColor) {
