@@ -13,12 +13,14 @@ import com.simibubi.create.content.kinetics.base.OrientedRotatingVisual;
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.tterrag.registrate.util.entry.BlockEntityEntry;
 import com.tterrag.registrate.util.entry.BlockEntry;
+import dev.engine_room.flywheel.lib.visualization.SimpleBlockEntityVisualizer;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
 import net.neoforged.api.distmarker.Dist;
@@ -54,14 +56,14 @@ public class MechanicalStorage {
 
 	public static final BlockEntityEntry<MechanicalStorageConnectorBlockEntity> MECHANICAL_STORAGE_CONNECTOR_BLOCK_ENTITY = REGISTRATE
 			.blockEntity("mechanical_storage_connector", (type, pos, state) -> new MechanicalStorageConnectorBlockEntity(pos, state))
-			.visual(() -> OrientedRotatingVisual.backHorizontal(AllPartialModels.SHAFT_HALF), false)
+			.visual(MechanicalStorage::backShaftVisual, false)
 			.validBlocks(MECHANICAL_STORAGE_CONNECTOR)
 			.renderer(() -> MechanicalStorageShaftRenderer::new)
 			.register();
 
 	public static final BlockEntityEntry<TerminalBlockEntity> MECHANICAL_STORAGE_TERMINAL_BLOCK_ENTITY = REGISTRATE
 			.blockEntity("mechanical_storage_terminal", (type, pos, state) -> new TerminalBlockEntity(pos, state))
-			.visual(() -> OrientedRotatingVisual.backHorizontal(AllPartialModels.SHAFT_HALF), false)
+			.visual(MechanicalStorage::backShaftVisual, false)
 			.validBlocks(MECHANICAL_STORAGE_TERMINAL)
 			.renderer(() -> MechanicalStorageShaftRenderer::new)
 			.register();
@@ -88,6 +90,11 @@ public class MechanicalStorage {
 		}
 
 		LOGGER.info("Mechanical Storage loaded");
+	}
+
+	@SuppressWarnings({"rawtypes", "unchecked"})
+	private static SimpleBlockEntityVisualizer.Factory<BlockEntity> backShaftVisual() {
+		return (SimpleBlockEntityVisualizer.Factory) OrientedRotatingVisual.backHorizontal(AllPartialModels.SHAFT_HALF);
 	}
 
 	private static BlockBehaviour.Properties machineProperties(MapColor mapColor) {
