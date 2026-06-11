@@ -14,6 +14,8 @@ import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.tterrag.registrate.util.entry.BlockEntityEntry;
 import com.tterrag.registrate.util.entry.BlockEntry;
 import dev.engine_room.flywheel.lib.visualization.SimpleBlockEntityVisualizer;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
+import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -58,14 +60,14 @@ public class MechanicalStorage {
 			.blockEntity("mechanical_storage_connector", (type, pos, state) -> new MechanicalStorageConnectorBlockEntity(pos, state))
 			.visual(MechanicalStorage::backShaftVisual, false)
 			.validBlocks(MECHANICAL_STORAGE_CONNECTOR)
-			.renderer(() -> MechanicalStorageShaftRenderer::new)
+			.renderer(MechanicalStorage::backShaftRenderer)
 			.register();
 
 	public static final BlockEntityEntry<TerminalBlockEntity> MECHANICAL_STORAGE_TERMINAL_BLOCK_ENTITY = REGISTRATE
 			.blockEntity("mechanical_storage_terminal", (type, pos, state) -> new TerminalBlockEntity(pos, state))
 			.visual(MechanicalStorage::backShaftVisual, false)
 			.validBlocks(MECHANICAL_STORAGE_TERMINAL)
-			.renderer(() -> MechanicalStorageShaftRenderer::new)
+			.renderer(MechanicalStorage::backShaftRenderer)
 			.register();
 
 	public static final DeferredHolder<MenuType<?>, MenuType<TerminalMenu>> TERMINAL_MENU = MENU_TYPES.register("terminal", () ->
@@ -95,6 +97,11 @@ public class MechanicalStorage {
 	@SuppressWarnings({"rawtypes", "unchecked"})
 	private static SimpleBlockEntityVisualizer.Factory<BlockEntity> backShaftVisual() {
 		return (SimpleBlockEntityVisualizer.Factory) OrientedRotatingVisual.backHorizontal(AllPartialModels.SHAFT_HALF);
+	}
+
+	@SuppressWarnings({"rawtypes", "unchecked"})
+	private static BlockEntityRendererProvider<BlockEntity> backShaftRenderer() {
+		return context -> (BlockEntityRenderer) new MechanicalStorageShaftRenderer(context);
 	}
 
 	private static BlockBehaviour.Properties machineProperties(MapColor mapColor) {
