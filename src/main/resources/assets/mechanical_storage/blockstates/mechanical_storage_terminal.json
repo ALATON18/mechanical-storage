@@ -1,8 +1,17 @@
 {
 	"variants": {
-		"facing=north": { "model": "mechanical_storage:block/mechanical_storage_terminal" },
-		"facing=east": { "model": "mechanical_storage:block/mechanical_storage_terminal", "y": 90 },
-		"facing=south": { "model": "mechanical_storage:block/mechanical_storage_terminal", "y": 180 },
-		"facing=west": { "model": "mechanical_storage:block/mechanical_storage_terminal", "y": 270 }
+		"facing=north": { "model": "mechanical_storage:block/mechanical_storage_terminal_kinetic" },
+		"facing=east": {
+			"model": "mechanical_storage:block/mechanical_storage_terminal_kinetic",
+			"y": 90
+		},
+		"facing=south": {
+			"model": "mechanical_storage:block/mechanical_storage_terminal_kinetic",
+			"y": 180
+		},
+		"facing=west": {
+			"model": "mechanical_storage:block/mechanical_storage_terminal_kinetic",
+			"y": 270
+		}
 	}
 }

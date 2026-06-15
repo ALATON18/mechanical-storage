@@ -1,0 +1,12 @@
+{
+  "parent": "create:block/kinetic_block",
+  "loader": "create:kinetic_model",
+  "children": {
+    "base": {
+      "model": "mechanical_storage:block/mechanical_storage_connector_base"
+    }
+  },
+  "textures": {
+    "particle": "create:block/encased_chain_drive"
+  }
+}
