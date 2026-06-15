@@ -7,6 +7,11 @@
     }
   },
   "textures": {
-    "particle": "create:block/encased_chain_drive"
+    "particle": "create:block/encased_chain_drive",
+    "chain": "create:block/encased_chain_drive",
+    "gearbox": "create:block/gearbox",
+    "copper": "create:block/copper_casing",
+    "brass": "create:block/brass_casing",
+    "screen": "create:block/display_board"
   }
 }
