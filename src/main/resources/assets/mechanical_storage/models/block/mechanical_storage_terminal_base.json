@@ -102,8 +102,7 @@
 				"east": {
 					"uv": [ 2, 0, 14, 16 ],
 					"rotation": 270,
-					"texture": "#chain",
-					"cullface": "east"
+					"texture": "#chain"
 				}
 			}
 		},
@@ -120,8 +119,7 @@
 				"west": {
 					"uv": [ 2, 0, 14, 16 ],
 					"rotation": 90,
-					"texture": "#chain",
-					"cullface": "west"
+					"texture": "#chain"
 				},
 				"north": {
 					"uv": [ 14, 2, 16, 14 ],
