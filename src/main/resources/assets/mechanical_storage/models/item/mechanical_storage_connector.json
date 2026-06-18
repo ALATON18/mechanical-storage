@@ -1,6 +1,3 @@
 {
-	"parent": "minecraft:item/generated",
-	"textures": {
-		"layer0": "mechanical_storage:item/mechanical_storage_connector"
-	}
+	"parent": "mechanical_storage:block/mechanical_storage_connector_base"
 }
