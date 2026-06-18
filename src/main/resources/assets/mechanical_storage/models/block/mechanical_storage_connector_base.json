@@ -1,5 +1,6 @@
 {
 	"credit": "Based on Create encased chain drive shape",
+	"parent": "minecraft:block/block",
 	"textures": {
 		"particle": "create:block/encased_chain_drive",
 		"chain": "create:block/encased_chain_drive",
