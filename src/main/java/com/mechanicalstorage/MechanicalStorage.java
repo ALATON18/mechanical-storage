@@ -13,16 +13,13 @@ import com.simibubi.create.content.kinetics.base.OrientedRotatingVisual;
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.tterrag.registrate.util.entry.BlockEntityEntry;
 import com.tterrag.registrate.util.entry.BlockEntry;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.level.block.SoundType;
-import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
-import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.MapColor;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
@@ -56,14 +53,14 @@ public class MechanicalStorage {
 			.register();
 
 	public static final BlockEntityEntry<MechanicalStorageConnectorBlockEntity> MECHANICAL_STORAGE_CONNECTOR_BLOCK_ENTITY = REGISTRATE
-			.blockEntity("mechanical_storage_connector", MechanicalStorage::createConnectorBlockEntity)
+			.blockEntity("mechanical_storage_connector", MechanicalStorageConnectorBlockEntity::new)
 			.visual(() -> OrientedRotatingVisual.backHorizontal(AllPartialModels.SHAFT_HALF), false)
 			.validBlocks(MECHANICAL_STORAGE_CONNECTOR)
 			.renderer(() -> MechanicalStorageShaftRenderer::new)
 			.register();
 
 	public static final BlockEntityEntry<TerminalBlockEntity> MECHANICAL_STORAGE_TERMINAL_BLOCK_ENTITY = REGISTRATE
-			.blockEntity("mechanical_storage_terminal", MechanicalStorage::createTerminalBlockEntity)
+			.blockEntity("mechanical_storage_terminal", TerminalBlockEntity::new)
 			.visual(() -> OrientedRotatingVisual.backHorizontal(AllPartialModels.SHAFT_HALF), false)
 			.validBlocks(MECHANICAL_STORAGE_TERMINAL)
 			.renderer(() -> MechanicalStorageShaftRenderer::new)
@@ -87,20 +84,6 @@ public class MechanicalStorage {
 		}
 
 		LOGGER.info("Mechanical Storage loaded");
-	}
-
-	private static MechanicalStorageConnectorBlockEntity createConnectorBlockEntity(
-			BlockEntityType<MechanicalStorageConnectorBlockEntity> type,
-			BlockPos pos,
-			BlockState state) {
-		return new MechanicalStorageConnectorBlockEntity(pos, state);
-	}
-
-	private static TerminalBlockEntity createTerminalBlockEntity(
-			BlockEntityType<TerminalBlockEntity> type,
-			BlockPos pos,
-			BlockState state) {
-		return new TerminalBlockEntity(pos, state);
 	}
 
 	private static BlockBehaviour.Properties machineProperties(MapColor mapColor) {
