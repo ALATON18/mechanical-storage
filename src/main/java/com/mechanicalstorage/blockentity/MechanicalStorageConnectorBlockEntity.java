@@ -8,14 +8,19 @@ import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.items.IItemHandler;
 import org.jetbrains.annotations.Nullable;
 
 public class MechanicalStorageConnectorBlockEntity extends KineticBlockEntity {
+	public MechanicalStorageConnectorBlockEntity(BlockEntityType<? extends MechanicalStorageConnectorBlockEntity> type, BlockPos pos, BlockState blockState) {
+		super(type, pos, blockState);
+	}
+
 	public MechanicalStorageConnectorBlockEntity(BlockPos pos, BlockState blockState) {
-		super(MechanicalStorage.MECHANICAL_STORAGE_CONNECTOR_BLOCK_ENTITY.get(), pos, blockState);
+		this(MechanicalStorage.MECHANICAL_STORAGE_CONNECTOR_BLOCK_ENTITY.get(), pos, blockState);
 	}
 
 	public boolean isOnline() {
