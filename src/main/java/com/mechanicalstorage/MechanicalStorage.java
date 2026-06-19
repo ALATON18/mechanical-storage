@@ -53,14 +53,14 @@ public class MechanicalStorage {
 			.register();
 
 	public static final BlockEntityEntry<MechanicalStorageConnectorBlockEntity> MECHANICAL_STORAGE_CONNECTOR_BLOCK_ENTITY = REGISTRATE
-			.blockEntity("mechanical_storage_connector", MechanicalStorageConnectorBlockEntity::new)
+			.<MechanicalStorageConnectorBlockEntity>blockEntity("mechanical_storage_connector", MechanicalStorageConnectorBlockEntity::new)
 			.visual(() -> OrientedRotatingVisual.backHorizontal(AllPartialModels.SHAFT_HALF), false)
 			.validBlocks(MECHANICAL_STORAGE_CONNECTOR)
 			.renderer(() -> MechanicalStorageShaftRenderer::new)
 			.register();
 
 	public static final BlockEntityEntry<TerminalBlockEntity> MECHANICAL_STORAGE_TERMINAL_BLOCK_ENTITY = REGISTRATE
-			.blockEntity("mechanical_storage_terminal", TerminalBlockEntity::new)
+			.<TerminalBlockEntity>blockEntity("mechanical_storage_terminal", TerminalBlockEntity::new)
 			.visual(() -> OrientedRotatingVisual.backHorizontal(AllPartialModels.SHAFT_HALF), false)
 			.validBlocks(MECHANICAL_STORAGE_TERMINAL)
 			.renderer(() -> MechanicalStorageShaftRenderer::new)
