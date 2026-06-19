@@ -16,6 +16,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
@@ -35,8 +36,12 @@ public class TerminalBlockEntity extends KineticBlockEntity implements MenuProvi
 	private static final int MAX_CONNECTORS = 64;
 	private static final int MAX_SUMMARY_ITEMS = 8;
 
+	public TerminalBlockEntity(BlockEntityType<? extends TerminalBlockEntity> type, BlockPos pos, BlockState blockState) {
+		super(type, pos, blockState);
+	}
+
 	public TerminalBlockEntity(BlockPos pos, BlockState blockState) {
-		super(MechanicalStorage.MECHANICAL_STORAGE_TERMINAL_BLOCK_ENTITY.get(), pos, blockState);
+		this(MechanicalStorage.MECHANICAL_STORAGE_TERMINAL_BLOCK_ENTITY.get(), pos, blockState);
 	}
 
 	public boolean isOnline() {
