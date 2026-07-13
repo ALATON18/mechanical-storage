@@ -4,18 +4,22 @@ Mechanical Storage is a Minecraft 1.21.1 NeoForge addon for Create 6.0.10.
 
 The goal is a Create-style mechanical storage network where Create shafts/cogs act as the network path, and storage terminals/connectors only function when connected to a rotating, non-overstressed kinetic network.
 
-## Current v0.1 scope
+## Current experimental scope
 
-This first pass is project setup and visible block registration:
+The `experiment/network-scan` branch currently includes:
 
 - Mechanical Storage Connector
 - Mechanical Storage Terminal
-- Mechanical Storage creative tab
-- Placeholder block/item models
-- Basic recipes using Create materials
-- Create declared as a required dependency
-
-The actual storage network, kinetic-network detection, terminal GUI, and inventory movement logic are planned next.
+- Create kinetic-network membership with no artificial distance limit
+- Loaded connectors only, with a 64-connector limit per network
+- Combined item counts that keep different item components separate
+- Search by name, `@mod`, or `#tag`
+- Name/count sorting and a scrollable 9x6 item grid
+- Shift-click deposits and withdrawals
+- Full-stack left-click withdrawals
+- Ctrl-left-click and Ctrl-scroll single-item transfers
+- Matching-stack-first network insertion
+- Live disconnected and overstressed terminal states
 
 ## Planned behaviour
 
@@ -26,6 +30,15 @@ The actual storage network, kinetic-network detection, terminal GUI, and invento
 - Loaded chunks only.
 - 64 connectors per network.
 - No cross-dimensional storage.
+
+## Planned expansion
+
+- Connector priority and Create-filter support
+- Functional Storage and Sophisticated Storage compatibility testing
+- Mechanical crafting grid with a per-player crafting matrix
+- Fluid grid and fluid-capable connectors
+- RPM-ranged wireless satellite
+- Backtank-powered handheld item and crafting grids
 
 ## Development
 

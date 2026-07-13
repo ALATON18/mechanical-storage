@@ -2,6 +2,7 @@ package com.mechanicalstorage.blockentity;
 
 import com.mechanicalstorage.MechanicalStorage;
 import com.mechanicalstorage.block.DirectionalMachineBlock;
+import com.mechanicalstorage.network.StorageNetworkRegistry;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -27,13 +28,33 @@ public class MechanicalStorageConnectorBlockEntity extends KineticBlockEntity {
 		return getSpeed() != 0 && hasNetwork();
 	}
 
+	@Override
+	public void tick() {
+		super.tick();
+		StorageNetworkRegistry.register(this);
+	}
+
+	@Override
+	public void remove() {
+		StorageNetworkRegistry.unregister(this);
+		super.remove();
+	}
+
+	@Override
+	public void onChunkUnloaded() {
+		StorageNetworkRegistry.unregister(this);
+		super.onChunkUnloaded();
+	}
+
 	public boolean isOnSameNetwork(TerminalBlockEntity terminal) {
 		return isOnline() && terminal.isOnline() && network != null && network.equals(terminal.network);
 	}
 
 	public Component describeTargetInventory() {
 		if (!isOnline()) {
-			return Component.literal("Connector: offline. Add rotation from the Create kinetic network.");
+			return hasKineticConnection()
+					? Component.translatable("status.mechanical_storage.overstressed")
+					: Component.translatable("status.mechanical_storage.disconnected");
 		}
 
 		IItemHandler handler = getTargetItemHandler();
@@ -75,6 +96,15 @@ public class MechanicalStorageConnectorBlockEntity extends KineticBlockEntity {
 		BlockEntity targetBlockEntity = level.getBlockEntity(targetPos);
 
 		return level.getCapability(Capabilities.ItemHandler.BLOCK, targetPos, targetState, targetBlockEntity, facing.getOpposite());
+	}
+
+	private boolean hasKineticConnection() {
+		if (level == null) {
+			return false;
+		}
+
+		Direction facing = getBlockState().getValue(DirectionalMachineBlock.FACING);
+		return level.getBlockEntity(worldPosition.relative(facing.getOpposite())) instanceof KineticBlockEntity;
 	}
 
 	private static String formatPos(BlockPos pos) {

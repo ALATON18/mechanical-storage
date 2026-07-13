@@ -46,6 +46,8 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 
 		addSideButton(0, "AZ", TerminalMenu.SORT_NAME_BUTTON);
 		addSideButton(1, "Qt", TerminalMenu.SORT_COUNT_BUTTON);
+		addSideButton(2, "^", TerminalMenu.SCROLL_UP_BUTTON);
+		addSideButton(3, "v", TerminalMenu.SCROLL_DOWN_BUTTON);
 	}
 
 	@Override
@@ -100,6 +102,15 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 	@Override
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
 		super.render(guiGraphics, mouseX, mouseY, partialTick);
+		if (this.menu.getNetworkStatus() != com.mechanicalstorage.blockentity.TerminalBlockEntity.NetworkStatus.ONLINE) {
+			int left = this.leftPos + 31;
+			int top = this.topPos + 47;
+			int right = left + TerminalMenu.GRID_COLUMNS * 18;
+			int bottom = top + TerminalMenu.GRID_ROWS * 18;
+			guiGraphics.fill(left, top, right, bottom, 0xB0202020);
+			Component status = this.menu.getNetworkStatus().message();
+			guiGraphics.drawCenteredString(this.font, status, (left + right) / 2, (top + bottom - this.font.lineHeight) / 2, 0xFF6B6B);
+		}
 		this.renderTooltip(guiGraphics, mouseX, mouseY);
 	}
 
@@ -107,6 +118,12 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 	protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
 		guiGraphics.drawString(this.font, Component.literal("Terminal"), this.titleLabelX, this.titleLabelY, TEXT, false);
 		guiGraphics.drawString(this.font, this.playerInventoryTitle, this.inventoryLabelX, this.inventoryLabelY, TEXT, false);
+		if (this.menu.getTotalMatchingItems() > 0) {
+			int first = this.menu.getScrollRow() * TerminalMenu.GRID_COLUMNS + 1;
+			int last = Math.min(this.menu.getTotalMatchingItems(), first + TerminalMenu.NETWORK_SLOTS - 1);
+			String range = first + "-" + last + "/" + this.menu.getTotalMatchingItems();
+			guiGraphics.drawString(this.font, range, 192 - this.font.width(range), 37, TEXT, false);
+		}
 	}
 
 	@Override
@@ -115,7 +132,38 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 			searchBox.setFocused(false);
 		}
 
+		if (button == 0 && hasControlDown() && this.hoveredSlot != null) {
+			int slot = this.menu.slots.indexOf(this.hoveredSlot);
+			if (slot >= 0 && slot < TerminalMenu.NETWORK_SLOTS) {
+				sendMenuButton(TerminalMenu.SINGLE_EXTRACT_SLOT_BASE_BUTTON + slot);
+				return true;
+			}
+		}
+
 		return super.mouseClicked(mouseX, mouseY, button);
+	}
+
+	@Override
+	public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+		if (isMouseOverNetworkGrid(mouseX, mouseY)) {
+			if (hasControlDown()) {
+				if (scrollY > 0 && this.hoveredSlot != null) {
+					int slot = this.menu.slots.indexOf(this.hoveredSlot);
+					if (slot >= 0 && slot < TerminalMenu.NETWORK_SLOTS) {
+						sendMenuButton(TerminalMenu.SINGLE_EXTRACT_SLOT_BASE_BUTTON + slot);
+					}
+				} else if (scrollY < 0) {
+					sendMenuButton(TerminalMenu.SINGLE_DEPOSIT_BUTTON);
+				}
+			} else if (scrollY > 0) {
+				sendMenuButton(TerminalMenu.SCROLL_UP_BUTTON);
+			} else if (scrollY < 0) {
+				sendMenuButton(TerminalMenu.SCROLL_DOWN_BUTTON);
+			}
+			return true;
+		}
+
+		return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
 	}
 
 	@Override
@@ -170,6 +218,13 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 
 	private boolean isMouseOverSearchBox(double mouseX, double mouseY) {
 		return searchBox != null && mouseX >= searchBox.getX() && mouseX < searchBox.getX() + searchBox.getWidth() && mouseY >= searchBox.getY() && mouseY < searchBox.getY() + searchBox.getHeight();
+	}
+
+	private boolean isMouseOverNetworkGrid(double mouseX, double mouseY) {
+		int left = this.leftPos + 31;
+		int top = this.topPos + 47;
+		return mouseX >= left && mouseX < left + TerminalMenu.GRID_COLUMNS * 18
+				&& mouseY >= top && mouseY < top + TerminalMenu.GRID_ROWS * 18;
 	}
 
 	private void drawSmallCount(GuiGraphics guiGraphics, String countText, int slotX, int slotY) {

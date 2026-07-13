@@ -1,9 +1,12 @@
 package com.mechanicalstorage.blockentity;
 
 import com.mechanicalstorage.MechanicalStorage;
+import com.mechanicalstorage.block.DirectionalMachineBlock;
 import com.mechanicalstorage.menu.TerminalMenu;
+import com.mechanicalstorage.network.StorageNetworkRegistry;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -24,16 +27,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-import java.util.Set;
 
 public class TerminalBlockEntity extends KineticBlockEntity implements MenuProvider {
-	private static final int SCAN_RADIUS = 32;
-	private static final int MAX_CONNECTORS = 64;
+	public static final int MAX_CONNECTORS = 64;
 	private static final int MAX_SUMMARY_ITEMS = 8;
 
 	public TerminalBlockEntity(BlockEntityType<? extends TerminalBlockEntity> type, BlockPos pos, BlockState blockState) {
@@ -46,6 +44,24 @@ public class TerminalBlockEntity extends KineticBlockEntity implements MenuProvi
 
 	public boolean isOnline() {
 		return getSpeed() != 0 && hasNetwork();
+	}
+
+	public NetworkStatus getNetworkStatus() {
+		if (isOnline()) {
+			return NetworkStatus.ONLINE;
+		}
+
+		return hasKineticConnection() ? NetworkStatus.OVERSTRESSED : NetworkStatus.DISCONNECTED;
+	}
+
+	private boolean hasKineticConnection() {
+		if (level == null) {
+			return false;
+		}
+
+		Direction facing = getBlockState().getValue(DirectionalMachineBlock.FACING);
+		BlockEntity neighbour = level.getBlockEntity(worldPosition.relative(facing.getOpposite()));
+		return neighbour instanceof KineticBlockEntity;
 	}
 
 	@Override
@@ -65,14 +81,12 @@ public class TerminalBlockEntity extends KineticBlockEntity implements MenuProvi
 		}
 
 		if (!isOnline()) {
-			return Component.literal("Terminal: offline. Add rotation from the Create kinetic network.");
+			return getNetworkStatus().message();
 		}
 
 		NetworkSummary networkSummary = collectNetworkSummary();
-
 		String message = "Terminal: online at " + Math.abs(getSpeed()) + " RPM, found " + networkSummary.connectorsFound + " connector(s), " + networkSummary.inventoriesFound + " inventory/inventories, " + networkSummary.occupiedSlots + "/" + networkSummary.totalSlots + " slots used, " + networkSummary.totalItems + " items total.";
 		String summary = formatItemSummary(networkSummary.itemSummary);
-
 		if (!summary.isEmpty()) {
 			message += " Items: " + summary;
 		}
@@ -80,48 +94,44 @@ public class TerminalBlockEntity extends KineticBlockEntity implements MenuProvi
 		return Component.literal(message);
 	}
 
-	public List<ItemStack> getNetworkDisplayStacks(int limit) {
-		return getNetworkDisplayStacks(limit, "");
-	}
-
-	public List<ItemStack> getNetworkDisplayStacks(int limit, String searchText) {
-		return getNetworkDisplayStacks(limit, searchText, "COUNT", true);
-	}
-
-	public List<ItemStack> getNetworkDisplayStacks(int limit, String searchText, String sortMode, boolean descending) {
+	public DisplayPage getNetworkDisplayPage(int limit, int offset, String searchText, String sortMode, boolean descending) {
 		NetworkSummary networkSummary = collectNetworkSummary();
-		List<Map.Entry<ResourceLocation, ItemSummary>> entries = new ArrayList<>(networkSummary.itemSummary.entrySet());
-		Comparator<Map.Entry<ResourceLocation, ItemSummary>> comparator;
+		List<ItemSummary> entries = new ArrayList<>();
+		String normalizedSearch = normalizeSearch(searchText);
 
+		for (ItemSummary summary : networkSummary.itemSummary) {
+			if (matchesSearch(summary, normalizedSearch)) {
+				entries.add(summary);
+			}
+		}
+
+		Comparator<ItemSummary> comparator;
 		if ("NAME".equals(sortMode)) {
-			comparator = Comparator.comparing(entry -> entry.getValue().displayName.toLowerCase(Locale.ROOT));
+			comparator = Comparator.comparing(summary -> summary.displayName.toLowerCase(Locale.ROOT));
 		} else {
-			comparator = Comparator.<Map.Entry<ResourceLocation, ItemSummary>>comparingInt(entry -> entry.getValue().count);
+			comparator = Comparator.comparingInt(summary -> summary.count);
 		}
 
 		if (descending) {
 			comparator = comparator.reversed();
 		}
+		entries.sort(comparator.thenComparing(summary -> summary.itemId.toString()));
 
-		entries.sort(comparator);
-
-		String normalizedSearch = normalizeSearch(searchText);
-		List<ItemStack> stacks = new ArrayList<>();
-		for (Map.Entry<ResourceLocation, ItemSummary> entry : entries) {
-			if (stacks.size() >= limit) {
-				break;
-			}
-
-			if (!matchesSearch(entry.getKey(), entry.getValue(), normalizedSearch)) {
-				continue;
-			}
-
-			ItemStack displayStack = entry.getValue().representative.copy();
-			displayStack.setCount(entry.getValue().count);
+		int safeOffset = Math.max(0, Math.min(offset, entries.size()));
+		int end = Math.min(entries.size(), safeOffset + Math.max(0, limit));
+		List<ItemStack> stacks = new ArrayList<>(end - safeOffset);
+		for (int index = safeOffset; index < end; index++) {
+			ItemSummary summary = entries.get(index);
+			ItemStack displayStack = summary.representative.copy();
+			displayStack.setCount(summary.count);
 			stacks.add(displayStack);
 		}
 
-		return stacks;
+		return new DisplayPage(stacks, entries.size());
+	}
+
+	public List<ItemStack> getNetworkDisplayStacks(int limit, String searchText, String sortMode, boolean descending) {
+		return getNetworkDisplayPage(limit, 0, searchText, sortMode, descending).stacks();
 	}
 
 	public ItemStack extractMatchingStackToPlayer(ItemStack filterStack, int amount, Player player) {
@@ -140,8 +150,7 @@ public class TerminalBlockEntity extends KineticBlockEntity implements MenuProvi
 
 		ItemStack collected = ItemStack.EMPTY;
 		int remainingAmount = amount;
-
-		for (MechanicalStorageConnectorBlockEntity connector : findNearbyConnectors()) {
+		for (MechanicalStorageConnectorBlockEntity connector : findNetworkConnectors()) {
 			IItemHandler handler = connector.getTargetItemHandler();
 			if (handler == null) {
 				continue;
@@ -174,52 +183,13 @@ public class TerminalBlockEntity extends KineticBlockEntity implements MenuProvi
 		return collected;
 	}
 
-	public Component extractFirstAvailableStack(Player player) {
-		if (level == null) {
-			return Component.literal("Terminal: level is not available.");
-		}
-
-		if (!isOnline()) {
-			return Component.literal("Terminal: offline. Add rotation from the Create kinetic network.");
-		}
-
-		int connectorsChecked = 0;
-
-		for (MechanicalStorageConnectorBlockEntity connector : findNearbyConnectors()) {
-			connectorsChecked++;
-			IItemHandler handler = connector.getTargetItemHandler();
-			if (handler == null) {
-				continue;
-			}
-
-			for (int slot = 0; slot < handler.getSlots(); slot++) {
-				ItemStack stack = handler.getStackInSlot(slot);
-				if (stack.isEmpty()) {
-					continue;
-				}
-
-				int amountToExtract = Math.min(stack.getMaxStackSize(), stack.getCount());
-				ItemStack extracted = handler.extractItem(slot, amountToExtract, false);
-				if (extracted.isEmpty()) {
-					continue;
-				}
-
-				ItemStack delivered = extracted.copy();
-				ItemHandlerHelper.giveItemToPlayer(player, delivered);
-				return Component.literal("Terminal: withdrew " + extracted.getHoverName().getString() + " x" + extracted.getCount() + ".");
-			}
-		}
-
-		return Component.literal("Terminal: no extractable items found across " + connectorsChecked + " connector(s).");
-	}
-
 	public Component insertHeldStack(Player player, InteractionHand hand) {
 		if (level == null) {
 			return Component.literal("Terminal: level is not available.");
 		}
 
 		if (!isOnline()) {
-			return Component.literal("Terminal: offline. Add rotation from the Create kinetic network.");
+			return getNetworkStatus().message();
 		}
 
 		ItemStack heldStack = player.getItemInHand(hand);
@@ -230,7 +200,6 @@ public class TerminalBlockEntity extends KineticBlockEntity implements MenuProvi
 		String displayName = heldStack.getHoverName().getString();
 		int startingCount = heldStack.getCount();
 		ItemStack remaining = insertStackIntoNetwork(heldStack.copy());
-
 		if (remaining.isEmpty()) {
 			player.setItemInHand(hand, ItemStack.EMPTY);
 			return Component.literal("Terminal: inserted " + displayName + " x" + startingCount + ".");
@@ -251,17 +220,48 @@ public class TerminalBlockEntity extends KineticBlockEntity implements MenuProvi
 		}
 
 		ItemStack remaining = stack.copy();
-
-		for (MechanicalStorageConnectorBlockEntity connector : findNearbyConnectors()) {
+		List<IItemHandler> handlers = new ArrayList<>();
+		for (MechanicalStorageConnectorBlockEntity connector : findNetworkConnectors()) {
 			IItemHandler handler = connector.getTargetItemHandler();
-			if (handler == null) {
-				continue;
+			if (handler != null) {
+				handlers.add(handler);
 			}
+		}
 
+		remaining = insertIntoMatchingStacks(handlers, remaining);
+		if (remaining.isEmpty()) {
+			return ItemStack.EMPTY;
+		}
+
+		return insertIntoEmptySlots(handlers, remaining);
+	}
+
+	private static ItemStack insertIntoMatchingStacks(List<IItemHandler> handlers, ItemStack stack) {
+		ItemStack remaining = stack;
+		for (IItemHandler handler : handlers) {
 			for (int slot = 0; slot < handler.getSlots(); slot++) {
-				remaining = handler.insertItem(slot, remaining, false);
-				if (remaining.isEmpty()) {
-					return ItemStack.EMPTY;
+				ItemStack existing = handler.getStackInSlot(slot);
+				if (!existing.isEmpty() && sameDisplayGroup(existing, remaining)) {
+					remaining = handler.insertItem(slot, remaining, false);
+					if (remaining.isEmpty()) {
+						return ItemStack.EMPTY;
+					}
+				}
+			}
+		}
+
+		return remaining;
+	}
+
+	private static ItemStack insertIntoEmptySlots(List<IItemHandler> handlers, ItemStack stack) {
+		ItemStack remaining = stack;
+		for (IItemHandler handler : handlers) {
+			for (int slot = 0; slot < handler.getSlots(); slot++) {
+				if (handler.getStackInSlot(slot).isEmpty()) {
+					remaining = handler.insertItem(slot, remaining, false);
+					if (remaining.isEmpty()) {
+						return ItemStack.EMPTY;
+					}
 				}
 			}
 		}
@@ -271,12 +271,11 @@ public class TerminalBlockEntity extends KineticBlockEntity implements MenuProvi
 
 	private NetworkSummary collectNetworkSummary() {
 		NetworkSummary networkSummary = new NetworkSummary();
-
 		if (!isOnline()) {
 			return networkSummary;
 		}
 
-		for (MechanicalStorageConnectorBlockEntity connector : findNearbyConnectors()) {
+		for (MechanicalStorageConnectorBlockEntity connector : findNetworkConnectors()) {
 			networkSummary.connectorsFound++;
 			IItemHandler handler = connector.getTargetItemHandler();
 			if (handler == null) {
@@ -284,10 +283,8 @@ public class TerminalBlockEntity extends KineticBlockEntity implements MenuProvi
 			}
 
 			networkSummary.inventoriesFound++;
-			int slots = handler.getSlots();
-			networkSummary.totalSlots += slots;
-
-			for (int slot = 0; slot < slots; slot++) {
+			networkSummary.totalSlots += handler.getSlots();
+			for (int slot = 0; slot < handler.getSlots(); slot++) {
 				ItemStack stack = handler.getStackInSlot(slot);
 				if (!stack.isEmpty()) {
 					networkSummary.occupiedSlots++;
@@ -300,35 +297,24 @@ public class TerminalBlockEntity extends KineticBlockEntity implements MenuProvi
 		return networkSummary;
 	}
 
-	private List<MechanicalStorageConnectorBlockEntity> findNearbyConnectors() {
-		List<MechanicalStorageConnectorBlockEntity> connectors = new ArrayList<>();
-		Set<BlockPos> seenTargets = new HashSet<>();
-
-		if (level == null || !isOnline()) {
-			return connectors;
-		}
-
-		BlockPos min = worldPosition.offset(-SCAN_RADIUS, -SCAN_RADIUS, -SCAN_RADIUS);
-		BlockPos max = worldPosition.offset(SCAN_RADIUS, SCAN_RADIUS, SCAN_RADIUS);
-
-		for (BlockPos scanPos : BlockPos.betweenClosed(min, max)) {
-			if (connectors.size() >= MAX_CONNECTORS) {
-				break;
-			}
-
-			BlockEntity blockEntity = level.getBlockEntity(scanPos);
-			if (blockEntity instanceof MechanicalStorageConnectorBlockEntity connector && connector.isOnSameNetwork(this) && seenTargets.add(connector.getTargetPos())) {
-				connectors.add(connector);
-			}
-		}
-
-		return connectors;
+	private List<MechanicalStorageConnectorBlockEntity> findNetworkConnectors() {
+		return StorageNetworkRegistry.findConnectors(this, MAX_CONNECTORS);
 	}
 
-	private static void addToSummary(Map<ResourceLocation, ItemSummary> itemSummary, ItemStack stack) {
-		ResourceLocation itemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
-		ItemSummary summary = itemSummary.computeIfAbsent(itemId, ignored -> new ItemSummary(stack));
-		summary.count += stack.getCount();
+	private static void addToSummary(List<ItemSummary> itemSummary, ItemStack stack) {
+		for (ItemSummary summary : itemSummary) {
+			if (sameDisplayGroup(summary.representative, stack)) {
+				summary.count = saturatedAdd(summary.count, stack.getCount());
+				return;
+			}
+		}
+
+		itemSummary.add(new ItemSummary(stack));
+	}
+
+	private static int saturatedAdd(int first, int second) {
+		long result = (long) first + second;
+		return result >= Integer.MAX_VALUE ? Integer.MAX_VALUE : (int) result;
 	}
 
 	private static boolean sameDisplayGroup(ItemStack first, ItemStack second) {
@@ -339,16 +325,15 @@ public class TerminalBlockEntity extends KineticBlockEntity implements MenuProvi
 		return searchText == null ? "" : searchText.trim().toLowerCase(Locale.ROOT);
 	}
 
-	private static boolean matchesSearch(ResourceLocation itemId, ItemSummary itemSummary, String searchText) {
+	private static boolean matchesSearch(ItemSummary itemSummary, String searchText) {
 		if (searchText.isEmpty()) {
 			return true;
 		}
 
 		String displayName = itemSummary.displayName.toLowerCase(Locale.ROOT);
-		String path = itemId.getPath().toLowerCase(Locale.ROOT);
-
+		String path = itemSummary.itemId.getPath().toLowerCase(Locale.ROOT);
 		if (searchText.startsWith("@")) {
-			return itemId.getNamespace().toLowerCase(Locale.ROOT).contains(searchText.substring(1));
+			return itemSummary.itemId.getNamespace().toLowerCase(Locale.ROOT).contains(searchText.substring(1));
 		}
 
 		if (searchText.startsWith("#")) {
@@ -365,8 +350,7 @@ public class TerminalBlockEntity extends KineticBlockEntity implements MenuProvi
 
 		String normalizedSearch = searchText.toLowerCase(Locale.ROOT);
 		for (TagKey<Item> tagKey : stack.getTags().toList()) {
-			String tag = tagKey.location().toString().toLowerCase(Locale.ROOT);
-			if (tag.contains(normalizedSearch)) {
+			if (tagKey.location().toString().toLowerCase(Locale.ROOT).contains(normalizedSearch)) {
 				return true;
 			}
 		}
@@ -374,26 +358,24 @@ public class TerminalBlockEntity extends KineticBlockEntity implements MenuProvi
 		return false;
 	}
 
-	private static String formatItemSummary(Map<ResourceLocation, ItemSummary> itemSummary) {
+	private static String formatItemSummary(List<ItemSummary> itemSummary) {
 		if (itemSummary.isEmpty()) {
 			return "";
 		}
 
-		List<Map.Entry<ResourceLocation, ItemSummary>> entries = new ArrayList<>(itemSummary.entrySet());
-		entries.sort(Comparator.<Map.Entry<ResourceLocation, ItemSummary>>comparingInt(entry -> entry.getValue().count).reversed());
-
+		List<ItemSummary> entries = new ArrayList<>(itemSummary);
+		entries.sort(Comparator.comparingInt((ItemSummary summary) -> summary.count).reversed());
 		StringBuilder builder = new StringBuilder();
 		int shown = 0;
-		for (Map.Entry<ResourceLocation, ItemSummary> entry : entries) {
+		for (ItemSummary summary : entries) {
 			if (shown >= MAX_SUMMARY_ITEMS) {
 				break;
 			}
 
-			if (builder.length() > 0) {
+			if (!builder.isEmpty()) {
 				builder.append(", ");
 			}
-
-			builder.append(entry.getValue().displayName).append(" x").append(entry.getValue().count);
+			builder.append(summary.displayName).append(" x").append(summary.count);
 			shown++;
 		}
 
@@ -405,24 +387,44 @@ public class TerminalBlockEntity extends KineticBlockEntity implements MenuProvi
 		return builder.toString();
 	}
 
+	public record DisplayPage(List<ItemStack> stacks, int totalItems) {
+	}
+
+	public enum NetworkStatus {
+		ONLINE,
+		OVERSTRESSED,
+		DISCONNECTED;
+
+		public Component message() {
+			return switch (this) {
+				case ONLINE -> Component.translatable("status.mechanical_storage.online");
+				case OVERSTRESSED -> Component.translatable("status.mechanical_storage.overstressed");
+				case DISCONNECTED -> Component.translatable("status.mechanical_storage.disconnected");
+			};
+		}
+	}
+
 	private static class NetworkSummary {
 		private int connectorsFound;
 		private int inventoriesFound;
 		private int totalSlots;
 		private int occupiedSlots;
 		private int totalItems;
-		private final Map<ResourceLocation, ItemSummary> itemSummary = new LinkedHashMap<>();
+		private final List<ItemSummary> itemSummary = new ArrayList<>();
 	}
 
 	private static class ItemSummary {
 		private final ItemStack representative;
+		private final ResourceLocation itemId;
 		private final String displayName;
 		private int count;
 
 		private ItemSummary(ItemStack stack) {
 			this.representative = stack.copy();
 			this.representative.setCount(1);
+			this.itemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
 			this.displayName = stack.getHoverName().getString();
+			this.count = stack.getCount();
 		}
 	}
 }
