@@ -94,7 +94,7 @@ dependencies {
 	localRuntime "com.hrznstudio:titanium:1.21-4.0.34"
 	localRuntime "curse.maven:functional-storage-556861:8179577"
 	localRuntime "curse.maven:sophisticated-core-618298:8398762"
-	localRuntime "curse.maven:sophisticated-storage-619320:7168639"
+	localRuntime "curse.maven:sophisticated-storage-619320:8398824"
 	localRuntime "curse.maven:sophisticated-backpacks-422301:8398799"
 }
 
