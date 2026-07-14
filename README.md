@@ -20,7 +20,7 @@ The `experiment/network-scan` branch currently includes:
 - Ctrl-left-click and Ctrl-scroll single-item transfers
 - Matching-stack-first network insertion
 - Live disconnected and overstressed terminal states
-- Persistent Create List Filter and Attribute Filter tabs on the terminal
+- Persistent Create List Filter (mod namespaces) and Attribute Filter tabs on the terminal
 - Functional Storage, Sophisticated Storage, and Sophisticated Backpacks in the development client for compatibility testing
 
 ## Planned behaviour

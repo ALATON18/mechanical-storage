@@ -185,13 +185,32 @@ public class TerminalBlockEntity extends KineticBlockEntity implements MenuProvi
 			return false;
 		}
 
-		for (int slot = 0; slot < terminalFilters.getSlots(); slot++) {
-			ItemStack filter = terminalFilters.getStackInSlot(slot);
-			if (!filter.isEmpty() && !FilterItemStack.of(filter.copy()).test(level, stack)) {
-				return false;
+		ItemStack listFilter = terminalFilters.getStackInSlot(LIST_FILTER_SLOT);
+		if (!listFilter.isEmpty() && !matchesModListFilter(listFilter, stack)) {
+			return false;
+		}
+
+		ItemStack attributeFilter = terminalFilters.getStackInSlot(ATTRIBUTE_FILTER_SLOT);
+		return attributeFilter.isEmpty() || FilterItemStack.of(attributeFilter.copy()).test(level, stack);
+	}
+
+	private boolean matchesModListFilter(ItemStack filterStack, ItemStack candidate) {
+		FilterItemStack filter = FilterItemStack.of(filterStack.copy());
+		if (!(filter instanceof FilterItemStack.ListFilterItemStack listFilter)) {
+			return filter.test(level, candidate);
+		}
+
+		String candidateNamespace = BuiltInRegistries.ITEM.getKey(candidate.getItem()).getNamespace();
+		boolean matchedNamespace = false;
+		for (FilterItemStack containedFilter : listFilter.containedItems) {
+			ItemStack listedItem = containedFilter.item();
+			if (!listedItem.isEmpty() && BuiltInRegistries.ITEM.getKey(listedItem.getItem()).getNamespace().equals(candidateNamespace)) {
+				matchedNamespace = true;
+				break;
 			}
 		}
-		return true;
+
+		return listFilter.isBlacklist != matchedNamespace;
 	}
 
 	public List<ItemStack> getNetworkDisplayStacks(int limit, String searchText, String sortMode, boolean descending) {
