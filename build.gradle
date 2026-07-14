@@ -96,6 +96,7 @@ dependencies {
 	localRuntime "curse.maven:sophisticated-core-618298:8398762"
 	localRuntime "curse.maven:sophisticated-storage-619320:8398824"
 	localRuntime "curse.maven:sophisticated-backpacks-422301:8398799"
+	localRuntime "mezz.jei:jei-1.21.1-neoforge:19.37.0.362"
 }
 
 var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {

@@ -3,6 +3,7 @@ package com.mechanicalstorage.client;
 import com.mechanicalstorage.blockentity.TerminalBlockEntity;
 import com.mechanicalstorage.menu.TerminalMenu;
 import com.simibubi.create.content.logistics.filter.FilterItemStack;
+import com.simibubi.create.content.logistics.filter.ListFilterItem;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
@@ -23,9 +24,9 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 	private static final int SLOT = 0xFF8B8B8B;
 	private static final int TEXT = 0xFF404040;
 	private static final int PANEL_WIDTH = 204;
-	private static final int BASE_IMAGE_HEIGHT = 150;
+	private static final int BASE_IMAGE_HEIGHT = 132;
 	private static final int SCROLLBAR_X = 194;
-	private static final int SCROLLBAR_WIDTH = 8;
+	private static final int SCROLLBAR_WIDTH = 5;
 	private static final int MIN_SCROLLBAR_THUMB_HEIGHT = 12;
 
 	private static SizeMode preferredSize = SizeMode.MEDIUM;
@@ -41,7 +42,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 		this.imageWidth = 236;
 		this.imageHeight = imageHeight(TerminalMenu.DEFAULT_GRID_ROWS);
 		this.titleLabelX = 32;
-		this.titleLabelY = 20;
+		this.titleLabelY = 17;
 		this.inventoryLabelX = 32;
 	}
 
@@ -55,7 +56,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 		menu.setVisibleRowsClient(rows);
 		sendMenuButton(TerminalMenu.GRID_ROWS_BUTTON_BASE + rows);
 
-		searchBox = new EditBox(this.font, this.leftPos + 84, this.topPos + 16, 108, 16, Component.translatable("container.mechanical_storage.search"));
+		searchBox = new EditBox(this.font, this.leftPos + 84, this.topPos + 14, 108, 14, Component.translatable("container.mechanical_storage.search"));
 		searchBox.setMaxLength(TerminalMenu.SEARCH_MAX_LENGTH);
 		searchBox.setHint(Component.translatable("container.mechanical_storage.search"));
 		searchBox.setValue(searchQuery);
@@ -83,6 +84,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 		int networkGridHeight = rows * 18;
 
 		drawModernPanel(guiGraphics, x + 24, y + 10, x + PANEL_WIDTH - 4, y + imageHeight - 4);
+		drawModernPanel(guiGraphics, x + PANEL_WIDTH, y + 10, x + imageWidth, y + 58);
 		drawInsetPanel(guiGraphics, gridX, networkGridY, gridX + gridWidth, networkGridY + networkGridHeight);
 		drawInsetPanel(guiGraphics, gridX, inventoryGridY, gridX + gridWidth, inventoryGridY + 3 * 18);
 		drawInsetPanel(guiGraphics, gridX, hotbarGridY, gridX + gridWidth, hotbarGridY + 18);
@@ -90,8 +92,8 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 		drawSlotBackgrounds(guiGraphics, gridX, networkGridY, TerminalMenu.GRID_COLUMNS, rows);
 		drawSlotBackgrounds(guiGraphics, gridX, inventoryGridY, 9, 3);
 		drawSlotBackgrounds(guiGraphics, gridX, hotbarGridY, 9, 1);
-		drawFilterRack(guiGraphics, x + TerminalMenu.FILTER_SLOT_X - 1, y + TerminalMenu.LIST_FILTER_SLOT_Y - 1);
-		drawFilterRack(guiGraphics, x + TerminalMenu.FILTER_SLOT_X - 1, y + TerminalMenu.ATTRIBUTE_FILTER_SLOT_Y - 1);
+		drawRecessedSlot(guiGraphics, x + TerminalMenu.FILTER_SLOT_X - 1, y + TerminalMenu.LIST_FILTER_SLOT_Y - 1);
+		drawRecessedSlot(guiGraphics, x + TerminalMenu.FILTER_SLOT_X - 1, y + TerminalMenu.ATTRIBUTE_FILTER_SLOT_Y - 1);
 		drawInstalledFilterTab(guiGraphics, TerminalBlockEntity.LIST_FILTER_SLOT, x + 6, y + visualListFilterSlotY(rows) - 1);
 		drawInstalledFilterTab(guiGraphics, TerminalBlockEntity.ATTRIBUTE_FILTER_SLOT, x + 6, y + visualAttributeFilterSlotY(rows) - 1);
 		drawScrollbar(guiGraphics);
@@ -135,7 +137,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 		super.render(guiGraphics, mouseX, mouseY, partialTick);
 		if (this.menu.getNetworkStatus() != com.mechanicalstorage.blockentity.TerminalBlockEntity.NetworkStatus.ONLINE) {
 			int left = this.leftPos + 31;
-			int top = this.topPos + TerminalMenu.NETWORK_SLOT_Y;
+			int top = this.topPos + TerminalMenu.NETWORK_SLOT_Y - 1;
 			int right = left + TerminalMenu.GRID_COLUMNS * 18;
 			int bottom = top + menu.getVisibleRows() * 18;
 			guiGraphics.fill(left, top, right, bottom, 0xB0202020);
@@ -147,10 +149,9 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 		renderFilterTabTooltip(guiGraphics, mouseX, mouseY);
 		if (this.hoveredSlot != null && !this.hoveredSlot.hasItem()) {
 			int slotIndex = this.menu.slots.indexOf(this.hoveredSlot);
-			if (slotIndex == TerminalMenu.FILTER_SLOT_START) {
-				guiGraphics.renderTooltip(this.font, Component.translatable("container.mechanical_storage.list_filter"), mouseX, mouseY);
-			} else if (slotIndex == TerminalMenu.FILTER_SLOT_START + 1) {
-				guiGraphics.renderTooltip(this.font, Component.translatable("container.mechanical_storage.attribute_filter"), mouseX, mouseY);
+			if (slotIndex >= TerminalMenu.FILTER_SLOT_START
+					&& slotIndex < TerminalMenu.FILTER_SLOT_START + TerminalMenu.FILTER_SLOTS) {
+				guiGraphics.renderTooltip(this.font, Component.literal("Create filter slot"), mouseX, mouseY);
 			}
 		}
 	}
@@ -163,7 +164,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 			int first = this.menu.getScrollRow() * TerminalMenu.GRID_COLUMNS + 1;
 			int last = Math.min(this.menu.getTotalMatchingItems(), first + this.menu.getVisibleRows() * TerminalMenu.GRID_COLUMNS - 1);
 			String range = first + "-" + last + "/" + this.menu.getTotalMatchingItems();
-			guiGraphics.drawString(this.font, range, 192 - this.font.width(range), 37, TEXT, false);
+			guiGraphics.drawString(this.font, range, 192 - this.font.width(range), 28, TEXT, false);
 		}
 	}
 
@@ -254,7 +255,6 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
 		if (searchBox != null && searchBox.isFocused()) {
 			if (this.minecraft != null && this.minecraft.options.keyInventory.matches(keyCode, scanCode)) {
-				searchBox.setFocused(false);
 				return true;
 			}
 
@@ -315,14 +315,14 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 
 	private boolean isMouseOverNetworkGrid(double mouseX, double mouseY) {
 		int left = this.leftPos + 31;
-		int top = this.topPos + TerminalMenu.NETWORK_SLOT_Y;
+		int top = this.topPos + TerminalMenu.NETWORK_SLOT_Y - 1;
 		return mouseX >= left && mouseX < left + TerminalMenu.GRID_COLUMNS * 18
 				&& mouseY >= top && mouseY < top + menu.getVisibleRows() * 18;
 	}
 
 	private boolean isMouseOverScrollbar(double mouseX, double mouseY) {
 		int left = this.leftPos + SCROLLBAR_X;
-		int top = this.topPos + TerminalMenu.NETWORK_SLOT_Y;
+		int top = this.topPos + TerminalMenu.NETWORK_SLOT_Y - 1;
 		return mouseX >= left && mouseX < left + SCROLLBAR_WIDTH
 				&& mouseY >= top && mouseY < top + menu.getVisibleRows() * 18;
 	}
@@ -333,7 +333,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 			return;
 		}
 
-		int trackTop = this.topPos + TerminalMenu.NETWORK_SLOT_Y;
+		int trackTop = this.topPos + TerminalMenu.NETWORK_SLOT_Y - 1;
 		int trackHeight = menu.getVisibleRows() * 18;
 		int thumbHeight = scrollbarThumbHeight(trackHeight);
 		int travel = Math.max(1, trackHeight - thumbHeight);
@@ -350,7 +350,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 
 	private void drawScrollbar(GuiGraphics guiGraphics) {
 		int left = this.leftPos + SCROLLBAR_X;
-		int top = this.topPos + TerminalMenu.NETWORK_SLOT_Y;
+		int top = this.topPos + TerminalMenu.NETWORK_SLOT_Y - 1;
 		int trackHeight = menu.getVisibleRows() * 18;
 		guiGraphics.fill(left, top, left + SCROLLBAR_WIDTH, top + trackHeight, SLOT_DARK);
 		guiGraphics.fill(left + 1, top + 1, left + SCROLLBAR_WIDTH - 1, top + trackHeight - 1, BG_DARK);
@@ -418,12 +418,6 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 		}
 	}
 
-	private void drawFilterRack(GuiGraphics guiGraphics, int x, int y) {
-		guiGraphics.fill(x - 1, y - 3, x + 23, y + 21, BG_BORDER);
-		guiGraphics.fill(x, y - 2, x + 22, y + 20, BG);
-		drawRecessedSlot(guiGraphics, x, y);
-	}
-
 	private void drawInstalledFilterTab(GuiGraphics guiGraphics, int filterSlot, int x, int y) {
 		ItemStack filter = menu.getTerminalFilter(filterSlot);
 		if (filter.isEmpty()) {
@@ -443,7 +437,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 	}
 
 	private ItemStack filterTabIcon(int filterSlot, ItemStack filter) {
-		if (filterSlot == TerminalBlockEntity.LIST_FILTER_SLOT) {
+		if (filter.getItem() instanceof ListFilterItem) {
 			FilterItemStack wrapped = FilterItemStack.of(filter.copy());
 			if (wrapped instanceof FilterItemStack.ListFilterItemStack listFilter && !listFilter.containedItems.isEmpty()) {
 				ItemStack firstItem = listFilter.containedItems.getFirst().item();
@@ -480,13 +474,17 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 		int rows = menu.getVisibleRows();
 		if (isMouseOverFilterTab(mouseX, mouseY, visualListFilterSlotY(rows))
 				&& !menu.getTerminalFilter(TerminalBlockEntity.LIST_FILTER_SLOT).isEmpty()) {
-			guiGraphics.renderTooltip(this.font, Component.literal(menu.isFilterActive(TerminalBlockEntity.LIST_FILTER_SLOT)
-					? "Disable mod filter" : "Enable mod filter"), mouseX, mouseY);
+			guiGraphics.renderTooltip(this.font, filterToggleTooltip(TerminalBlockEntity.LIST_FILTER_SLOT), mouseX, mouseY);
 		} else if (isMouseOverFilterTab(mouseX, mouseY, visualAttributeFilterSlotY(rows))
 				&& !menu.getTerminalFilter(TerminalBlockEntity.ATTRIBUTE_FILTER_SLOT).isEmpty()) {
-			guiGraphics.renderTooltip(this.font, Component.literal(menu.isFilterActive(TerminalBlockEntity.ATTRIBUTE_FILTER_SLOT)
-					? "Disable attribute filter" : "Enable attribute filter"), mouseX, mouseY);
+			guiGraphics.renderTooltip(this.font, filterToggleTooltip(TerminalBlockEntity.ATTRIBUTE_FILTER_SLOT), mouseX, mouseY);
 		}
+	}
+
+	private Component filterToggleTooltip(int slot) {
+		ItemStack filter = menu.getTerminalFilter(slot);
+		String type = filter.getItem() instanceof ListFilterItem ? "mod" : "attribute";
+		return Component.literal((menu.isFilterActive(slot) ? "Disable " : "Enable ") + type + " filter");
 	}
 
 	private void drawRecessedSlot(GuiGraphics guiGraphics, int x, int y) {
@@ -507,7 +505,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 	}
 
 	private static int visualPlayerInventoryY(int rows) {
-		return TerminalMenu.NETWORK_SLOT_Y + rows * 18 + 15;
+		return TerminalMenu.NETWORK_SLOT_Y + rows * 18 + 11;
 	}
 
 	private static int visualHotbarY(int rows) {
@@ -536,9 +534,9 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 
 		private int rowsFor(int screenHeight) {
 			return switch (this) {
-				case SMALL -> 3;
-				case MEDIUM -> TerminalMenu.DEFAULT_GRID_ROWS;
-				case LARGE -> 9;
+				case SMALL -> 4;
+				case MEDIUM -> TerminalMenu.DEFAULT_GRID_ROWS + 1;
+				case LARGE -> 10;
 				case STRETCH -> Math.max(3, Math.min(TerminalMenu.MAX_GRID_ROWS, (screenHeight - BASE_IMAGE_HEIGHT - 20) / 18));
 			};
 		}

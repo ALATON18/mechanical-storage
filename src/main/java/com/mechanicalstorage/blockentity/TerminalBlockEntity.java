@@ -42,16 +42,12 @@ public class TerminalBlockEntity extends KineticBlockEntity implements MenuProvi
 	public static final int LIST_FILTER_SLOT = 0;
 	public static final int ATTRIBUTE_FILTER_SLOT = 1;
 	public static final int FILTER_SLOTS = 2;
-	private boolean listFilterActive;
-	private boolean attributeFilterActive;
+	private final boolean[] filterActive = new boolean[FILTER_SLOTS];
 	private final ItemStackHandler terminalFilters = new ItemStackHandler(FILTER_SLOTS) {
 		@Override
 		public boolean isItemValid(int slot, ItemStack stack) {
-			return switch (slot) {
-				case LIST_FILTER_SLOT -> stack.getItem() instanceof ListFilterItem;
-				case ATTRIBUTE_FILTER_SLOT -> stack.getItem() instanceof AttributeFilterItem;
-				default -> false;
-			};
+			return slot >= 0 && slot < FILTER_SLOTS
+					&& (stack.getItem() instanceof ListFilterItem || stack.getItem() instanceof AttributeFilterItem);
 		}
 
 		@Override
@@ -84,22 +80,14 @@ public class TerminalBlockEntity extends KineticBlockEntity implements MenuProvi
 	}
 
 	public boolean isFilterActive(int slot) {
-		return switch (slot) {
-			case LIST_FILTER_SLOT -> listFilterActive;
-			case ATTRIBUTE_FILTER_SLOT -> attributeFilterActive;
-			default -> false;
-		};
+		return slot >= 0 && slot < FILTER_SLOTS && filterActive[slot];
 	}
 
 	public void setFilterActive(int slot, boolean active) {
-		boolean enabled = active && !terminalFilters.getStackInSlot(slot).isEmpty();
-		if (slot == LIST_FILTER_SLOT) {
-			listFilterActive = enabled;
-		} else if (slot == ATTRIBUTE_FILTER_SLOT) {
-			attributeFilterActive = enabled;
-		} else {
+		if (slot < 0 || slot >= FILTER_SLOTS) {
 			return;
 		}
+		filterActive[slot] = active && !terminalFilters.getStackInSlot(slot).isEmpty();
 		setChanged();
 		if (level != null && !level.isClientSide) {
 			sendData();
@@ -110,8 +98,9 @@ public class TerminalBlockEntity extends KineticBlockEntity implements MenuProvi
 	protected void write(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
 		super.write(compound, registries, clientPacket);
 		compound.put("TerminalFilters", terminalFilters.serializeNBT(registries));
-		compound.putBoolean("ListFilterActive", listFilterActive);
-		compound.putBoolean("AttributeFilterActive", attributeFilterActive);
+		for (int slot = 0; slot < FILTER_SLOTS; slot++) {
+			compound.putBoolean("Filter" + slot + "Active", filterActive[slot]);
+		}
 	}
 
 	@Override
@@ -120,8 +109,14 @@ public class TerminalBlockEntity extends KineticBlockEntity implements MenuProvi
 		if (compound.contains("TerminalFilters")) {
 			terminalFilters.deserializeNBT(registries, compound.getCompound("TerminalFilters"));
 		}
-		listFilterActive = compound.getBoolean("ListFilterActive") && !terminalFilters.getStackInSlot(LIST_FILTER_SLOT).isEmpty();
-		attributeFilterActive = compound.getBoolean("AttributeFilterActive") && !terminalFilters.getStackInSlot(ATTRIBUTE_FILTER_SLOT).isEmpty();
+		for (int slot = 0; slot < FILTER_SLOTS; slot++) {
+			String key = "Filter" + slot + "Active";
+			boolean legacyActive = slot == LIST_FILTER_SLOT
+					? compound.getBoolean("ListFilterActive")
+					: compound.getBoolean("AttributeFilterActive");
+			filterActive[slot] = (compound.contains(key) ? compound.getBoolean(key) : legacyActive)
+					&& !terminalFilters.getStackInSlot(slot).isEmpty();
+		}
 	}
 
 	public boolean isOnline() {
@@ -217,13 +212,19 @@ public class TerminalBlockEntity extends KineticBlockEntity implements MenuProvi
 			return false;
 		}
 
-		ItemStack listFilter = terminalFilters.getStackInSlot(LIST_FILTER_SLOT);
-		if (listFilterActive && !listFilter.isEmpty() && !matchesModListFilter(listFilter, stack)) {
-			return false;
+		for (int slot = 0; slot < FILTER_SLOTS; slot++) {
+			ItemStack filter = terminalFilters.getStackInSlot(slot);
+			if (!filterActive[slot] || filter.isEmpty()) {
+				continue;
+			}
+			boolean matches = filter.getItem() instanceof ListFilterItem
+					? matchesModListFilter(filter, stack)
+					: FilterItemStack.of(filter.copy()).test(level, stack);
+			if (!matches) {
+				return false;
+			}
 		}
-
-		ItemStack attributeFilter = terminalFilters.getStackInSlot(ATTRIBUTE_FILTER_SLOT);
-		return !attributeFilterActive || attributeFilter.isEmpty() || FilterItemStack.of(attributeFilter.copy()).test(level, stack);
+		return true;
 	}
 
 	private boolean matchesModListFilter(ItemStack filterStack, ItemStack candidate) {
