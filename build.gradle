@@ -21,6 +21,10 @@ sourceSets.main.resources {
 repositories {
 	maven { url = 'https://maven.createmod.net' }
 	maven { url = 'https://maven.ithundxr.dev/snapshots' }
+	maven {
+		url = 'https://cursemaven.com'
+		content { includeGroup 'curse.maven' }
+	}
 }
 
 base {
@@ -84,6 +88,13 @@ dependencies {
 	compileOnly "dev.engine-room.flywheel:flywheel-neoforge-api-${minecraft_version}:${flywheel_version}"
 	runtimeOnly "dev.engine-room.flywheel:flywheel-neoforge-${minecraft_version}:${flywheel_version}"
 	implementation "com.tterrag.registrate:Registrate:${registrate_version}"
+
+	// Development-runtime compatibility fixtures. These are not bundled or required by the published mod.
+	localRuntime "com.hrznstudio:titanium:1.21-4.0.34"
+	localRuntime "curse.maven:functional-storage-556861:8179577"
+	localRuntime "curse.maven:sophisticated-core-618298:8398762"
+	localRuntime "curse.maven:sophisticated-storage-619320:7168639"
+	localRuntime "curse.maven:sophisticated-backpacks-422301:8398799"
 }
 
 var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {

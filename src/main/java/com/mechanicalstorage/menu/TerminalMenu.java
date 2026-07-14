@@ -2,6 +2,8 @@ package com.mechanicalstorage.menu;
 
 import com.mechanicalstorage.MechanicalStorage;
 import com.mechanicalstorage.blockentity.TerminalBlockEntity;
+import com.simibubi.create.content.logistics.filter.AttributeFilterItem;
+import com.simibubi.create.content.logistics.filter.ListFilterItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.entity.player.Inventory;
@@ -20,8 +22,17 @@ import java.util.List;
 
 public class TerminalMenu extends AbstractContainerMenu {
 	public static final int GRID_COLUMNS = 9;
-	public static final int GRID_ROWS = 6;
-	public static final int NETWORK_SLOTS = GRID_COLUMNS * GRID_ROWS;
+	public static final int DEFAULT_GRID_ROWS = 6;
+	public static final int MAX_GRID_ROWS = 18;
+	public static final int NETWORK_SLOTS = GRID_COLUMNS * MAX_GRID_ROWS;
+	public static final int FILTER_SLOTS = TerminalBlockEntity.FILTER_SLOTS;
+	public static final int NETWORK_SLOT_X = 32;
+	public static final int NETWORK_SLOT_Y = 47;
+	public static final int PLAYER_INVENTORY_Y = NETWORK_SLOT_Y + MAX_GRID_ROWS * 18 + 15;
+	public static final int HOTBAR_Y = PLAYER_INVENTORY_Y + 58;
+	public static final int FILTER_SLOT_X = 7;
+	public static final int LIST_FILTER_SLOT_Y = NETWORK_SLOT_Y + MAX_GRID_ROWS * 18 - 34;
+	public static final int ATTRIBUTE_FILTER_SLOT_Y = LIST_FILTER_SLOT_Y + 18;
 	public static final int SEARCH_CLEAR_BUTTON = 100000;
 	public static final int SEARCH_BACKSPACE_BUTTON = 100001;
 	public static final int SEARCH_APPLY_BUTTON = 100002;
@@ -32,19 +43,24 @@ public class TerminalMenu extends AbstractContainerMenu {
 	public static final int SINGLE_DEPOSIT_BUTTON = 100007;
 	public static final int SEARCH_CHAR_BASE_BUTTON = 200000;
 	public static final int SINGLE_EXTRACT_SLOT_BASE_BUTTON = 300000;
+	public static final int GRID_ROWS_BUTTON_BASE = 400000;
+	public static final int SCROLL_TO_ROW_BASE_BUTTON = 500000;
 	public static final int SEARCH_MAX_LENGTH = 64;
 
-	private static final int PLAYER_INVENTORY_START = NETWORK_SLOTS;
+	public static final int FILTER_SLOT_START = NETWORK_SLOTS;
+	private static final int PLAYER_INVENTORY_START = FILTER_SLOT_START + FILTER_SLOTS;
 	private static final int PLAYER_INVENTORY_SLOTS = 27;
 	private static final int HOTBAR_START = PLAYER_INVENTORY_START + PLAYER_INVENTORY_SLOTS;
 	private static final int HOTBAR_SLOTS = 9;
 
 	private final ItemStackHandler displayItems = new ItemStackHandler(NETWORK_SLOTS);
+	private final ItemStackHandler filterItems;
 	private final Inventory playerInventory;
 	private final BlockPos terminalPos;
 	private final DataSlot scrollRow = DataSlot.standalone();
 	private final DataSlot totalMatchingItems = DataSlot.standalone();
 	private final DataSlot networkStatus = DataSlot.standalone();
+	private final DataSlot visibleRows = DataSlot.standalone();
 	@Nullable
 	private final TerminalBlockEntity terminal;
 	private String searchText = "";
@@ -65,12 +81,16 @@ public class TerminalMenu extends AbstractContainerMenu {
 		this.playerInventory = playerInventory;
 		this.terminalPos = terminalPos;
 		this.terminal = terminal;
+		this.filterItems = terminal == null ? new ItemStackHandler(FILTER_SLOTS) : terminal.getTerminalFilters();
+		this.visibleRows.set(DEFAULT_GRID_ROWS);
 
 		addNetworkSlots();
+		addTerminalFilterSlots();
 		addPlayerInventorySlots(playerInventory);
 		addDataSlot(scrollRow);
 		addDataSlot(totalMatchingItems);
 		addDataSlot(networkStatus);
+		addDataSlot(visibleRows);
 		refreshDisplay();
 	}
 
@@ -144,10 +164,22 @@ public class TerminalMenu extends AbstractContainerMenu {
 		if (id >= SINGLE_EXTRACT_SLOT_BASE_BUTTON && id < SINGLE_EXTRACT_SLOT_BASE_BUTTON + NETWORK_SLOTS) {
 			int slot = id - SINGLE_EXTRACT_SLOT_BASE_BUTTON;
 			ItemStack displayedStack = displayItems.getStackInSlot(slot);
-			if (!displayedStack.isEmpty()) {
-				extractDisplayedStackToCursor(displayedStack, 1);
+			ItemStack carried = getCarried();
+			ItemStack extractionTarget = carried.isEmpty() ? displayedStack : carried;
+			if (!extractionTarget.isEmpty()) {
+				extractDisplayedStackToCursor(extractionTarget, 1);
 				refreshAfterInteraction();
 			}
+			return true;
+		}
+
+		if (id >= GRID_ROWS_BUTTON_BASE && id <= GRID_ROWS_BUTTON_BASE + MAX_GRID_ROWS) {
+			setVisibleRows(id - GRID_ROWS_BUTTON_BASE);
+			return true;
+		}
+
+		if (id >= SCROLL_TO_ROW_BASE_BUTTON) {
+			setScrollRow(id - SCROLL_TO_ROW_BASE_BUTTON);
 			return true;
 		}
 
@@ -183,7 +215,26 @@ public class TerminalMenu extends AbstractContainerMenu {
 			return extracted.isEmpty() ? ItemStack.EMPTY : originalStack;
 		}
 
+		if (isFilterSlot(index)) {
+			if (!moveItemStackTo(clickedStack, PLAYER_INVENTORY_START, HOTBAR_START + HOTBAR_SLOTS, true)) {
+				return ItemStack.EMPTY;
+			}
+
+			slot.set(clickedStack.isEmpty() ? ItemStack.EMPTY : clickedStack);
+			slot.setChanged();
+			refreshDisplay();
+			return originalStack;
+		}
+
 		if (isPlayerSlot(index)) {
+			if (isSupportedFilter(clickedStack)
+					&& moveItemStackTo(clickedStack, FILTER_SLOT_START, FILTER_SLOT_START + FILTER_SLOTS, false)) {
+				slot.set(clickedStack.isEmpty() ? ItemStack.EMPTY : clickedStack);
+				slot.setChanged();
+				refreshDisplay();
+				return originalStack;
+			}
+
 			ItemStack remaining = insertIntoNetwork(clickedStack.copy());
 			if (ItemStack.matches(remaining, clickedStack)) {
 				return ItemStack.EMPTY;
@@ -230,6 +281,12 @@ public class TerminalMenu extends AbstractContainerMenu {
 			return;
 		}
 
+		if (isFilterSlot(slotId)) {
+			super.clicked(slotId, button, clickType, player);
+			refreshAfterInteraction();
+			return;
+		}
+
 		super.clicked(slotId, button, clickType, player);
 	}
 
@@ -262,8 +319,25 @@ public class TerminalMenu extends AbstractContainerMenu {
 		return totalMatchingItems.get();
 	}
 
+	public int getVisibleRows() {
+		return Math.max(1, Math.min(MAX_GRID_ROWS, visibleRows.get()));
+	}
+
+	public void setVisibleRowsClient(int rows) {
+		visibleRows.set(clampVisibleRows(rows));
+		scrollRow.set(Math.min(scrollRow.get(), getMaximumScrollRow()));
+	}
+
+	public void setScrollRowClient(int row) {
+		scrollRow.set(Math.max(0, Math.min(getMaximumScrollRow(), row)));
+	}
+
 	public int getMaximumScrollRow() {
-		return Math.max(0, (getTotalMatchingItems() + GRID_COLUMNS - 1) / GRID_COLUMNS - GRID_ROWS);
+		return Math.max(0, (getTotalMatchingItems() + GRID_COLUMNS - 1) / GRID_COLUMNS - getVisibleRows());
+	}
+
+	public boolean isFilterSlotIndex(int index) {
+		return isFilterSlot(index);
 	}
 
 	public TerminalBlockEntity.NetworkStatus getNetworkStatus() {
@@ -273,29 +347,28 @@ public class TerminalMenu extends AbstractContainerMenu {
 	}
 
 	private void addNetworkSlots() {
-		int startX = 32;
-		int startY = 47;
-
-		for (int row = 0; row < GRID_ROWS; row++) {
+		for (int row = 0; row < MAX_GRID_ROWS; row++) {
 			for (int column = 0; column < GRID_COLUMNS; column++) {
 				int slot = column + row * GRID_COLUMNS;
-				this.addSlot(new NetworkDisplaySlot(displayItems, slot, startX + column * 18, startY + row * 18));
+				this.addSlot(new NetworkDisplaySlot(this, displayItems, slot, row, NETWORK_SLOT_X + column * 18, NETWORK_SLOT_Y + row * 18));
 			}
 		}
 	}
 
-	private void addPlayerInventorySlots(Inventory inventory) {
-		int startX = 32;
-		int startY = 170;
+	private void addTerminalFilterSlots() {
+		this.addSlot(new TerminalFilterSlot(filterItems, TerminalBlockEntity.LIST_FILTER_SLOT, FILTER_SLOT_X, LIST_FILTER_SLOT_Y));
+		this.addSlot(new TerminalFilterSlot(filterItems, TerminalBlockEntity.ATTRIBUTE_FILTER_SLOT, FILTER_SLOT_X, ATTRIBUTE_FILTER_SLOT_Y));
+	}
 
+	private void addPlayerInventorySlots(Inventory inventory) {
 		for (int row = 0; row < 3; row++) {
 			for (int column = 0; column < 9; column++) {
-				this.addSlot(new Slot(inventory, column + row * 9 + 9, startX + column * 18, startY + row * 18));
+				this.addSlot(new Slot(inventory, column + row * 9 + 9, NETWORK_SLOT_X + column * 18, PLAYER_INVENTORY_Y + row * 18));
 			}
 		}
 
 		for (int column = 0; column < 9; column++) {
-			this.addSlot(new Slot(inventory, column, startX + column * 18, 228));
+			this.addSlot(new Slot(inventory, column, NETWORK_SLOT_X + column * 18, HOTBAR_Y));
 		}
 	}
 
@@ -305,6 +378,10 @@ public class TerminalMenu extends AbstractContainerMenu {
 
 	private boolean isPlayerSlot(int index) {
 		return index >= PLAYER_INVENTORY_START && index < HOTBAR_START + HOTBAR_SLOTS;
+	}
+
+	private boolean isFilterSlot(int index) {
+		return index >= FILTER_SLOT_START && index < FILTER_SLOT_START + FILTER_SLOTS;
 	}
 
 	private void refreshDisplay() {
@@ -342,11 +419,30 @@ public class TerminalMenu extends AbstractContainerMenu {
 	}
 
 	private void scrollByRows(int rows) {
-		int nextRow = Math.max(0, Math.min(getMaximumScrollRow(), scrollRow.get() + rows));
-		if (nextRow != scrollRow.get()) {
-			scrollRow.set(nextRow);
-			refreshAfterInteraction();
+		setScrollRow(scrollRow.get() + rows);
+	}
+
+	private void setScrollRow(int row) {
+		int nextRow = Math.max(0, Math.min(getMaximumScrollRow(), row));
+		if (nextRow == scrollRow.get()) {
+			return;
 		}
+		scrollRow.set(nextRow);
+		refreshAfterInteraction();
+	}
+
+	private void setVisibleRows(int rows) {
+		int clampedRows = clampVisibleRows(rows);
+		if (clampedRows == visibleRows.get()) {
+			return;
+		}
+		visibleRows.set(clampedRows);
+		scrollRow.set(Math.min(scrollRow.get(), getMaximumScrollRow()));
+		refreshAfterInteraction();
+	}
+
+	private static int clampVisibleRows(int rows) {
+		return Math.max(1, Math.min(MAX_GRID_ROWS, rows));
 	}
 
 	private int getOneStackExtractAmount(int slot, ItemStack displayedStack) {
@@ -423,14 +519,23 @@ public class TerminalMenu extends AbstractContainerMenu {
 		return character >= 32 && character != 127;
 	}
 
+	private static boolean isSupportedFilter(ItemStack stack) {
+		return stack.getItem() instanceof ListFilterItem || stack.getItem() instanceof AttributeFilterItem;
+	}
+
 	private enum SortMode {
 		NAME,
 		COUNT
 	}
 
 	private static class NetworkDisplaySlot extends SlotItemHandler {
-		private NetworkDisplaySlot(ItemStackHandler itemHandler, int index, int xPosition, int yPosition) {
+		private final TerminalMenu menu;
+		private final int row;
+
+		private NetworkDisplaySlot(TerminalMenu menu, ItemStackHandler itemHandler, int index, int row, int xPosition, int yPosition) {
 			super(itemHandler, index, xPosition, yPosition);
+			this.menu = menu;
+			this.row = row;
 		}
 
 		@Override
@@ -441,6 +546,31 @@ public class TerminalMenu extends AbstractContainerMenu {
 		@Override
 		public boolean mayPickup(Player player) {
 			return true;
+		}
+
+		@Override
+		public boolean isActive() {
+			return row < menu.getVisibleRows();
+		}
+	}
+
+	private static class TerminalFilterSlot extends SlotItemHandler {
+		private TerminalFilterSlot(ItemStackHandler itemHandler, int index, int xPosition, int yPosition) {
+			super(itemHandler, index, xPosition, yPosition);
+		}
+
+		@Override
+		public boolean mayPlace(ItemStack stack) {
+			return switch (getSlotIndex()) {
+				case TerminalBlockEntity.LIST_FILTER_SLOT -> stack.getItem() instanceof ListFilterItem;
+				case TerminalBlockEntity.ATTRIBUTE_FILTER_SLOT -> stack.getItem() instanceof AttributeFilterItem;
+				default -> false;
+			};
+		}
+
+		@Override
+		public int getMaxStackSize() {
+			return 1;
 		}
 	}
 }

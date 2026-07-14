@@ -14,12 +14,14 @@ The `experiment/network-scan` branch currently includes:
 - Loaded connectors only, with a 64-connector limit per network
 - Combined item counts that keep different item components separate
 - Search by name, `@mod`, or `#tag`
-- Name/count sorting and a scrollable 9x6 item grid
+- Name/count sorting, a draggable proportional scrollbar, and small/medium/large/stretch grid heights
 - Shift-click deposits and withdrawals
 - Full-stack left-click withdrawals
 - Ctrl-left-click and Ctrl-scroll single-item transfers
 - Matching-stack-first network insertion
 - Live disconnected and overstressed terminal states
+- Persistent Create List Filter and Attribute Filter tabs on the terminal
+- Functional Storage, Sophisticated Storage, and Sophisticated Backpacks in the development client for compatibility testing
 
 ## Planned behaviour
 
@@ -33,7 +35,7 @@ The `experiment/network-scan` branch currently includes:
 
 ## Planned expansion
 
-- Connector priority and Create-filter support
+- Connector priority and per-connector Create-filter support
 - Functional Storage and Sophisticated Storage compatibility testing
 - Mechanical crafting grid with a per-player crafting matrix
 - Fluid grid and fluid-capable connectors

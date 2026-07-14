@@ -3,6 +3,9 @@
 	"block.mechanical_storage.mechanical_storage_connector": "Mechanical Storage Connector",
 	"block.mechanical_storage.mechanical_storage_terminal": "Mechanical Storage Terminal",
 	"container.mechanical_storage.terminal": "Terminal",
+	"container.mechanical_storage.search": "Search",
+	"container.mechanical_storage.list_filter": "Create List Filter",
+	"container.mechanical_storage.attribute_filter": "Create Attribute Filter",
 	"status.mechanical_storage.online": "Network Online",
 	"status.mechanical_storage.overstressed": "Network Overstressed",
 	"status.mechanical_storage.disconnected": "Network Disconnected"

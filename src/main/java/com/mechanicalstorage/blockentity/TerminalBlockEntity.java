@@ -4,10 +4,15 @@ import com.mechanicalstorage.MechanicalStorage;
 import com.mechanicalstorage.block.DirectionalMachineBlock;
 import com.mechanicalstorage.menu.TerminalMenu;
 import com.mechanicalstorage.network.StorageNetworkRegistry;
+import com.simibubi.create.content.logistics.filter.AttributeFilterItem;
+import com.simibubi.create.content.logistics.filter.FilterItemStack;
+import com.simibubi.create.content.logistics.filter.ListFilterItem;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
@@ -23,6 +28,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
+import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -33,6 +39,32 @@ import java.util.Locale;
 public class TerminalBlockEntity extends KineticBlockEntity implements MenuProvider {
 	public static final int MAX_CONNECTORS = 64;
 	private static final int MAX_SUMMARY_ITEMS = 8;
+	public static final int LIST_FILTER_SLOT = 0;
+	public static final int ATTRIBUTE_FILTER_SLOT = 1;
+	public static final int FILTER_SLOTS = 2;
+	private final ItemStackHandler terminalFilters = new ItemStackHandler(FILTER_SLOTS) {
+		@Override
+		public boolean isItemValid(int slot, ItemStack stack) {
+			return switch (slot) {
+				case LIST_FILTER_SLOT -> stack.getItem() instanceof ListFilterItem;
+				case ATTRIBUTE_FILTER_SLOT -> stack.getItem() instanceof AttributeFilterItem;
+				default -> false;
+			};
+		}
+
+		@Override
+		public int getSlotLimit(int slot) {
+			return 1;
+		}
+
+		@Override
+		protected void onContentsChanged(int slot) {
+			setChanged();
+			if (level != null && !level.isClientSide) {
+				sendData();
+			}
+		}
+	};
 
 	public TerminalBlockEntity(BlockEntityType<? extends TerminalBlockEntity> type, BlockPos pos, BlockState blockState) {
 		super(type, pos, blockState);
@@ -40,6 +72,24 @@ public class TerminalBlockEntity extends KineticBlockEntity implements MenuProvi
 
 	public TerminalBlockEntity(BlockPos pos, BlockState blockState) {
 		this(MechanicalStorage.MECHANICAL_STORAGE_TERMINAL_BLOCK_ENTITY.get(), pos, blockState);
+	}
+
+	public ItemStackHandler getTerminalFilters() {
+		return terminalFilters;
+	}
+
+	@Override
+	protected void write(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
+		super.write(compound, registries, clientPacket);
+		compound.put("TerminalFilters", terminalFilters.serializeNBT(registries));
+	}
+
+	@Override
+	protected void read(CompoundTag compound, HolderLookup.Provider registries, boolean clientPacket) {
+		super.read(compound, registries, clientPacket);
+		if (compound.contains("TerminalFilters")) {
+			terminalFilters.deserializeNBT(registries, compound.getCompound("TerminalFilters"));
+		}
 	}
 
 	public boolean isOnline() {
@@ -100,7 +150,7 @@ public class TerminalBlockEntity extends KineticBlockEntity implements MenuProvi
 		String normalizedSearch = normalizeSearch(searchText);
 
 		for (ItemSummary summary : networkSummary.itemSummary) {
-			if (matchesSearch(summary, normalizedSearch)) {
+			if (matchesTerminalFilters(summary.representative) && matchesSearch(summary, normalizedSearch)) {
 				entries.add(summary);
 			}
 		}
@@ -128,6 +178,20 @@ public class TerminalBlockEntity extends KineticBlockEntity implements MenuProvi
 		}
 
 		return new DisplayPage(stacks, entries.size());
+	}
+
+	private boolean matchesTerminalFilters(ItemStack stack) {
+		if (level == null) {
+			return false;
+		}
+
+		for (int slot = 0; slot < terminalFilters.getSlots(); slot++) {
+			ItemStack filter = terminalFilters.getStackInSlot(slot);
+			if (!filter.isEmpty() && !FilterItemStack.of(filter.copy()).test(level, stack)) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	public List<ItemStack> getNetworkDisplayStacks(int limit, String searchText, String sortMode, boolean descending) {
