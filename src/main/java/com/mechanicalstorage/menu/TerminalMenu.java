@@ -30,8 +30,8 @@ public class TerminalMenu extends AbstractContainerMenu {
 	public static final int NETWORK_SLOT_Y = 47;
 	public static final int PLAYER_INVENTORY_Y = NETWORK_SLOT_Y + MAX_GRID_ROWS * 18 + 15;
 	public static final int HOTBAR_Y = PLAYER_INVENTORY_Y + 58;
-	public static final int FILTER_SLOT_X = 7;
-	public static final int LIST_FILTER_SLOT_Y = NETWORK_SLOT_Y + MAX_GRID_ROWS * 18 - 34;
+	public static final int FILTER_SLOT_X = 212;
+	public static final int LIST_FILTER_SLOT_Y = NETWORK_SLOT_Y;
 	public static final int ATTRIBUTE_FILTER_SLOT_Y = LIST_FILTER_SLOT_Y + 18;
 	public static final int SEARCH_CLEAR_BUTTON = 100000;
 	public static final int SEARCH_BACKSPACE_BUTTON = 100001;
@@ -41,6 +41,8 @@ public class TerminalMenu extends AbstractContainerMenu {
 	public static final int SCROLL_UP_BUTTON = 100005;
 	public static final int SCROLL_DOWN_BUTTON = 100006;
 	public static final int SINGLE_DEPOSIT_BUTTON = 100007;
+	public static final int TOGGLE_LIST_FILTER_BUTTON = 100008;
+	public static final int TOGGLE_ATTRIBUTE_FILTER_BUTTON = 100009;
 	public static final int SEARCH_CHAR_BASE_BUTTON = 200000;
 	public static final int SINGLE_EXTRACT_SLOT_BASE_BUTTON = 300000;
 	public static final int GRID_ROWS_BUTTON_BASE = 400000;
@@ -61,6 +63,8 @@ public class TerminalMenu extends AbstractContainerMenu {
 	private final DataSlot totalMatchingItems = DataSlot.standalone();
 	private final DataSlot networkStatus = DataSlot.standalone();
 	private final DataSlot visibleRows = DataSlot.standalone();
+	private final DataSlot listFilterActive = DataSlot.standalone();
+	private final DataSlot attributeFilterActive = DataSlot.standalone();
 	@Nullable
 	private final TerminalBlockEntity terminal;
 	private String searchText = "";
@@ -91,6 +95,8 @@ public class TerminalMenu extends AbstractContainerMenu {
 		addDataSlot(totalMatchingItems);
 		addDataSlot(networkStatus);
 		addDataSlot(visibleRows);
+		addDataSlot(listFilterActive);
+		addDataSlot(attributeFilterActive);
 		refreshDisplay();
 	}
 
@@ -158,6 +164,16 @@ public class TerminalMenu extends AbstractContainerMenu {
 		if (id == SINGLE_DEPOSIT_BUTTON) {
 			depositCarriedStack(1);
 			refreshAfterInteraction();
+			return true;
+		}
+
+		if (id == TOGGLE_LIST_FILTER_BUTTON) {
+			toggleFilter(TerminalBlockEntity.LIST_FILTER_SLOT);
+			return true;
+		}
+
+		if (id == TOGGLE_ATTRIBUTE_FILTER_BUTTON) {
+			toggleFilter(TerminalBlockEntity.ATTRIBUTE_FILTER_SLOT);
 			return true;
 		}
 
@@ -340,6 +356,18 @@ public class TerminalMenu extends AbstractContainerMenu {
 		return isFilterSlot(index);
 	}
 
+	public ItemStack getTerminalFilter(int slot) {
+		return slot >= 0 && slot < FILTER_SLOTS ? filterItems.getStackInSlot(slot) : ItemStack.EMPTY;
+	}
+
+	public boolean isFilterActive(int slot) {
+		return switch (slot) {
+			case TerminalBlockEntity.LIST_FILTER_SLOT -> listFilterActive.get() != 0;
+			case TerminalBlockEntity.ATTRIBUTE_FILTER_SLOT -> attributeFilterActive.get() != 0;
+			default -> false;
+		};
+	}
+
 	public TerminalBlockEntity.NetworkStatus getNetworkStatus() {
 		int status = networkStatus.get();
 		TerminalBlockEntity.NetworkStatus[] values = TerminalBlockEntity.NetworkStatus.values();
@@ -393,6 +421,9 @@ public class TerminalMenu extends AbstractContainerMenu {
 			return;
 		}
 
+		listFilterActive.set(terminal.isFilterActive(TerminalBlockEntity.LIST_FILTER_SLOT) ? 1 : 0);
+		attributeFilterActive.set(terminal.isFilterActive(TerminalBlockEntity.ATTRIBUTE_FILTER_SLOT) ? 1 : 0);
+
 		networkStatus.set(terminal.getNetworkStatus().ordinal());
 		TerminalBlockEntity.DisplayPage page = terminal.getNetworkDisplayPage(NETWORK_SLOTS, scrollRow.get() * GRID_COLUMNS, searchText, sortMode.name(), sortDescending);
 		totalMatchingItems.set(page.totalItems());
@@ -406,6 +437,14 @@ public class TerminalMenu extends AbstractContainerMenu {
 		for (int slot = 0; slot < Math.min(NETWORK_SLOTS, stacks.size()); slot++) {
 			displayItems.setStackInSlot(slot, stacks.get(slot).copy());
 		}
+	}
+
+	private void toggleFilter(int slot) {
+		if (terminal == null || terminal.getTerminalFilters().getStackInSlot(slot).isEmpty()) {
+			return;
+		}
+		terminal.setFilterActive(slot, !terminal.isFilterActive(slot));
+		refreshAfterInteraction();
 	}
 
 	private void refreshAfterSearchChange() {
