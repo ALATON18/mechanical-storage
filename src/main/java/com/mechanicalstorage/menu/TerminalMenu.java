@@ -65,7 +65,8 @@ public class TerminalMenu extends AbstractContainerMenu {
 	private final DataSlot visibleRows = DataSlot.standalone();
 	private final DataSlot listFilterActive = DataSlot.standalone();
 	private final DataSlot attributeFilterActive = DataSlot.standalone();
-	private final DataSlot[] networkSlotCounts = new DataSlot[NETWORK_SLOTS];
+	private final DataSlot[] networkSlotCountLow = new DataSlot[NETWORK_SLOTS];
+	private final DataSlot[] networkSlotCountHigh = new DataSlot[NETWORK_SLOTS];
 	@Nullable
 	private final TerminalBlockEntity terminal;
 	private String searchText = "";
@@ -99,8 +100,10 @@ public class TerminalMenu extends AbstractContainerMenu {
 		addDataSlot(listFilterActive);
 		addDataSlot(attributeFilterActive);
 		for (int slot = 0; slot < NETWORK_SLOTS; slot++) {
-			networkSlotCounts[slot] = DataSlot.standalone();
-			addDataSlot(networkSlotCounts[slot]);
+			networkSlotCountLow[slot] = DataSlot.standalone();
+			networkSlotCountHigh[slot] = DataSlot.standalone();
+			addDataSlot(networkSlotCountLow[slot]);
+			addDataSlot(networkSlotCountHigh[slot]);
 		}
 		refreshDisplay();
 	}
@@ -329,7 +332,9 @@ public class TerminalMenu extends AbstractContainerMenu {
 			return 0;
 		}
 
-		return networkSlotCounts[slot].get();
+		int low = networkSlotCountLow[slot].get() & 0xFFFF;
+		int high = networkSlotCountHigh[slot].get() & 0x7FFF;
+		return (high << 16) | low;
 	}
 
 	public int getScrollRow() {
@@ -418,13 +423,16 @@ public class TerminalMenu extends AbstractContainerMenu {
 	}
 
 	private void refreshDisplay() {
-		for (int slot = 0; slot < NETWORK_SLOTS; slot++) {
-			displayItems.setStackInSlot(slot, ItemStack.EMPTY);
-			networkSlotCounts[slot].set(0);
-		}
-
+		// The client menu has no terminal. Its predicted click handling must leave the
+		// server-synchronised display alone or it clears every visible result before
+		// the authoritative click response arrives.
 		if (terminal == null) {
 			return;
+		}
+
+		for (int slot = 0; slot < NETWORK_SLOTS; slot++) {
+			displayItems.setStackInSlot(slot, ItemStack.EMPTY);
+			setNetworkSlotCount(slot, 0);
 		}
 
 		listFilterActive.set(terminal.isFilterActive(TerminalBlockEntity.LIST_FILTER_SLOT) ? 1 : 0);
@@ -442,9 +450,15 @@ public class TerminalMenu extends AbstractContainerMenu {
 		List<ItemStack> stacks = page.stacks();
 		for (int slot = 0; slot < Math.min(NETWORK_SLOTS, stacks.size()); slot++) {
 			ItemStack stack = stacks.get(slot);
-			networkSlotCounts[slot].set(stack.getCount());
+			setNetworkSlotCount(slot, stack.getCount());
 			displayItems.setStackInSlot(slot, stack.copyWithCount(1));
 		}
+	}
+
+	private void setNetworkSlotCount(int slot, int count) {
+		int safeCount = Math.max(0, count);
+		networkSlotCountLow[slot].set(safeCount & 0xFFFF);
+		networkSlotCountHigh[slot].set((safeCount >>> 16) & 0x7FFF);
 	}
 
 	private void toggleFilter(int slot) {
@@ -604,16 +618,3 @@ public class TerminalMenu extends AbstractContainerMenu {
 	private static class TerminalFilterSlot extends SlotItemHandler {
 		private TerminalFilterSlot(ItemStackHandler itemHandler, int index, int xPosition, int yPosition) {
 			super(itemHandler, index, xPosition, yPosition);
-		}
-
-		@Override
-		public boolean mayPlace(ItemStack stack) {
-			return isSupportedFilter(stack);
-		}
-
-		@Override
-		public int getMaxStackSize() {
-			return 1;
-		}
-	}
-}
