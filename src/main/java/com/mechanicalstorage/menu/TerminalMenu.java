@@ -618,3 +618,16 @@ public class TerminalMenu extends AbstractContainerMenu {
 	private static class TerminalFilterSlot extends SlotItemHandler {
 		private TerminalFilterSlot(ItemStackHandler itemHandler, int index, int xPosition, int yPosition) {
 			super(itemHandler, index, xPosition, yPosition);
+		}
+
+		@Override
+		public boolean mayPlace(ItemStack stack) {
+			return isSupportedFilter(stack);
+		}
+
+		@Override
+		public int getMaxStackSize() {
+			return 1;
+		}
+	}
+}
