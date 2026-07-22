@@ -72,10 +72,6 @@ public class MechanicalStorage {
 	public static final DeferredHolder<CreativeModeTab, CreativeModeTab> MECHANICAL_STORAGE_TAB = CREATIVE_MODE_TABS.register("mechanical_storage", () -> CreativeModeTab.builder()
 			.title(Component.translatable("itemGroup.mechanical_storage"))
 			.icon(() -> MECHANICAL_STORAGE_TERMINAL.get().asItem().getDefaultInstance())
-			.displayItems((parameters, output) -> {
-				output.accept(MECHANICAL_STORAGE_CONNECTOR.get().asItem());
-				output.accept(MECHANICAL_STORAGE_TERMINAL.get().asItem());
-			})
 			.build());
 
 	public MechanicalStorage(IEventBus modEventBus, ModContainer modContainer) {
