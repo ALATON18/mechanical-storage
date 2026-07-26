@@ -28,6 +28,15 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 	private static final int SCROLLBAR_X = 194;
 	private static final int SCROLLBAR_WIDTH = 5;
 	private static final int MIN_SCROLLBAR_THUMB_HEIGHT = 12;
+	private static final int FILTER_TAB_START_X = 31;
+	private static final int FILTER_TAB_Y = -12;
+	private static final int FILTER_TAB_WIDTH = 28;
+	private static final int FILTER_TAB_HEIGHT = 22;
+	private static final int ACTIVE_FILTER_TAB_HEIGHT = 24;
+	private static final int[] FILTER_TAB_SLOTS = {
+			TerminalBlockEntity.LIST_FILTER_SLOT,
+			TerminalBlockEntity.ATTRIBUTE_FILTER_SLOT
+	};
 
 	private static SizeMode preferredSize = SizeMode.MEDIUM;
 
@@ -67,7 +76,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 		addSideButton(0, "AZ", TerminalMenu.SORT_NAME_BUTTON);
 		addSideButton(1, "Qt", TerminalMenu.SORT_COUNT_BUTTON);
 		addRenderableWidget(Button.builder(Component.literal(preferredSize.label), button -> cycleSize())
-				.bounds(this.leftPos - 22, this.topPos + 93, 22, 18)
+				.bounds(this.leftPos + 1, this.topPos + 93, 22, 18)
 				.build());
 	}
 
@@ -94,8 +103,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 		drawSlotBackgrounds(guiGraphics, gridX, hotbarGridY, 9, 1);
 		drawRecessedSlot(guiGraphics, x + TerminalMenu.FILTER_SLOT_X - 1, y + TerminalMenu.LIST_FILTER_SLOT_Y - 1);
 		drawRecessedSlot(guiGraphics, x + TerminalMenu.FILTER_SLOT_X - 1, y + TerminalMenu.ATTRIBUTE_FILTER_SLOT_Y - 1);
-		drawInstalledFilterTab(guiGraphics, TerminalBlockEntity.LIST_FILTER_SLOT, x + 6, y + visualListFilterSlotY(rows) - 1);
-		drawInstalledFilterTab(guiGraphics, TerminalBlockEntity.ATTRIBUTE_FILTER_SLOT, x + 6, y + visualAttributeFilterSlotY(rows) - 1);
+		drawInstalledFilterTabs(guiGraphics);
 		drawScrollbar(guiGraphics);
 	}
 
@@ -277,7 +285,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 
 	private void addSideButton(int row, String label, int buttonId) {
 		addRenderableWidget(Button.builder(Component.literal(label), button -> sendMenuButton(buttonId))
-				.bounds(this.leftPos - 22, this.topPos + 47 + row * 23, 22, 18)
+				.bounds(this.leftPos + 1, this.topPos + 47 + row * 23, 22, 18)
 				.build());
 	}
 
@@ -418,22 +426,39 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 		}
 	}
 
-	private void drawInstalledFilterTab(GuiGraphics guiGraphics, int filterSlot, int x, int y) {
+	private void drawInstalledFilterTabs(GuiGraphics guiGraphics) {
+		for (int filterSlot : FILTER_TAB_SLOTS) {
+			drawInstalledFilterTab(guiGraphics, filterSlot);
+		}
+	}
+
+	private void drawInstalledFilterTab(GuiGraphics guiGraphics, int filterSlot) {
 		ItemStack filter = menu.getTerminalFilter(filterSlot);
 		if (filter.isEmpty()) {
 			return;
 		}
 
 		boolean active = menu.isFilterActive(filterSlot);
-		guiGraphics.fill(x - 4, y - 1, x + 20, y + 19, BG_BORDER);
-		guiGraphics.fill(x - 3, y, x + 20, y + 18, active ? 0xFFB6D7A8 : BG);
-		drawRecessedSlot(guiGraphics, x, y);
-		if (active) {
-			guiGraphics.fill(x + 1, y + 1, x + 17, y + 2, 0xFF67A34D);
+		int x = this.leftPos + filterTabX(filterSlot);
+		int y = this.topPos + FILTER_TAB_Y;
+		int bottom = y + (active ? ACTIVE_FILTER_TAB_HEIGHT : FILTER_TAB_HEIGHT);
+		int fill = active ? BG : BG_DARK;
+
+		guiGraphics.fill(x + 2, y + 2, x + FILTER_TAB_WIDTH + 2, bottom + 2, BG_SHADOW);
+		guiGraphics.fill(x, y + 2, x + 1, bottom, BG_BORDER);
+		guiGraphics.fill(x + 1, y + 1, x + 2, bottom, BG_LIGHT);
+		guiGraphics.fill(x + 2, y, x + FILTER_TAB_WIDTH - 2, y + 1, BG_LIGHT);
+		guiGraphics.fill(x + FILTER_TAB_WIDTH - 2, y + 1, x + FILTER_TAB_WIDTH - 1, bottom, BG_BORDER);
+		guiGraphics.fill(x + FILTER_TAB_WIDTH - 1, y + 2, x + FILTER_TAB_WIDTH, bottom, BG_SHADOW);
+		guiGraphics.fill(x + 2, y + 1, x + FILTER_TAB_WIDTH - 2, bottom, fill);
+		if (!active) {
+			guiGraphics.fill(x + 1, bottom - 1, x + FILTER_TAB_WIDTH - 1, bottom, BG_BORDER);
+		} else {
+			guiGraphics.fill(x + 1, this.topPos + 10, x + FILTER_TAB_WIDTH - 1, bottom, BG);
 		}
 
 		ItemStack icon = filterTabIcon(filterSlot, filter);
-		guiGraphics.renderItem(icon, x + 1, y + 1);
+		guiGraphics.renderItem(icon, x + 6, y + 4);
 	}
 
 	private ItemStack filterTabIcon(int filterSlot, ItemStack filter) {
@@ -450,13 +475,12 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 	}
 
 	private boolean clickFilterTab(double mouseX, double mouseY) {
-		int rows = menu.getVisibleRows();
-		if (isMouseOverFilterTab(mouseX, mouseY, visualListFilterSlotY(rows))
+		if (isMouseOverFilterTab(mouseX, mouseY, TerminalBlockEntity.LIST_FILTER_SLOT)
 				&& !menu.getTerminalFilter(TerminalBlockEntity.LIST_FILTER_SLOT).isEmpty()) {
 			sendMenuButton(TerminalMenu.TOGGLE_LIST_FILTER_BUTTON);
 			return true;
 		}
-		if (isMouseOverFilterTab(mouseX, mouseY, visualAttributeFilterSlotY(rows))
+		if (isMouseOverFilterTab(mouseX, mouseY, TerminalBlockEntity.ATTRIBUTE_FILTER_SLOT)
 				&& !menu.getTerminalFilter(TerminalBlockEntity.ATTRIBUTE_FILTER_SLOT).isEmpty()) {
 			sendMenuButton(TerminalMenu.TOGGLE_ATTRIBUTE_FILTER_BUTTON);
 			return true;
@@ -464,21 +488,35 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 		return false;
 	}
 
-	private boolean isMouseOverFilterTab(double mouseX, double mouseY, int slotY) {
-		int left = this.leftPos + 2;
-		int top = this.topPos + slotY - 2;
-		return mouseX >= left && mouseX < left + 24 && mouseY >= top && mouseY < top + 20;
+	private boolean isMouseOverFilterTab(double mouseX, double mouseY, int filterSlot) {
+		int left = this.leftPos + filterTabX(filterSlot);
+		int top = this.topPos + FILTER_TAB_Y;
+		int height = menu.isFilterActive(filterSlot) ? ACTIVE_FILTER_TAB_HEIGHT : FILTER_TAB_HEIGHT;
+		return mouseX >= left && mouseX < left + FILTER_TAB_WIDTH
+				&& mouseY >= top && mouseY < top + height;
 	}
 
 	private void renderFilterTabTooltip(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-		int rows = menu.getVisibleRows();
-		if (isMouseOverFilterTab(mouseX, mouseY, visualListFilterSlotY(rows))
+		if (isMouseOverFilterTab(mouseX, mouseY, TerminalBlockEntity.LIST_FILTER_SLOT)
 				&& !menu.getTerminalFilter(TerminalBlockEntity.LIST_FILTER_SLOT).isEmpty()) {
 			guiGraphics.renderTooltip(this.font, filterToggleTooltip(TerminalBlockEntity.LIST_FILTER_SLOT), mouseX, mouseY);
-		} else if (isMouseOverFilterTab(mouseX, mouseY, visualAttributeFilterSlotY(rows))
+		} else if (isMouseOverFilterTab(mouseX, mouseY, TerminalBlockEntity.ATTRIBUTE_FILTER_SLOT)
 				&& !menu.getTerminalFilter(TerminalBlockEntity.ATTRIBUTE_FILTER_SLOT).isEmpty()) {
 			guiGraphics.renderTooltip(this.font, filterToggleTooltip(TerminalBlockEntity.ATTRIBUTE_FILTER_SLOT), mouseX, mouseY);
 		}
+	}
+
+	private int filterTabX(int filterSlot) {
+		int visibleIndex = 0;
+		for (int candidate : FILTER_TAB_SLOTS) {
+			if (candidate == filterSlot) {
+				return FILTER_TAB_START_X + visibleIndex * FILTER_TAB_WIDTH;
+			}
+			if (!menu.getTerminalFilter(candidate).isEmpty()) {
+				visibleIndex++;
+			}
+		}
+		return FILTER_TAB_START_X;
 	}
 
 	private Component filterToggleTooltip(int slot) {
@@ -510,14 +548,6 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 
 	private static int visualHotbarY(int rows) {
 		return visualPlayerInventoryY(rows) + 58;
-	}
-
-	private static int visualListFilterSlotY(int rows) {
-		return TerminalMenu.NETWORK_SLOT_Y + rows * 18 - 34;
-	}
-
-	private static int visualAttributeFilterSlotY(int rows) {
-		return visualListFilterSlotY(rows) + 18;
 	}
 
 	private enum SizeMode {
