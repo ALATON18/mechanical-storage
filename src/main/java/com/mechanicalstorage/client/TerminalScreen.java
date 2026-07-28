@@ -14,16 +14,17 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 
 public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
-	private static final int BG = 0xFFC6C6C6;
-	private static final int BG_LIGHT = 0xFFE8E8E8;
-	private static final int BG_BORDER = 0xFF5F5F5F;
-	private static final int BG_SHADOW = 0xFF242424;
-	private static final int BG_DARK = 0xFF8B8B8B;
-	private static final int SLOT_DARK = 0xFF373737;
-	private static final int SLOT_LIGHT = 0xFFDCDCDC;
-	private static final int SLOT = 0xFF8B8B8B;
-	private static final int TEXT = 0xFF404040;
+	private static final int BG = 0xFFC1AE83;
+	private static final int BG_LIGHT = 0xFFEADBB5;
+	private static final int BG_BORDER = 0xFF4B3021;
+	private static final int BG_SHADOW = 0xFF24150F;
+	private static final int BG_DARK = 0xFF6B4A35;
+	private static final int SLOT_DARK = 0xFF382219;
+	private static final int SLOT_LIGHT = 0xFFD8C79E;
+	private static final int SLOT = 0xFF8D775B;
+	private static final int TEXT = 0xFF382219;
 	private static final int PANEL_WIDTH = 204;
+	private static final int PANEL_TOP = 10;
 	private static final int BASE_IMAGE_HEIGHT = 132;
 	private static final int SCROLLBAR_X = 194;
 	private static final int SCROLLBAR_WIDTH = 5;
@@ -31,8 +32,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 	private static final int FILTER_TAB_START_X = 31;
 	private static final int FILTER_TAB_Y = -12;
 	private static final int FILTER_TAB_WIDTH = 28;
-	private static final int FILTER_TAB_HEIGHT = 22;
-	private static final int ACTIVE_FILTER_TAB_HEIGHT = 24;
+	private static final int FILTER_TAB_HEIGHT = 24;
 	private static final int[] FILTER_TAB_SLOTS = {
 			TerminalBlockEntity.LIST_FILTER_SLOT,
 			TerminalBlockEntity.ATTRIBUTE_FILTER_SLOT
@@ -92,8 +92,10 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 		int gridWidth = TerminalMenu.GRID_COLUMNS * 18;
 		int networkGridHeight = rows * 18;
 
-		drawModernPanel(guiGraphics, x + 24, y + 10, x + PANEL_WIDTH - 4, y + imageHeight - 4);
-		drawModernPanel(guiGraphics, x + PANEL_WIDTH, y + 10, x + imageWidth, y + 58);
+		drawInstalledFilterTabBacks(guiGraphics);
+		drawModernPanel(guiGraphics, x + 24, y + PANEL_TOP, x + PANEL_WIDTH - 4, y + imageHeight - 4);
+		drawModernPanel(guiGraphics, x + PANEL_WIDTH, y + PANEL_TOP, x + imageWidth, y + 58);
+		drawSelectedFilterTabConnections(guiGraphics);
 		drawInsetPanel(guiGraphics, gridX, networkGridY, gridX + gridWidth, networkGridY + networkGridHeight);
 		drawInsetPanel(guiGraphics, gridX, inventoryGridY, gridX + gridWidth, inventoryGridY + 3 * 18);
 		drawInsetPanel(guiGraphics, gridX, hotbarGridY, gridX + gridWidth, hotbarGridY + 18);
@@ -103,7 +105,6 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 		drawSlotBackgrounds(guiGraphics, gridX, hotbarGridY, 9, 1);
 		drawRecessedSlot(guiGraphics, x + TerminalMenu.FILTER_SLOT_X - 1, y + TerminalMenu.LIST_FILTER_SLOT_Y - 1);
 		drawRecessedSlot(guiGraphics, x + TerminalMenu.FILTER_SLOT_X - 1, y + TerminalMenu.ATTRIBUTE_FILTER_SLOT_Y - 1);
-		drawInstalledFilterTabs(guiGraphics);
 		drawScrollbar(guiGraphics);
 	}
 
@@ -403,7 +404,11 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 	}
 
 	private void drawModernPanel(GuiGraphics guiGraphics, int left, int top, int right, int bottom) {
-		guiGraphics.fill(left + 3, top + 3, right + 2, bottom + 2, BG_SHADOW);
+		guiGraphics.fill(right, top + 3, right + 2, bottom - 2, BG_SHADOW);
+		guiGraphics.fill(right - 1, top + 2, right + 1, top + 3, BG_SHADOW);
+		guiGraphics.fill(left + 3, bottom, right - 2, bottom + 2, BG_SHADOW);
+		guiGraphics.fill(left + 2, bottom - 1, left + 3, bottom + 1, BG_SHADOW);
+		guiGraphics.fill(right - 2, bottom - 1, right, bottom + 1, BG_SHADOW);
 		guiGraphics.fill(left + 1, top, right - 1, top + 1, BG_BORDER);
 		guiGraphics.fill(left, top + 1, right, bottom - 1, BG_BORDER);
 		guiGraphics.fill(left + 1, bottom - 1, right - 1, bottom, BG_BORDER);
@@ -426,13 +431,13 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 		}
 	}
 
-	private void drawInstalledFilterTabs(GuiGraphics guiGraphics) {
+	private void drawInstalledFilterTabBacks(GuiGraphics guiGraphics) {
 		for (int filterSlot : FILTER_TAB_SLOTS) {
-			drawInstalledFilterTab(guiGraphics, filterSlot);
+			drawInstalledFilterTabBack(guiGraphics, filterSlot);
 		}
 	}
 
-	private void drawInstalledFilterTab(GuiGraphics guiGraphics, int filterSlot) {
+	private void drawInstalledFilterTabBack(GuiGraphics guiGraphics, int filterSlot) {
 		ItemStack filter = menu.getTerminalFilter(filterSlot);
 		if (filter.isEmpty()) {
 			return;
@@ -441,24 +446,41 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 		boolean active = menu.isFilterActive(filterSlot);
 		int x = this.leftPos + filterTabX(filterSlot);
 		int y = this.topPos + FILTER_TAB_Y;
-		int bottom = y + (active ? ACTIVE_FILTER_TAB_HEIGHT : FILTER_TAB_HEIGHT);
+		int bottom = y + FILTER_TAB_HEIGHT;
 		int fill = active ? BG : BG_DARK;
 
-		guiGraphics.fill(x + 2, y + 2, x + FILTER_TAB_WIDTH + 2, bottom + 2, BG_SHADOW);
-		guiGraphics.fill(x, y + 2, x + 1, bottom, BG_BORDER);
-		guiGraphics.fill(x + 1, y + 1, x + 2, bottom, BG_LIGHT);
+		guiGraphics.fill(x + FILTER_TAB_WIDTH, y + 3, x + FILTER_TAB_WIDTH + 2, bottom - 1, BG_SHADOW);
+		guiGraphics.fill(x + FILTER_TAB_WIDTH - 1, y + 2, x + FILTER_TAB_WIDTH + 1, y + 3, BG_SHADOW);
+		guiGraphics.fill(x + 3, bottom, x + FILTER_TAB_WIDTH - 1, bottom + 2, BG_SHADOW);
+		guiGraphics.fill(x + 2, bottom - 1, x + 3, bottom + 1, BG_SHADOW);
+		guiGraphics.fill(x + FILTER_TAB_WIDTH - 1, bottom - 1, x + FILTER_TAB_WIDTH + 1, bottom, BG_SHADOW);
+
+		guiGraphics.fill(x + 2, y, x + FILTER_TAB_WIDTH - 2, bottom, BG_BORDER);
+		guiGraphics.fill(x + 1, y + 1, x + FILTER_TAB_WIDTH - 1, bottom, BG_BORDER);
+		guiGraphics.fill(x, y + 2, x + FILTER_TAB_WIDTH, bottom, BG_BORDER);
+		guiGraphics.fill(x + 2, y + 1, x + FILTER_TAB_WIDTH - 2, bottom - 1, fill);
+		guiGraphics.fill(x + 1, y + 2, x + FILTER_TAB_WIDTH - 1, bottom - 1, fill);
 		guiGraphics.fill(x + 2, y, x + FILTER_TAB_WIDTH - 2, y + 1, BG_LIGHT);
-		guiGraphics.fill(x + FILTER_TAB_WIDTH - 2, y + 1, x + FILTER_TAB_WIDTH - 1, bottom, BG_BORDER);
-		guiGraphics.fill(x + FILTER_TAB_WIDTH - 1, y + 2, x + FILTER_TAB_WIDTH, bottom, BG_SHADOW);
-		guiGraphics.fill(x + 2, y + 1, x + FILTER_TAB_WIDTH - 2, bottom, fill);
-		if (!active) {
-			guiGraphics.fill(x + 1, bottom - 1, x + FILTER_TAB_WIDTH - 1, bottom, BG_BORDER);
-		} else {
-			guiGraphics.fill(x + 1, this.topPos + 10, x + FILTER_TAB_WIDTH - 1, bottom, BG);
-		}
+		guiGraphics.fill(x + 1, y + 2, x + 2, bottom - 1, BG_LIGHT);
+		guiGraphics.fill(x + FILTER_TAB_WIDTH - 2, y + 2, x + FILTER_TAB_WIDTH - 1, bottom - 1, BG_BORDER);
+		guiGraphics.fill(x + 2, bottom - 1, x + FILTER_TAB_WIDTH - 2, bottom, BG_SHADOW);
 
 		ItemStack icon = filterTabIcon(filterSlot, filter);
 		guiGraphics.renderItem(icon, x + 6, y + 4);
+	}
+
+	private void drawSelectedFilterTabConnections(GuiGraphics guiGraphics) {
+		for (int filterSlot : FILTER_TAB_SLOTS) {
+			if (menu.getTerminalFilter(filterSlot).isEmpty() || !menu.isFilterActive(filterSlot)) {
+				continue;
+			}
+
+			int x = this.leftPos + filterTabX(filterSlot);
+			int panelTop = this.topPos + PANEL_TOP;
+			guiGraphics.fill(x + 2, panelTop - 1, x + FILTER_TAB_WIDTH - 2, panelTop + 3, BG);
+			guiGraphics.fill(x + 1, panelTop, x + 2, panelTop + 2, BG_LIGHT);
+			guiGraphics.fill(x + FILTER_TAB_WIDTH - 2, panelTop, x + FILTER_TAB_WIDTH - 1, panelTop + 2, BG_BORDER);
+		}
 	}
 
 	private ItemStack filterTabIcon(int filterSlot, ItemStack filter) {
@@ -491,9 +513,8 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 	private boolean isMouseOverFilterTab(double mouseX, double mouseY, int filterSlot) {
 		int left = this.leftPos + filterTabX(filterSlot);
 		int top = this.topPos + FILTER_TAB_Y;
-		int height = menu.isFilterActive(filterSlot) ? ACTIVE_FILTER_TAB_HEIGHT : FILTER_TAB_HEIGHT;
 		return mouseX >= left && mouseX < left + FILTER_TAB_WIDTH
-				&& mouseY >= top && mouseY < top + height;
+				&& mouseY >= top && mouseY < top + FILTER_TAB_HEIGHT;
 	}
 
 	private void renderFilterTabTooltip(GuiGraphics guiGraphics, int mouseX, int mouseY) {
