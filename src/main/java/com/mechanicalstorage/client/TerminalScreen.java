@@ -5,6 +5,7 @@ import com.mechanicalstorage.menu.TerminalMenu;
 import com.simibubi.create.content.logistics.filter.FilterItemStack;
 import com.simibubi.create.content.logistics.filter.ListFilterItem;
 import com.simibubi.create.content.logistics.item.filter.attribute.attributes.AddedByAttribute;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
@@ -182,8 +183,32 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 			int first = this.menu.getScrollRow() * TerminalMenu.GRID_COLUMNS + 1;
 			int last = Math.min(this.menu.getTotalMatchingItems(), first + this.menu.getVisibleRows() * TerminalMenu.GRID_COLUMNS - 1);
 			String range = first + "-" + last + "/" + this.menu.getTotalMatchingItems();
-			guiGraphics.drawString(this.font, range, 192 - this.font.width(range), 28, TEXT, false);
+			guiGraphics.drawString(this.font, range, 192 - this.font.width(range), 29, TEXT, false);
 		}
+	}
+
+	@Override
+	protected List<Component> getTooltipFromContainerItem(ItemStack stack) {
+		List<Component> tooltip = super.getTooltipFromContainerItem(stack);
+		if (this.hoveredSlot == null) {
+			return tooltip;
+		}
+
+		int slotIndex = this.menu.slots.indexOf(this.hoveredSlot);
+		if (slotIndex < 0 || slotIndex >= TerminalMenu.NETWORK_SLOTS) {
+			return tooltip;
+		}
+
+		String modId = stack.getItem().getCreatorModId(stack);
+		if (modId == null) {
+			return tooltip;
+		}
+
+		String modName = modDisplayName(modId);
+		if (tooltip.stream().noneMatch(line -> line.getString().equals(modName))) {
+			tooltip.add(Component.literal(modName).withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
+		}
+		return tooltip;
 	}
 
 	@Override
@@ -576,7 +601,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 			attributeFilter.attributeTests.forEach(test -> {
 				Component attributeName = test.getFirst() instanceof AddedByAttribute addedBy
 						? Component.literal((test.getSecond() ? "Not " : "") + modDisplayName(addedBy.modId()))
-						: test.getFirst().format(test.getSecond());
+						: shortenAttributeName(test.getFirst().format(test.getSecond()));
 				tooltip.add(Component.literal("- ").append(attributeName));
 			});
 		}
@@ -587,6 +612,17 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 					: "No attributes configured"));
 		}
 		return tooltip;
+	}
+
+	private static Component shortenAttributeName(Component attributeName) {
+		String text = attributeName.getString();
+		if (text.startsWith("is not in group ")) {
+			return Component.literal("not group " + text.substring("is not in group ".length()));
+		}
+		if (text.startsWith("is in group ")) {
+			return Component.literal("group " + text.substring("is in group ".length()));
+		}
+		return attributeName;
 	}
 
 	private static String modDisplayName(String modId) {
