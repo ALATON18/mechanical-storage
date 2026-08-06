@@ -1,11 +1,13 @@
 package com.mechanicalstorage.client;
 
+import com.mechanicalstorage.MechanicalStorage;
 import com.mechanicalstorage.blockentity.TerminalBlockEntity;
 import com.mechanicalstorage.menu.TerminalMenu;
 import com.simibubi.create.content.logistics.filter.FilterItemStack;
 import com.simibubi.create.content.logistics.filter.ListFilterItem;
 import com.simibubi.create.content.logistics.item.filter.attribute.attributes.AddedByAttribute;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
@@ -18,21 +20,27 @@ import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforgespi.language.IModInfo;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Properties;
 import java.util.Set;
 
 public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
-	private static final int BG = 0xFFC1AE83;
-	private static final int BG_LIGHT = 0xFFEADBB5;
-	private static final int BG_BORDER = 0xFF4B3021;
-	private static final int BG_SHADOW = 0xFF24150F;
-	private static final int BG_DARK = 0xFF6B4A35;
-	private static final int SLOT_DARK = 0xFF382219;
-	private static final int SLOT_LIGHT = 0xFFD8C79E;
-	private static final int SLOT = 0xFF8D775B;
-	private static final int TEXT = 0xFF382219;
+	private static int BG = 0xFFC1AE83;
+	private static int BG_LIGHT = 0xFFEADBB5;
+	private static int BG_BORDER = 0xFF4B3021;
+	private static int BG_SHADOW = 0xFF24150F;
+	private static int BG_DARK = 0xFF6B4A35;
+	private static int SLOT_DARK = 0xFF382219;
+	private static int SLOT_LIGHT = 0xFFD8C79E;
+	private static int SLOT = 0xFF8D775B;
+	private static int TEXT = 0xFF382219;
 	private static final int PANEL_WIDTH = 204;
 	private static final int PANEL_TOP = 10;
 	private static final int BASE_IMAGE_HEIGHT = 136;
@@ -43,12 +51,12 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 	private static final int FILTER_TAB_Y = -12;
 	private static final int FILTER_TAB_WIDTH = 28;
 	private static final int FILTER_TAB_HEIGHT = 24;
-	private static final int[] FILTER_TAB_SLOTS = {
-			TerminalBlockEntity.LIST_FILTER_SLOT,
-			TerminalBlockEntity.ATTRIBUTE_FILTER_SLOT
-	};
+	private static final int[] FILTER_TAB_SLOTS = {0, 1, 2, 3};
+	private static final String THEME_PREFERENCE_FILE = "mechanical_storage-client.properties";
 
 	private static SizeMode preferredSize = SizeMode.MEDIUM;
+	private static boolean createTheme = true;
+	private static boolean themeLoaded;
 
 	private EditBox searchBox;
 	private String searchQuery = "";
@@ -58,6 +66,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 
 	public TerminalScreen(TerminalMenu menu, Inventory playerInventory, Component title) {
 		super(menu, playerInventory, title);
+		ensureThemeLoaded();
 		this.imageWidth = 236;
 		this.imageHeight = imageHeight(TerminalMenu.DEFAULT_GRID_ROWS);
 		this.titleLabelX = 32;
@@ -83,6 +92,9 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 		searchBox.setFocused(false);
 		addRenderableWidget(searchBox);
 
+		addRenderableWidget(Button.builder(Component.literal("UI"), button -> toggleTheme())
+				.bounds(this.leftPos + 1, this.topPos + 24, 22, 18)
+				.build());
 		addSideButton(0, "AZ", TerminalMenu.SORT_NAME_BUTTON);
 		addSideButton(1, "Qt", TerminalMenu.SORT_COUNT_BUTTON);
 		addRenderableWidget(Button.builder(Component.literal(preferredSize.label), button -> cycleSize())
@@ -104,7 +116,8 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 
 		drawInstalledFilterTabBacks(guiGraphics);
 		drawModernPanel(guiGraphics, x + 24, y + PANEL_TOP, x + PANEL_WIDTH - 4, y + imageHeight - 4);
-		drawModernPanel(guiGraphics, x + PANEL_WIDTH, y + PANEL_TOP, x + imageWidth, y + 58);
+		drawModernPanel(guiGraphics, x + PANEL_WIDTH, y + PANEL_TOP, x + imageWidth,
+				y + TerminalMenu.FILTER_SLOT_Y + TerminalMenu.FILTER_SLOTS * TerminalMenu.FILTER_SLOT_SPACING + 4);
 		drawSelectedFilterTabConnections(guiGraphics);
 		drawInsetPanel(guiGraphics, gridX, networkGridY, gridX + gridWidth, networkGridY + networkGridHeight);
 		drawInsetPanel(guiGraphics, gridX, inventoryGridY, gridX + gridWidth, inventoryGridY + 3 * 18);
@@ -113,8 +126,10 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 		drawSlotBackgrounds(guiGraphics, gridX, networkGridY, TerminalMenu.GRID_COLUMNS, rows);
 		drawSlotBackgrounds(guiGraphics, gridX, inventoryGridY, 9, 3);
 		drawSlotBackgrounds(guiGraphics, gridX, hotbarGridY, 9, 1);
-		drawRecessedSlot(guiGraphics, x + TerminalMenu.FILTER_SLOT_X - 1, y + TerminalMenu.LIST_FILTER_SLOT_Y - 1);
-		drawRecessedSlot(guiGraphics, x + TerminalMenu.FILTER_SLOT_X - 1, y + TerminalMenu.ATTRIBUTE_FILTER_SLOT_Y - 1);
+		for (int slot = 0; slot < TerminalMenu.FILTER_SLOTS; slot++) {
+			drawRecessedSlot(guiGraphics, x + TerminalMenu.FILTER_SLOT_X - 1,
+					y + TerminalMenu.FILTER_SLOT_Y + slot * TerminalMenu.FILTER_SLOT_SPACING - 1);
+		}
 		drawScrollbar(guiGraphics);
 	}
 
@@ -213,6 +228,12 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 
 	@Override
 	public boolean mouseClicked(double mouseX, double mouseY, int button) {
+		if (button == 1 && isMouseOverSearchBox(mouseX, mouseY)) {
+			searchBox.setValue("");
+			searchBox.setFocused(true);
+			return true;
+		}
+
 		if (searchBox != null && !isMouseOverSearchBox(mouseX, mouseY)) {
 			searchBox.setFocused(false);
 		}
@@ -325,6 +346,12 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 				.build());
 	}
 
+	private void toggleTheme() {
+		createTheme = !createTheme;
+		applyTheme();
+		saveThemePreference();
+	}
+
 	private void cycleSize() {
 		preferredSize = preferredSize.next();
 		if (this.minecraft != null) {
@@ -429,13 +456,20 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 	}
 
 	private static String formatCount(int count) {
+		if (count >= 1_000_000_000) {
+			return formatScaledCount(count, 1_000_000_000, "B");
+		}
 		if (count >= 1_000_000) {
-			return count / 1_000_000 + "M";
+			return formatScaledCount(count, 1_000_000, "M");
 		}
 		if (count >= 1_000) {
-			return count / 1_000 + "K";
+			return formatScaledCount(count, 1_000, "K");
 		}
 		return Integer.toString(count);
+	}
+
+	private static String formatScaledCount(int count, int divisor, String suffix) {
+		return String.format(Locale.ROOT, "%.1f%s", count / (double) divisor, suffix);
 	}
 
 	private void drawModernPanel(GuiGraphics guiGraphics, int left, int top, int right, int bottom) {
@@ -532,15 +566,12 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 	}
 
 	private boolean clickFilterTab(double mouseX, double mouseY) {
-		if (isMouseOverFilterTab(mouseX, mouseY, TerminalBlockEntity.LIST_FILTER_SLOT)
-				&& !menu.getTerminalFilter(TerminalBlockEntity.LIST_FILTER_SLOT).isEmpty()) {
-			sendMenuButton(TerminalMenu.TOGGLE_LIST_FILTER_BUTTON);
-			return true;
-		}
-		if (isMouseOverFilterTab(mouseX, mouseY, TerminalBlockEntity.ATTRIBUTE_FILTER_SLOT)
-				&& !menu.getTerminalFilter(TerminalBlockEntity.ATTRIBUTE_FILTER_SLOT).isEmpty()) {
-			sendMenuButton(TerminalMenu.TOGGLE_ATTRIBUTE_FILTER_BUTTON);
-			return true;
+		for (int filterSlot : FILTER_TAB_SLOTS) {
+			if (isMouseOverFilterTab(mouseX, mouseY, filterSlot)
+					&& !menu.getTerminalFilter(filterSlot).isEmpty()) {
+				sendMenuButton(TerminalMenu.TOGGLE_FILTER_BUTTON_BASE + filterSlot);
+				return true;
+			}
 		}
 		return false;
 	}
@@ -553,12 +584,12 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 	}
 
 	private void renderFilterTabTooltip(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-		if (isMouseOverFilterTab(mouseX, mouseY, TerminalBlockEntity.LIST_FILTER_SLOT)
-				&& !menu.getTerminalFilter(TerminalBlockEntity.LIST_FILTER_SLOT).isEmpty()) {
-			guiGraphics.renderComponentTooltip(this.font, filterContentsTooltip(TerminalBlockEntity.LIST_FILTER_SLOT), mouseX, mouseY);
-		} else if (isMouseOverFilterTab(mouseX, mouseY, TerminalBlockEntity.ATTRIBUTE_FILTER_SLOT)
-				&& !menu.getTerminalFilter(TerminalBlockEntity.ATTRIBUTE_FILTER_SLOT).isEmpty()) {
-			guiGraphics.renderComponentTooltip(this.font, filterContentsTooltip(TerminalBlockEntity.ATTRIBUTE_FILTER_SLOT), mouseX, mouseY);
+		for (int filterSlot : FILTER_TAB_SLOTS) {
+			if (isMouseOverFilterTab(mouseX, mouseY, filterSlot)
+					&& !menu.getTerminalFilter(filterSlot).isEmpty()) {
+				guiGraphics.renderComponentTooltip(this.font, filterContentsTooltip(filterSlot), mouseX, mouseY);
+				return;
+			}
 		}
 	}
 
@@ -646,6 +677,67 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 			}
 		}
 		return name.toString();
+	}
+
+	private static void ensureThemeLoaded() {
+		if (themeLoaded) {
+			return;
+		}
+		themeLoaded = true;
+
+		Properties properties = new Properties();
+		Path preferencePath = themePreferencePath();
+		if (Files.isRegularFile(preferencePath)) {
+			try (var reader = Files.newBufferedReader(preferencePath, StandardCharsets.UTF_8)) {
+				properties.load(reader);
+				createTheme = Boolean.parseBoolean(properties.getProperty("createTheme", "true"));
+			} catch (IOException exception) {
+				MechanicalStorage.LOGGER.warn("Could not load terminal theme preference", exception);
+			}
+		}
+		applyTheme();
+	}
+
+	private static void saveThemePreference() {
+		Properties properties = new Properties();
+		properties.setProperty("createTheme", Boolean.toString(createTheme));
+		Path preferencePath = themePreferencePath();
+		try {
+			Files.createDirectories(preferencePath.getParent());
+			try (var writer = Files.newBufferedWriter(preferencePath, StandardCharsets.UTF_8)) {
+				properties.store(writer, "Mechanical Storage client preferences");
+			}
+		} catch (IOException exception) {
+			MechanicalStorage.LOGGER.warn("Could not save terminal theme preference", exception);
+		}
+	}
+
+	private static Path themePreferencePath() {
+		return Minecraft.getInstance().gameDirectory.toPath().resolve("config").resolve(THEME_PREFERENCE_FILE);
+	}
+
+	private static void applyTheme() {
+		if (createTheme) {
+			BG = 0xFFC1AE83;
+			BG_LIGHT = 0xFFEADBB5;
+			BG_BORDER = 0xFF4B3021;
+			BG_SHADOW = 0xFF24150F;
+			BG_DARK = 0xFF6B4A35;
+			SLOT_DARK = 0xFF382219;
+			SLOT_LIGHT = 0xFFD8C79E;
+			SLOT = 0xFF8D775B;
+			TEXT = 0xFF382219;
+		} else {
+			BG = 0xFFC6C6C6;
+			BG_LIGHT = 0xFFE8E8E8;
+			BG_BORDER = 0xFF5F5F5F;
+			BG_SHADOW = 0xFF242424;
+			BG_DARK = 0xFF8B8B8B;
+			SLOT_DARK = 0xFF373737;
+			SLOT_LIGHT = 0xFFDCDCDC;
+			SLOT = 0xFF8B8B8B;
+			TEXT = 0xFF404040;
+		}
 	}
 
 	private void drawRecessedSlot(GuiGraphics guiGraphics, int x, int y) {
