@@ -269,7 +269,11 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 			}
 		}
 
-		return super.mouseClicked(mouseX, mouseY, button);
+		boolean handled = super.mouseClicked(mouseX, mouseY, button);
+		if (handled && button == 0 && getFocused() instanceof Button) {
+			setFocused(null);
+		}
+		return handled;
 	}
 
 	@Override
