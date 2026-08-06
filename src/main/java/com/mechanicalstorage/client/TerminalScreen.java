@@ -4,6 +4,7 @@ import com.mechanicalstorage.blockentity.TerminalBlockEntity;
 import com.mechanicalstorage.menu.TerminalMenu;
 import com.simibubi.create.content.logistics.filter.FilterItemStack;
 import com.simibubi.create.content.logistics.filter.ListFilterItem;
+import com.simibubi.create.content.logistics.item.filter.attribute.attributes.AddedByAttribute;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
@@ -12,6 +13,14 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.ModList;
+import net.neoforged.neoforgespi.language.IModInfo;
+
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Set;
 
 public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 	private static final int BG = 0xFFC1AE83;
@@ -25,7 +34,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 	private static final int TEXT = 0xFF382219;
 	private static final int PANEL_WIDTH = 204;
 	private static final int PANEL_TOP = 10;
-	private static final int BASE_IMAGE_HEIGHT = 132;
+	private static final int BASE_IMAGE_HEIGHT = 136;
 	private static final int SCROLLBAR_X = 194;
 	private static final int SCROLLBAR_WIDTH = 5;
 	private static final int MIN_SCROLLBAR_THUMB_HEIGHT = 12;
@@ -59,7 +68,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 	protected void init() {
 		int rows = preferredSize.rowsFor(this.height);
 		this.imageHeight = imageHeight(rows);
-		this.inventoryLabelY = visualPlayerInventoryY(rows) - 12;
+		this.inventoryLabelY = visualPlayerInventoryY(rows) - 10;
 		super.init();
 
 		menu.setVisibleRowsClient(rows);
@@ -233,8 +242,9 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 
 	@Override
 	public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
-		if (isMouseOverNetworkGrid(mouseX, mouseY)) {
-			if (hasControlDown()) {
+		boolean overNetworkGrid = isMouseOverNetworkGrid(mouseX, mouseY);
+		if (overNetworkGrid || isMouseOverScrollbar(mouseX, mouseY)) {
+			if (overNetworkGrid && hasControlDown()) {
 				if (scrollY < 0 && this.hoveredSlot != null) {
 					int slot = this.menu.slots.indexOf(this.hoveredSlot);
 					if (slot >= 0 && slot < TerminalMenu.NETWORK_SLOTS) {
@@ -520,10 +530,10 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 	private void renderFilterTabTooltip(GuiGraphics guiGraphics, int mouseX, int mouseY) {
 		if (isMouseOverFilterTab(mouseX, mouseY, TerminalBlockEntity.LIST_FILTER_SLOT)
 				&& !menu.getTerminalFilter(TerminalBlockEntity.LIST_FILTER_SLOT).isEmpty()) {
-			guiGraphics.renderTooltip(this.font, filterToggleTooltip(TerminalBlockEntity.LIST_FILTER_SLOT), mouseX, mouseY);
+			guiGraphics.renderComponentTooltip(this.font, filterContentsTooltip(TerminalBlockEntity.LIST_FILTER_SLOT), mouseX, mouseY);
 		} else if (isMouseOverFilterTab(mouseX, mouseY, TerminalBlockEntity.ATTRIBUTE_FILTER_SLOT)
 				&& !menu.getTerminalFilter(TerminalBlockEntity.ATTRIBUTE_FILTER_SLOT).isEmpty()) {
-			guiGraphics.renderTooltip(this.font, filterToggleTooltip(TerminalBlockEntity.ATTRIBUTE_FILTER_SLOT), mouseX, mouseY);
+			guiGraphics.renderComponentTooltip(this.font, filterContentsTooltip(TerminalBlockEntity.ATTRIBUTE_FILTER_SLOT), mouseX, mouseY);
 		}
 	}
 
@@ -540,10 +550,66 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 		return FILTER_TAB_START_X;
 	}
 
-	private Component filterToggleTooltip(int slot) {
+	private List<Component> filterContentsTooltip(int slot) {
 		ItemStack filter = menu.getTerminalFilter(slot);
-		String type = filter.getItem() instanceof ListFilterItem ? "mod" : "attribute";
-		return Component.literal((menu.isFilterActive(slot) ? "Disable " : "Enable ") + type + " filter");
+		FilterItemStack wrapped = FilterItemStack.of(filter.copy());
+		List<Component> tooltip = new ArrayList<>();
+
+		if (wrapped instanceof FilterItemStack.ListFilterItemStack listFilter) {
+			Set<String> modIds = new LinkedHashSet<>();
+			for (FilterItemStack listedFilter : listFilter.containedItems) {
+				ItemStack listedItem = listedFilter.item();
+				if (listedItem.isEmpty()) {
+					continue;
+				}
+
+				String modId = listedItem.getItem().getCreatorModId(listedItem);
+				if (modId != null) {
+					modIds.add(modId);
+				}
+			}
+
+			for (String modId : modIds) {
+				tooltip.add(Component.literal("- " + modDisplayName(modId)));
+			}
+		} else if (wrapped instanceof FilterItemStack.AttributeFilterItemStack attributeFilter) {
+			attributeFilter.attributeTests.forEach(test -> {
+				Component attributeName = test.getFirst() instanceof AddedByAttribute addedBy
+						? Component.literal(modDisplayName(addedBy.modId()))
+						: test.getFirst().format(test.getSecond());
+				tooltip.add(Component.literal("- ").append(attributeName));
+			});
+		}
+
+		if (tooltip.isEmpty()) {
+			tooltip.add(Component.literal(filter.getItem() instanceof ListFilterItem
+					? "No mods configured"
+					: "No attributes configured"));
+		}
+		return tooltip;
+	}
+
+	private static String modDisplayName(String modId) {
+		return ModList.get().getModContainerById(modId)
+				.map(ModContainer::getModInfo)
+				.map(IModInfo::getDisplayName)
+				.orElseGet(() -> humanizeModId(modId));
+	}
+
+	private static String humanizeModId(String modId) {
+		StringBuilder name = new StringBuilder(modId.length());
+		boolean capitalizeNext = true;
+		for (int index = 0; index < modId.length(); index++) {
+			char character = modId.charAt(index);
+			if (character == '_' || character == '-') {
+				name.append(' ');
+				capitalizeNext = true;
+			} else {
+				name.append(capitalizeNext ? Character.toUpperCase(character) : character);
+				capitalizeNext = false;
+			}
+		}
+		return name.toString();
 	}
 
 	private void drawRecessedSlot(GuiGraphics guiGraphics, int x, int y) {
