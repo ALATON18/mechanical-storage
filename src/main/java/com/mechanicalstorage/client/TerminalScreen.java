@@ -2,6 +2,7 @@ package com.mechanicalstorage.client;
 
 import com.mechanicalstorage.MechanicalStorage;
 import com.mechanicalstorage.blockentity.TerminalBlockEntity;
+import com.mechanicalstorage.compat.jei.JeiSearchBridge;
 import com.mechanicalstorage.menu.TerminalMenu;
 import com.simibubi.create.content.logistics.filter.FilterItemStack;
 import com.simibubi.create.content.logistics.filter.ListFilterItem;
@@ -11,6 +12,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
@@ -56,9 +58,11 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 
 	private static SizeMode preferredSize = SizeMode.MEDIUM;
 	private static boolean createTheme = true;
+	private static boolean jeiSearchSync;
 	private static boolean themeLoaded;
 
 	private EditBox searchBox;
+	private Button jeiSyncButton;
 	private String searchQuery = "";
 	private boolean draggingScrollbar;
 	private boolean suppressReleaseClick;
@@ -95,10 +99,15 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 		addRenderableWidget(Button.builder(Component.literal("UI"), button -> toggleTheme())
 				.bounds(this.leftPos + 1, this.topPos + 24, 22, 18)
 				.build());
+		jeiSyncButton = Button.builder(Component.empty(), button -> toggleJeiSearchSync())
+				.bounds(this.leftPos + 1, this.topPos + 47, 22, 18)
+				.build();
+		updateJeiSyncButton();
+		addRenderableWidget(jeiSyncButton);
 		addSideButton(0, "AZ", TerminalMenu.SORT_NAME_BUTTON);
 		addSideButton(1, "Qt", TerminalMenu.SORT_COUNT_BUTTON);
 		addRenderableWidget(Button.builder(Component.literal(preferredSize.label), button -> cycleSize())
-				.bounds(this.leftPos + 1, this.topPos + 93, 22, 18)
+				.bounds(this.leftPos + 1, this.topPos + 116, 22, 18)
 				.build());
 	}
 
@@ -168,6 +177,8 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 
 	@Override
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+		syncSearchFromJei();
+		updateJeiSyncButton();
 		super.render(guiGraphics, mouseX, mouseY, partialTick);
 		if (this.menu.getNetworkStatus() != com.mechanicalstorage.blockentity.TerminalBlockEntity.NetworkStatus.ONLINE) {
 			int left = this.leftPos + 31;
@@ -342,7 +353,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 
 	private void addSideButton(int row, String label, int buttonId) {
 		addRenderableWidget(Button.builder(Component.literal(label), button -> sendMenuButton(buttonId))
-				.bounds(this.leftPos + 1, this.topPos + 47 + row * 23, 22, 18)
+				.bounds(this.leftPos + 1, this.topPos + 70 + row * 23, 22, 18)
 				.build());
 	}
 
@@ -350,6 +361,47 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 		createTheme = !createTheme;
 		applyTheme();
 		saveThemePreference();
+	}
+
+	private void toggleJeiSearchSync() {
+		if (!JeiSearchBridge.isAvailable()) {
+			return;
+		}
+		jeiSearchSync = !jeiSearchSync;
+		if (jeiSearchSync && searchBox != null) {
+			JeiSearchBridge.setFilterText(searchBox.getValue());
+		}
+		saveThemePreference();
+		updateJeiSyncButton();
+	}
+
+	private void updateJeiSyncButton() {
+		if (jeiSyncButton == null) {
+			return;
+		}
+		boolean available = JeiSearchBridge.isAvailable();
+		String label = jeiSearchSync ? "J+" : "J-";
+		if (jeiSyncButton.active == available && jeiSyncButton.getMessage().getString().equals(label)) {
+			return;
+		}
+		jeiSyncButton.active = available;
+		jeiSyncButton.setMessage(Component.literal(label));
+		Component tooltip = available
+				? Component.translatable(jeiSearchSync
+						? "container.mechanical_storage.jei_sync_on"
+						: "container.mechanical_storage.jei_sync_off")
+				: Component.translatable("container.mechanical_storage.jei_unavailable");
+		jeiSyncButton.setTooltip(Tooltip.create(tooltip));
+	}
+
+	private void syncSearchFromJei() {
+		if (!jeiSearchSync || searchBox == null || searchBox.isFocused() || !JeiSearchBridge.isAvailable()) {
+			return;
+		}
+		String jeiFilter = JeiSearchBridge.getFilterText();
+		if (!searchBox.getValue().equals(jeiFilter)) {
+			searchBox.setValue(jeiFilter);
+		}
 	}
 
 	private void cycleSize() {
@@ -361,6 +413,9 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 
 	private void onSearchChanged(String searchText) {
 		searchQuery = searchText;
+		if (jeiSearchSync) {
+			JeiSearchBridge.setFilterText(searchText);
+		}
 		if (this.minecraft == null || this.minecraft.gameMode == null) {
 			return;
 		}
@@ -691,6 +746,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 			try (var reader = Files.newBufferedReader(preferencePath, StandardCharsets.UTF_8)) {
 				properties.load(reader);
 				createTheme = Boolean.parseBoolean(properties.getProperty("createTheme", "true"));
+				jeiSearchSync = Boolean.parseBoolean(properties.getProperty("jeiSearchSync", "false"));
 			} catch (IOException exception) {
 				MechanicalStorage.LOGGER.warn("Could not load terminal theme preference", exception);
 			}
@@ -701,6 +757,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 	private static void saveThemePreference() {
 		Properties properties = new Properties();
 		properties.setProperty("createTheme", Boolean.toString(createTheme));
+		properties.setProperty("jeiSearchSync", Boolean.toString(jeiSearchSync));
 		Path preferencePath = themePreferencePath();
 		try {
 			Files.createDirectories(preferencePath.getParent());
