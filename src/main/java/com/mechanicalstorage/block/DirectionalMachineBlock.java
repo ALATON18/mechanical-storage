@@ -44,7 +44,7 @@ public abstract class DirectionalMachineBlock extends KineticBlock {
 
 	@Override
 	public boolean hasShaftTowards(LevelReader world, BlockPos pos, BlockState state, Direction face) {
-		return face.getAxis() == getRotationAxis(state);
+		return face == state.getValue(FACING).getOpposite();
 	}
 
 	@Override
