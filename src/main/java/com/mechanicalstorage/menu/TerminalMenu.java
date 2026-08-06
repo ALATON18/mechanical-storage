@@ -31,8 +31,8 @@ public class TerminalMenu extends AbstractContainerMenu {
 	public static final int PLAYER_INVENTORY_Y = NETWORK_SLOT_Y + MAX_GRID_ROWS * 18 + 11;
 	public static final int HOTBAR_Y = PLAYER_INVENTORY_Y + 58;
 	public static final int FILTER_SLOT_X = 212;
-	public static final int LIST_FILTER_SLOT_Y = 17;
-	public static final int ATTRIBUTE_FILTER_SLOT_Y = LIST_FILTER_SLOT_Y + 18;
+	public static final int FILTER_SLOT_Y = 17;
+	public static final int FILTER_SLOT_SPACING = 18;
 	public static final int SEARCH_CLEAR_BUTTON = 100000;
 	public static final int SEARCH_BACKSPACE_BUTTON = 100001;
 	public static final int SEARCH_APPLY_BUTTON = 100002;
@@ -41,8 +41,7 @@ public class TerminalMenu extends AbstractContainerMenu {
 	public static final int SCROLL_UP_BUTTON = 100005;
 	public static final int SCROLL_DOWN_BUTTON = 100006;
 	public static final int SINGLE_DEPOSIT_BUTTON = 100007;
-	public static final int TOGGLE_LIST_FILTER_BUTTON = 100008;
-	public static final int TOGGLE_ATTRIBUTE_FILTER_BUTTON = 100009;
+	public static final int TOGGLE_FILTER_BUTTON_BASE = 100008;
 	public static final int SEARCH_CHAR_BASE_BUTTON = 200000;
 	public static final int SINGLE_EXTRACT_SLOT_BASE_BUTTON = 300000;
 	public static final int GRID_ROWS_BUTTON_BASE = 400000;
@@ -63,8 +62,7 @@ public class TerminalMenu extends AbstractContainerMenu {
 	private final DataSlot totalMatchingItems = DataSlot.standalone();
 	private final DataSlot networkStatus = DataSlot.standalone();
 	private final DataSlot visibleRows = DataSlot.standalone();
-	private final DataSlot listFilterActive = DataSlot.standalone();
-	private final DataSlot attributeFilterActive = DataSlot.standalone();
+	private final DataSlot[] filterActive = new DataSlot[FILTER_SLOTS];
 	private final DataSlot[] networkSlotCountLow = new DataSlot[NETWORK_SLOTS];
 	private final DataSlot[] networkSlotCountHigh = new DataSlot[NETWORK_SLOTS];
 	@Nullable
@@ -97,8 +95,10 @@ public class TerminalMenu extends AbstractContainerMenu {
 		addDataSlot(totalMatchingItems);
 		addDataSlot(networkStatus);
 		addDataSlot(visibleRows);
-		addDataSlot(listFilterActive);
-		addDataSlot(attributeFilterActive);
+		for (int slot = 0; slot < FILTER_SLOTS; slot++) {
+			filterActive[slot] = DataSlot.standalone();
+			addDataSlot(filterActive[slot]);
+		}
 		for (int slot = 0; slot < NETWORK_SLOTS; slot++) {
 			networkSlotCountLow[slot] = DataSlot.standalone();
 			networkSlotCountHigh[slot] = DataSlot.standalone();
@@ -175,13 +175,8 @@ public class TerminalMenu extends AbstractContainerMenu {
 			return true;
 		}
 
-		if (id == TOGGLE_LIST_FILTER_BUTTON) {
-			toggleFilter(TerminalBlockEntity.LIST_FILTER_SLOT);
-			return true;
-		}
-
-		if (id == TOGGLE_ATTRIBUTE_FILTER_BUTTON) {
-			toggleFilter(TerminalBlockEntity.ATTRIBUTE_FILTER_SLOT);
+		if (id >= TOGGLE_FILTER_BUTTON_BASE && id < TOGGLE_FILTER_BUTTON_BASE + FILTER_SLOTS) {
+			toggleFilter(id - TOGGLE_FILTER_BUTTON_BASE);
 			return true;
 		}
 
@@ -371,11 +366,7 @@ public class TerminalMenu extends AbstractContainerMenu {
 	}
 
 	public boolean isFilterActive(int slot) {
-		return switch (slot) {
-			case TerminalBlockEntity.LIST_FILTER_SLOT -> listFilterActive.get() != 0;
-			case TerminalBlockEntity.ATTRIBUTE_FILTER_SLOT -> attributeFilterActive.get() != 0;
-			default -> false;
-		};
+		return slot >= 0 && slot < FILTER_SLOTS && filterActive[slot].get() != 0;
 	}
 
 	public TerminalBlockEntity.NetworkStatus getNetworkStatus() {
@@ -394,8 +385,9 @@ public class TerminalMenu extends AbstractContainerMenu {
 	}
 
 	private void addTerminalFilterSlots() {
-		this.addSlot(new TerminalFilterSlot(filterItems, 0, FILTER_SLOT_X, LIST_FILTER_SLOT_Y));
-		this.addSlot(new TerminalFilterSlot(filterItems, 1, FILTER_SLOT_X, ATTRIBUTE_FILTER_SLOT_Y));
+		for (int slot = 0; slot < FILTER_SLOTS; slot++) {
+			this.addSlot(new TerminalFilterSlot(filterItems, slot, FILTER_SLOT_X, FILTER_SLOT_Y + slot * FILTER_SLOT_SPACING));
+		}
 	}
 
 	private void addPlayerInventorySlots(Inventory inventory) {
@@ -435,8 +427,9 @@ public class TerminalMenu extends AbstractContainerMenu {
 			setNetworkSlotCount(slot, 0);
 		}
 
-		listFilterActive.set(terminal.isFilterActive(TerminalBlockEntity.LIST_FILTER_SLOT) ? 1 : 0);
-		attributeFilterActive.set(terminal.isFilterActive(TerminalBlockEntity.ATTRIBUTE_FILTER_SLOT) ? 1 : 0);
+		for (int slot = 0; slot < FILTER_SLOTS; slot++) {
+			filterActive[slot].set(terminal.isFilterActive(slot) ? 1 : 0);
+		}
 
 		networkStatus.set(terminal.getNetworkStatus().ordinal());
 		TerminalBlockEntity.DisplayPage page = terminal.getNetworkDisplayPage(NETWORK_SLOTS, scrollRow.get() * GRID_COLUMNS, searchText, sortMode.name(), sortDescending);
