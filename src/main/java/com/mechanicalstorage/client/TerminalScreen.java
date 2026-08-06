@@ -575,7 +575,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 		} else if (wrapped instanceof FilterItemStack.AttributeFilterItemStack attributeFilter) {
 			attributeFilter.attributeTests.forEach(test -> {
 				Component attributeName = test.getFirst() instanceof AddedByAttribute addedBy
-						? Component.literal(modDisplayName(addedBy.modId()))
+						? Component.literal((test.getSecond() ? "Not " : "") + modDisplayName(addedBy.modId()))
 						: test.getFirst().format(test.getSecond());
 				tooltip.add(Component.literal("- ").append(attributeName));
 			});
