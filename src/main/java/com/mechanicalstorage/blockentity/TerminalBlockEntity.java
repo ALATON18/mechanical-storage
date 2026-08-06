@@ -41,7 +41,7 @@ public class TerminalBlockEntity extends KineticBlockEntity implements MenuProvi
 	private static final int MAX_SUMMARY_ITEMS = 8;
 	public static final int LIST_FILTER_SLOT = 0;
 	public static final int ATTRIBUTE_FILTER_SLOT = 1;
-	public static final int FILTER_SLOTS = 2;
+	public static final int FILTER_SLOTS = 4;
 	private final boolean[] filterActive = new boolean[FILTER_SLOTS];
 	private final ItemStackHandler terminalFilters = new ItemStackHandler(FILTER_SLOTS) {
 		@Override
@@ -113,7 +113,7 @@ public class TerminalBlockEntity extends KineticBlockEntity implements MenuProvi
 			String key = "Filter" + slot + "Active";
 			boolean legacyActive = slot == LIST_FILTER_SLOT
 					? compound.getBoolean("ListFilterActive")
-					: compound.getBoolean("AttributeFilterActive");
+					: slot == ATTRIBUTE_FILTER_SLOT && compound.getBoolean("AttributeFilterActive");
 			filterActive[slot] = (compound.contains(key) ? compound.getBoolean(key) : legacyActive)
 					&& !terminalFilters.getStackInSlot(slot).isEmpty();
 		}
