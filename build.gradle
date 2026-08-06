@@ -89,6 +89,8 @@ dependencies {
 	compileOnly "dev.engine-room.flywheel:flywheel-neoforge-api-${minecraft_version}:${flywheel_version}"
 	runtimeOnly "dev.engine-room.flywheel:flywheel-neoforge-${minecraft_version}:${flywheel_version}"
 	implementation "com.tterrag.registrate:Registrate:${registrate_version}"
+	compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
+	compileOnly "mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}"
 
 	// Development-runtime compatibility fixtures. These are not bundled or required by the published mod.
 	localRuntime "com.hrznstudio:titanium:1.21-4.0.34"
@@ -96,7 +98,7 @@ dependencies {
 	localRuntime "curse.maven:sophisticated-core-618298:8398762"
 	localRuntime "curse.maven:sophisticated-storage-619320:8398824"
 	localRuntime "curse.maven:sophisticated-backpacks-422301:8398799"
-	localRuntime "mezz.jei:jei-1.21.1-neoforge:19.37.0.362"
+	localRuntime "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
 }
 
 var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
