@@ -45,6 +45,13 @@ public class TerminalBlockEntity extends KineticBlockEntity implements MenuProvi
 	private final boolean[] filterActive = new boolean[FILTER_SLOTS];
 	private final ItemStackHandler terminalFilters = new ItemStackHandler(FILTER_SLOTS) {
 		@Override
+		public void deserializeNBT(HolderLookup.Provider registries, CompoundTag compound) {
+			CompoundTag resized = compound.copy();
+			resized.putInt("Size", FILTER_SLOTS);
+			super.deserializeNBT(registries, resized);
+		}
+
+		@Override
 		public boolean isItemValid(int slot, ItemStack stack) {
 			return slot >= 0 && slot < FILTER_SLOTS
 					&& (stack.getItem() instanceof ListFilterItem || stack.getItem() instanceof AttributeFilterItem);
