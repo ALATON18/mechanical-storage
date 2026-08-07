@@ -138,53 +138,13 @@
 			"from": [ 2, 2, 0.95 ],
 			"to": [ 14, 14, 15.05 ],
 			"faces": {
+				"north": {
+					"uv": [ 2, 2, 14, 14 ],
+					"texture": "#gearbox"
+				},
 				"south": {
 					"uv": [ 2, 2, 14, 14 ],
 					"texture": "#brass"
-				}
-			}
-		},
-		{
-			"name": "Rear shaft surround top",
-			"from": [ 2, 10, 0.94 ],
-			"to": [ 14, 14, 0.95 ],
-			"faces": {
-				"north": {
-					"uv": [ 2, 2, 14, 6 ],
-					"texture": "#gearbox"
-				}
-			}
-		},
-		{
-			"name": "Rear shaft surround bottom",
-			"from": [ 2, 2, 0.94 ],
-			"to": [ 14, 6, 0.95 ],
-			"faces": {
-				"north": {
-					"uv": [ 2, 10, 14, 14 ],
-					"texture": "#gearbox"
-				}
-			}
-		},
-		{
-			"name": "Rear shaft surround left",
-			"from": [ 2, 6, 0.94 ],
-			"to": [ 6, 10, 0.95 ],
-			"faces": {
-				"north": {
-					"uv": [ 2, 6, 6, 10 ],
-					"texture": "#gearbox"
-				}
-			}
-		},
-		{
-			"name": "Rear shaft surround right",
-			"from": [ 10, 6, 0.94 ],
-			"to": [ 14, 10, 0.95 ],
-			"faces": {
-				"north": {
-					"uv": [ 10, 6, 14, 10 ],
-					"texture": "#gearbox"
 				}
 			}
 		},
