@@ -62,7 +62,11 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 	private static boolean themeLoaded;
 
 	private EditBox searchBox;
+	private Button themeButton;
 	private Button jeiSyncButton;
+	private Button nameSortButton;
+	private Button countSortButton;
+	private Button sizeButton;
 	private String searchQuery = "";
 	private boolean draggingScrollbar;
 	private boolean suppressReleaseClick;
@@ -96,19 +100,22 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 		searchBox.setFocused(false);
 		addRenderableWidget(searchBox);
 
-		addRenderableWidget(Button.builder(Component.literal("UI"), button -> toggleTheme())
+		themeButton = Button.builder(Component.literal("UI"), button -> toggleTheme())
 				.bounds(this.leftPos + 1, this.topPos + 24, 22, 18)
-				.build());
+				.build();
+		addRenderableWidget(themeButton);
 		jeiSyncButton = Button.builder(Component.empty(), button -> toggleJeiSearchSync())
 				.bounds(this.leftPos + 1, this.topPos + 47, 22, 18)
 				.build();
 		updateJeiSyncButton();
 		addRenderableWidget(jeiSyncButton);
-		addSideButton(0, "AZ", TerminalMenu.SORT_NAME_BUTTON);
-		addSideButton(1, "Qt", TerminalMenu.SORT_COUNT_BUTTON);
-		addRenderableWidget(Button.builder(Component.literal(preferredSize.label), button -> cycleSize())
+		nameSortButton = addSideButton(0, "AZ", TerminalMenu.SORT_NAME_BUTTON);
+		countSortButton = addSideButton(1, "Qt", TerminalMenu.SORT_COUNT_BUTTON);
+		sizeButton = Button.builder(Component.literal(preferredSize.label), button -> cycleSize())
 				.bounds(this.leftPos + 1, this.topPos + 116, 22, 18)
-				.build());
+				.build();
+		addRenderableWidget(sizeButton);
+		updateControlButtons();
 	}
 
 	@Override
@@ -179,6 +186,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 	public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
 		syncSearchFromJei();
 		updateJeiSyncButton();
+		updateControlButtons();
 		super.render(guiGraphics, mouseX, mouseY, partialTick);
 		if (this.menu.getNetworkStatus() != com.mechanicalstorage.blockentity.TerminalBlockEntity.NetworkStatus.ONLINE) {
 			int left = this.leftPos + 31;
@@ -355,16 +363,19 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 		return super.charTyped(codePoint, modifiers);
 	}
 
-	private void addSideButton(int row, String label, int buttonId) {
-		addRenderableWidget(Button.builder(Component.literal(label), button -> sendMenuButton(buttonId))
+	private Button addSideButton(int row, String label, int buttonId) {
+		Button button = Button.builder(Component.literal(label), ignored -> sendMenuButton(buttonId))
 				.bounds(this.leftPos + 1, this.topPos + 70 + row * 23, 22, 18)
-				.build());
+				.build();
+		addRenderableWidget(button);
+		return button;
 	}
 
 	private void toggleTheme() {
 		createTheme = !createTheme;
 		applyTheme();
 		saveThemePreference();
+		updateControlButtons();
 	}
 
 	private void toggleJeiSearchSync() {
@@ -396,6 +407,39 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 						: "container.mechanical_storage.jei_sync_off")
 				: Component.translatable("container.mechanical_storage.jei_unavailable");
 		jeiSyncButton.setTooltip(Tooltip.create(tooltip));
+	}
+
+	private void updateControlButtons() {
+		if (themeButton != null) {
+			themeButton.setTooltip(Tooltip.create(Component.translatable(createTheme
+					? "container.mechanical_storage.theme_create"
+					: "container.mechanical_storage.theme_default")));
+		}
+
+		if (nameSortButton != null && countSortButton != null) {
+			boolean sortingByName = menu.isSortingByName();
+			boolean descending = menu.isSortDescending();
+			nameSortButton.setMessage(Component.literal(sortingByName && descending ? "ZA" : "AZ"));
+
+			String nameTooltip = !sortingByName
+					? "container.mechanical_storage.sort_name_inactive"
+					: descending
+							? "container.mechanical_storage.sort_name_descending"
+							: "container.mechanical_storage.sort_name_ascending";
+			nameSortButton.setTooltip(Tooltip.create(Component.translatable(nameTooltip)));
+
+			String countTooltip = sortingByName
+					? "container.mechanical_storage.sort_count_inactive"
+					: descending
+							? "container.mechanical_storage.sort_count_descending"
+							: "container.mechanical_storage.sort_count_ascending";
+			countSortButton.setTooltip(Tooltip.create(Component.translatable(countTooltip)));
+		}
+
+		if (sizeButton != null) {
+			sizeButton.setMessage(Component.literal(preferredSize.label));
+			sizeButton.setTooltip(Tooltip.create(Component.translatable(preferredSize.tooltipKey)));
+		}
 	}
 
 	private void syncSearchFromJei() {
@@ -827,15 +871,17 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 	}
 
 	private enum SizeMode {
-		SMALL("S"),
-		MEDIUM("M"),
-		LARGE("L"),
-		STRETCH("Fit");
+		SMALL("S", "container.mechanical_storage.size_small"),
+		MEDIUM("M", "container.mechanical_storage.size_medium"),
+		LARGE("L", "container.mechanical_storage.size_large"),
+		STRETCH("Fit", "container.mechanical_storage.size_fit");
 
 		private final String label;
+		private final String tooltipKey;
 
-		SizeMode(String label) {
+		SizeMode(String label, String tooltipKey) {
 			this.label = label;
+			this.tooltipKey = tooltipKey;
 		}
 
 		private int rowsFor(int screenHeight) {
