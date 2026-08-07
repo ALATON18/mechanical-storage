@@ -1,9 +1,14 @@
 package com.mechanicalstorage.client;
 
 import com.mechanicalstorage.MechanicalStorage;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModList;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
+import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 
 public final class MechanicalStorageClient {
 	private MechanicalStorageClient() {
@@ -12,6 +17,7 @@ public final class MechanicalStorageClient {
 	public static void register(IEventBus modEventBus) {
 		modEventBus.addListener(MechanicalStorageClient::registerMenuScreens);
 		modEventBus.addListener(MechanicalStorageClient::registerBlockEntityRenderers);
+		NeoForge.EVENT_BUS.addListener(MechanicalStorageClient::addMachineItemTooltip);
 	}
 
 	private static void registerMenuScreens(RegisterMenuScreensEvent event) {
@@ -25,5 +31,19 @@ public final class MechanicalStorageClient {
 		event.registerBlockEntityRenderer(
 				MechanicalStorage.MECHANICAL_STORAGE_TERMINAL_BLOCK_ENTITY.get(),
 				MechanicalStorageShaftRenderer::new);
+	}
+
+	private static void addMachineItemTooltip(ItemTooltipEvent event) {
+		if (!event.getItemStack().is(MechanicalStorage.MECHANICAL_STORAGE_CONNECTOR.get().asItem())
+				&& !event.getItemStack().is(MechanicalStorage.MECHANICAL_STORAGE_TERMINAL.get().asItem())) {
+			return;
+		}
+
+		String modName = ModList.get().getModContainerById(MechanicalStorage.MODID)
+				.map(container -> container.getModInfo().getDisplayName())
+				.orElse("Mechanical Storage");
+		if (event.getToolTip().stream().noneMatch(line -> line.getString().equals(modName))) {
+			event.getToolTip().add(Component.literal(modName).withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
+		}
 	}
 }
