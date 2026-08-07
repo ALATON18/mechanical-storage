@@ -1,0 +1,18 @@
+{
+	"loader": "neoforge:composite",
+	"children": {
+		"encased_cogwheel": {
+			"parent": "create:item/andesite_encased_cogwheel"
+		},
+		"connector_front": {
+			"parent": "mechanical_storage:block/mechanical_storage_cogwheel_connector_item_front"
+		}
+	},
+	"display": {
+		"gui": {
+			"rotation": [ 30, 225, 0 ],
+			"translation": [ 0, 0, 0 ],
+			"scale": [ 0.625, 0.625, 0.625 ]
+		}
+	}
+}

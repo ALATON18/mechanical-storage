@@ -1,0 +1,13 @@
+{
+	"type": "minecraft:crafting_shapeless",
+	"category": "redstone",
+	"ingredients": [
+		{
+			"item": "mechanical_storage:mechanical_storage_cogwheel_connector"
+		}
+	],
+	"result": {
+		"id": "mechanical_storage:mechanical_storage_connector",
+		"count": 1
+	}
+}

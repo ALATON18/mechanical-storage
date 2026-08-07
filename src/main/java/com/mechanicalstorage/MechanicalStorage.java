@@ -1,6 +1,7 @@
 package com.mechanicalstorage;
 
 import com.mechanicalstorage.block.MechanicalStorageConnectorBlock;
+import com.mechanicalstorage.block.MechanicalStorageCogwheelConnectorBlock;
 import com.mechanicalstorage.block.MechanicalStorageTerminalBlock;
 import com.mechanicalstorage.blockentity.MechanicalStorageConnectorBlockEntity;
 import com.mechanicalstorage.blockentity.TerminalBlockEntity;
@@ -43,6 +44,12 @@ public class MechanicalStorage {
 			.build()
 			.register();
 
+	public static final BlockEntry<MechanicalStorageCogwheelConnectorBlock> MECHANICAL_STORAGE_COGWHEEL_CONNECTOR = REGISTRATE
+			.block("mechanical_storage_cogwheel_connector", properties -> new MechanicalStorageCogwheelConnectorBlock(machineProperties(MapColor.COLOR_GRAY)))
+			.item()
+			.build()
+			.register();
+
 	public static final BlockEntry<MechanicalStorageTerminalBlock> MECHANICAL_STORAGE_TERMINAL = REGISTRATE
 			.block("mechanical_storage_terminal", properties -> new MechanicalStorageTerminalBlock(machineProperties(MapColor.TERRACOTTA_ORANGE)))
 			.item()
@@ -51,7 +58,7 @@ public class MechanicalStorage {
 
 	public static final BlockEntityEntry<MechanicalStorageConnectorBlockEntity> MECHANICAL_STORAGE_CONNECTOR_BLOCK_ENTITY = REGISTRATE
 			.<MechanicalStorageConnectorBlockEntity>blockEntity("mechanical_storage_connector", MechanicalStorageConnectorBlockEntity::new)
-			.validBlocks(MECHANICAL_STORAGE_CONNECTOR)
+			.validBlocks(MECHANICAL_STORAGE_CONNECTOR, MECHANICAL_STORAGE_COGWHEEL_CONNECTOR)
 			.register();
 
 	public static final BlockEntityEntry<TerminalBlockEntity> MECHANICAL_STORAGE_TERMINAL_BLOCK_ENTITY = REGISTRATE
