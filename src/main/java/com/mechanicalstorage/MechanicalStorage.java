@@ -45,7 +45,7 @@ public class MechanicalStorage {
 			.register();
 
 	public static final BlockEntry<MechanicalStorageCogwheelConnectorBlock> MECHANICAL_STORAGE_COGWHEEL_CONNECTOR = REGISTRATE
-			.block("mechanical_storage_cogwheel_connector", properties -> new MechanicalStorageCogwheelConnectorBlock(machineProperties(MapColor.COLOR_GRAY)))
+			.block("mechanical_storage_cogwheel_connector", properties -> new MechanicalStorageCogwheelConnectorBlock(machineProperties(MapColor.COLOR_GRAY).noOcclusion()))
 			.item()
 			.build()
 			.register();
