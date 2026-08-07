@@ -3,7 +3,6 @@ package com.mechanicalstorage.blockentity;
 import com.mechanicalstorage.MechanicalStorage;
 import com.mechanicalstorage.block.DirectionalMachineBlock;
 import com.mechanicalstorage.network.StorageNetworkRegistry;
-import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
@@ -15,9 +14,11 @@ import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.items.IItemHandler;
 import org.jetbrains.annotations.Nullable;
 
-public class MechanicalStorageConnectorBlockEntity extends KineticBlockEntity {
+public class MechanicalStorageConnectorBlockEntity extends FixedStressKineticBlockEntity {
+	public static final float FIXED_STRESS_UNITS = 128.0F;
+
 	public MechanicalStorageConnectorBlockEntity(BlockEntityType<? extends MechanicalStorageConnectorBlockEntity> type, BlockPos pos, BlockState blockState) {
-		super(type, pos, blockState);
+		super(type, pos, blockState, FIXED_STRESS_UNITS);
 	}
 
 	public MechanicalStorageConnectorBlockEntity(BlockPos pos, BlockState blockState) {
@@ -25,7 +26,7 @@ public class MechanicalStorageConnectorBlockEntity extends KineticBlockEntity {
 	}
 
 	public boolean isOnline() {
-		return getSpeed() != 0 && hasNetwork();
+		return isSpeedRequirementFulfilled() && hasNetwork();
 	}
 
 	@Override
@@ -52,9 +53,13 @@ public class MechanicalStorageConnectorBlockEntity extends KineticBlockEntity {
 
 	public Component describeTargetInventory() {
 		if (!isOnline()) {
-			return hasKineticConnection()
-					? Component.translatable("status.mechanical_storage.overstressed")
-					: Component.translatable("status.mechanical_storage.disconnected");
+			if (isOverStressed()) {
+				return Component.translatable("status.mechanical_storage.overstressed");
+			}
+			if (getTheoreticalSpeed() != 0) {
+				return Component.translatable("status.mechanical_storage.too_slow");
+			}
+			return Component.translatable("status.mechanical_storage.disconnected");
 		}
 
 		IItemHandler handler = getTargetItemHandler();
@@ -96,15 +101,6 @@ public class MechanicalStorageConnectorBlockEntity extends KineticBlockEntity {
 		BlockEntity targetBlockEntity = level.getBlockEntity(targetPos);
 
 		return level.getCapability(Capabilities.ItemHandler.BLOCK, targetPos, targetState, targetBlockEntity, facing.getOpposite());
-	}
-
-	private boolean hasKineticConnection() {
-		if (level == null) {
-			return false;
-		}
-
-		Direction facing = getBlockState().getValue(DirectionalMachineBlock.FACING);
-		return level.getBlockEntity(worldPosition.relative(facing.getOpposite())) instanceof KineticBlockEntity;
 	}
 
 	private static String formatPos(BlockPos pos) {
