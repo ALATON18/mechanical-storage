@@ -67,6 +67,9 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 	private Button nameSortButton;
 	private Button countSortButton;
 	private Button sizeButton;
+	private Boolean displayedCreateTheme;
+	private int displayedSortState = -1;
+	private SizeMode displayedSize;
 	private String searchQuery = "";
 	private boolean draggingScrollbar;
 	private boolean suppressReleaseClick;
@@ -115,6 +118,9 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 				.bounds(this.leftPos + 1, this.topPos + 116, 22, 18)
 				.build();
 		addRenderableWidget(sizeButton);
+		displayedCreateTheme = null;
+		displayedSortState = -1;
+		displayedSize = null;
 		updateControlButtons();
 	}
 
@@ -410,35 +416,41 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 	}
 
 	private void updateControlButtons() {
-		if (themeButton != null) {
+		if (themeButton != null && (displayedCreateTheme == null || displayedCreateTheme != createTheme)) {
 			themeButton.setTooltip(Tooltip.create(Component.translatable(createTheme
 					? "container.mechanical_storage.theme_create"
 					: "container.mechanical_storage.theme_default")));
+			displayedCreateTheme = createTheme;
 		}
 
 		if (nameSortButton != null && countSortButton != null) {
 			boolean sortingByName = menu.isSortingByName();
 			boolean descending = menu.isSortDescending();
-			nameSortButton.setMessage(Component.literal(sortingByName && descending ? "ZA" : "AZ"));
+			int sortState = (sortingByName ? 2 : 0) | (descending ? 1 : 0);
+			if (displayedSortState != sortState) {
+				nameSortButton.setMessage(Component.literal(sortingByName && descending ? "ZA" : "AZ"));
 
-			String nameTooltip = !sortingByName
-					? "container.mechanical_storage.sort_name_inactive"
-					: descending
-							? "container.mechanical_storage.sort_name_descending"
-							: "container.mechanical_storage.sort_name_ascending";
-			nameSortButton.setTooltip(Tooltip.create(Component.translatable(nameTooltip)));
+				String nameTooltip = !sortingByName
+						? "container.mechanical_storage.sort_name_inactive"
+						: descending
+								? "container.mechanical_storage.sort_name_descending"
+								: "container.mechanical_storage.sort_name_ascending";
+				nameSortButton.setTooltip(Tooltip.create(Component.translatable(nameTooltip)));
 
-			String countTooltip = sortingByName
-					? "container.mechanical_storage.sort_count_inactive"
-					: descending
-							? "container.mechanical_storage.sort_count_descending"
-							: "container.mechanical_storage.sort_count_ascending";
-			countSortButton.setTooltip(Tooltip.create(Component.translatable(countTooltip)));
+				String countTooltip = sortingByName
+						? "container.mechanical_storage.sort_count_inactive"
+						: descending
+								? "container.mechanical_storage.sort_count_descending"
+								: "container.mechanical_storage.sort_count_ascending";
+				countSortButton.setTooltip(Tooltip.create(Component.translatable(countTooltip)));
+				displayedSortState = sortState;
+			}
 		}
 
-		if (sizeButton != null) {
+		if (sizeButton != null && displayedSize != preferredSize) {
 			sizeButton.setMessage(Component.literal(preferredSize.label));
 			sizeButton.setTooltip(Tooltip.create(Component.translatable(preferredSize.tooltipKey)));
+			displayedSize = preferredSize;
 		}
 	}
 
