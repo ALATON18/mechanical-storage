@@ -5,7 +5,6 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.AllPartialModels;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntityRenderer;
-import dev.engine_room.flywheel.api.visualization.VisualizationManager;
 import net.createmod.catnip.render.CachedBuffers;
 import net.createmod.catnip.render.SuperByteBuffer;
 import net.minecraft.client.renderer.LevelRenderer;
@@ -21,15 +20,11 @@ public class MechanicalStorageShaftRenderer<T extends KineticBlockEntity> extend
 
 	@Override
 	protected void renderSafe(T be, float partialTicks, PoseStack poseStack, MultiBufferSource buffer, int light, int overlay) {
-		if (VisualizationManager.supportsVisualization(be.getLevel())) {
-			return;
-		}
-
 		Direction front = be.getBlockState().getValue(DirectionalMachineBlock.FACING);
 		Direction shaftDirection = front.getOpposite();
 		SuperByteBuffer shaft = CachedBuffers.partialFacing(AllPartialModels.SHAFT_HALF, be.getBlockState(), shaftDirection);
 		int rearLight = LevelRenderer.getLightColor(be.getLevel(), be.getBlockPos().relative(shaftDirection));
 		standardKineticRotationTransform(shaft, be, rearLight)
-				.renderInto(poseStack, buffer.getBuffer(RenderType.cutoutMipped()));
+				.renderInto(poseStack, buffer.getBuffer(RenderType.solid()));
 	}
 }
