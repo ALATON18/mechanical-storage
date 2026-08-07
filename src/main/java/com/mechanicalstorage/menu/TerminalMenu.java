@@ -62,14 +62,14 @@ public class TerminalMenu extends AbstractContainerMenu {
 	private final DataSlot totalMatchingItems = DataSlot.standalone();
 	private final DataSlot networkStatus = DataSlot.standalone();
 	private final DataSlot visibleRows = DataSlot.standalone();
+	private final DataSlot sortModeState = DataSlot.standalone();
+	private final DataSlot sortDescendingState = DataSlot.standalone();
 	private final DataSlot[] filterActive = new DataSlot[FILTER_SLOTS];
 	private final DataSlot[] networkSlotCountLow = new DataSlot[NETWORK_SLOTS];
 	private final DataSlot[] networkSlotCountHigh = new DataSlot[NETWORK_SLOTS];
 	@Nullable
 	private final TerminalBlockEntity terminal;
 	private String searchText = "";
-	private SortMode sortMode = SortMode.COUNT;
-	private boolean sortDescending = true;
 	private int refreshCooldown;
 
 	public TerminalMenu(int containerId, Inventory playerInventory, RegistryFriendlyByteBuf buffer) {
@@ -87,6 +87,7 @@ public class TerminalMenu extends AbstractContainerMenu {
 		this.terminal = terminal;
 		this.filterItems = terminal == null ? new ItemStackHandler(FILTER_SLOTS) : terminal.getTerminalFilters();
 		this.visibleRows.set(DEFAULT_GRID_ROWS);
+		setSortState(SortMode.COUNT, true);
 
 		addNetworkSlots();
 		addTerminalFilterSlots();
@@ -95,6 +96,8 @@ public class TerminalMenu extends AbstractContainerMenu {
 		addDataSlot(totalMatchingItems);
 		addDataSlot(networkStatus);
 		addDataSlot(visibleRows);
+		addDataSlot(sortModeState);
+		addDataSlot(sortDescendingState);
 		for (int slot = 0; slot < FILTER_SLOTS; slot++) {
 			filterActive[slot] = DataSlot.standalone();
 			addDataSlot(filterActive[slot]);
@@ -136,11 +139,10 @@ public class TerminalMenu extends AbstractContainerMenu {
 		}
 
 		if (id == SORT_NAME_BUTTON) {
-			if (sortMode == SortMode.NAME) {
-				sortDescending = !sortDescending;
+			if (getSortMode() == SortMode.NAME) {
+				setSortState(SortMode.NAME, !isSortDescending());
 			} else {
-				sortMode = SortMode.NAME;
-				sortDescending = false;
+				setSortState(SortMode.NAME, false);
 			}
 			scrollRow.set(0);
 			refreshAfterSearchChange();
@@ -148,11 +150,10 @@ public class TerminalMenu extends AbstractContainerMenu {
 		}
 
 		if (id == SORT_COUNT_BUTTON) {
-			if (sortMode == SortMode.COUNT) {
-				sortDescending = !sortDescending;
+			if (getSortMode() == SortMode.COUNT) {
+				setSortState(SortMode.COUNT, !isSortDescending());
 			} else {
-				sortMode = SortMode.COUNT;
-				sortDescending = true;
+				setSortState(SortMode.COUNT, true);
 			}
 			scrollRow.set(0);
 			refreshAfterSearchChange();
@@ -344,6 +345,14 @@ public class TerminalMenu extends AbstractContainerMenu {
 		return Math.max(1, Math.min(MAX_GRID_ROWS, visibleRows.get()));
 	}
 
+	public boolean isSortingByName() {
+		return getSortMode() == SortMode.NAME;
+	}
+
+	public boolean isSortDescending() {
+		return sortDescendingState.get() != 0;
+	}
+
 	public void setVisibleRowsClient(int rows) {
 		visibleRows.set(clampVisibleRows(rows));
 		scrollRow.set(Math.min(scrollRow.get(), getMaximumScrollRow()));
@@ -432,12 +441,12 @@ public class TerminalMenu extends AbstractContainerMenu {
 		}
 
 		networkStatus.set(terminal.getNetworkStatus().ordinal());
-		TerminalBlockEntity.DisplayPage page = terminal.getNetworkDisplayPage(NETWORK_SLOTS, scrollRow.get() * GRID_COLUMNS, searchText, sortMode.name(), sortDescending);
+		TerminalBlockEntity.DisplayPage page = terminal.getNetworkDisplayPage(NETWORK_SLOTS, scrollRow.get() * GRID_COLUMNS, searchText, getSortMode().name(), isSortDescending());
 		totalMatchingItems.set(page.totalItems());
 		int maximumScrollRow = getMaximumScrollRow();
 		if (scrollRow.get() > maximumScrollRow) {
 			scrollRow.set(maximumScrollRow);
-			page = terminal.getNetworkDisplayPage(NETWORK_SLOTS, scrollRow.get() * GRID_COLUMNS, searchText, sortMode.name(), sortDescending);
+			page = terminal.getNetworkDisplayPage(NETWORK_SLOTS, scrollRow.get() * GRID_COLUMNS, searchText, getSortMode().name(), isSortDescending());
 		}
 
 		List<ItemStack> stacks = page.stacks();
@@ -575,6 +584,17 @@ public class TerminalMenu extends AbstractContainerMenu {
 
 	private static boolean isSupportedFilter(ItemStack stack) {
 		return stack.getItem() instanceof ListFilterItem || stack.getItem() instanceof AttributeFilterItem;
+	}
+
+	private SortMode getSortMode() {
+		int state = sortModeState.get();
+		SortMode[] modes = SortMode.values();
+		return state >= 0 && state < modes.length ? modes[state] : SortMode.COUNT;
+	}
+
+	private void setSortState(SortMode mode, boolean descending) {
+		sortModeState.set(mode.ordinal());
+		sortDescendingState.set(descending ? 1 : 0);
 	}
 
 	private enum SortMode {
