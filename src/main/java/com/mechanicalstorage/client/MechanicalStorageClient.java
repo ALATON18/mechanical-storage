@@ -55,6 +55,6 @@ public final class MechanicalStorageClient {
 	private static boolean isJeiBuildingIngredientTooltip() {
 		return STACK_WALKER.walk(frames -> frames
 				.map(StackWalker.StackFrame::getClassName)
-				.anyMatch(className -> className.startsWith("mezz.jei.")));
+				.anyMatch(className -> className.equals("mezz.jei.library.render.ItemStackRenderer")));
 	}
 }
