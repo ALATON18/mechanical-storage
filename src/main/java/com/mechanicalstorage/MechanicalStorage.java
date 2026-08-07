@@ -8,8 +8,6 @@ import com.mechanicalstorage.client.MechanicalStorageClient;
 import com.mechanicalstorage.client.MechanicalStorageShaftRenderer;
 import com.mechanicalstorage.menu.TerminalMenu;
 import com.mojang.logging.LogUtils;
-import com.simibubi.create.AllPartialModels;
-import com.simibubi.create.content.kinetics.base.OrientedRotatingVisual;
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.tterrag.registrate.util.entry.BlockEntityEntry;
 import com.tterrag.registrate.util.entry.BlockEntry;
@@ -54,14 +52,12 @@ public class MechanicalStorage {
 
 	public static final BlockEntityEntry<MechanicalStorageConnectorBlockEntity> MECHANICAL_STORAGE_CONNECTOR_BLOCK_ENTITY = REGISTRATE
 			.<MechanicalStorageConnectorBlockEntity>blockEntity("mechanical_storage_connector", MechanicalStorageConnectorBlockEntity::new)
-			.visual(() -> OrientedRotatingVisual.backHorizontal(AllPartialModels.SHAFT_HALF), false)
 			.validBlocks(MECHANICAL_STORAGE_CONNECTOR)
 			.renderer(() -> MechanicalStorageShaftRenderer::new)
 			.register();
 
 	public static final BlockEntityEntry<TerminalBlockEntity> MECHANICAL_STORAGE_TERMINAL_BLOCK_ENTITY = REGISTRATE
 			.<TerminalBlockEntity>blockEntity("mechanical_storage_terminal", TerminalBlockEntity::new)
-			.visual(() -> OrientedRotatingVisual.backHorizontal(AllPartialModels.SHAFT_HALF), false)
 			.validBlocks(MECHANICAL_STORAGE_TERMINAL)
 			.renderer(() -> MechanicalStorageShaftRenderer::new)
 			.register();
