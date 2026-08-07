@@ -6,8 +6,7 @@
 		"particle": "create:block/andesite_casing",
 		"casing": "create:block/andesite_casing",
 		"side": "create:block/andesite_encased_cogwheel_side",
-		"inner": "minecraft:block/stripped_spruce_log_top",
-		"copper": "create:block/copper_casing",
+		"inner": "create:block/andesite_casing",
 		"brass": "create:block/brass_casing",
 		"dark": "minecraft:block/deepslate_tiles"
 	},
@@ -96,11 +95,11 @@
 			}
 		},
 		{
-			"name": "Recessed front copper panel",
+			"name": "Recessed front andesite panel",
 			"from": [ 2, 10, 2 ],
 			"to": [ 14, 15.05, 14 ],
 			"faces": {
-				"up": { "uv": [ 2, 2, 14, 14 ], "texture": "#copper" },
+				"up": { "uv": [ 2, 2, 14, 14 ], "texture": "#casing" },
 				"down": { "uv": [ 2, 2, 14, 14 ], "texture": "#inner" }
 			}
 		},

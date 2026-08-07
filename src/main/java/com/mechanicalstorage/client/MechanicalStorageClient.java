@@ -17,6 +17,7 @@ public final class MechanicalStorageClient {
 	}
 
 	public static void register(IEventBus modEventBus) {
+		MechanicalStoragePartialModels.init();
 		modEventBus.addListener(MechanicalStorageClient::registerMenuScreens);
 		modEventBus.addListener(MechanicalStorageClient::registerBlockEntityRenderers);
 		NeoForge.EVENT_BUS.addListener(MechanicalStorageClient::addMachineItemTooltip);

@@ -1,0 +1,25 @@
+{
+	"parent": "minecraft:block/block",
+	"textures": {
+		"particle": "minecraft:block/lime_concrete",
+		"scanline": "minecraft:block/lime_concrete"
+	},
+	"elements": [
+		{
+			"name": "CRT scanline",
+			"from": [ 4.2, 5.05, 15.105 ],
+			"to": [ 11.8, 5.3, 15.115 ],
+			"faces": {
+				"south": { "uv": [ 0, 0, 16, 1 ], "texture": "#scanline" }
+			}
+		},
+		{
+			"name": "CRT pulse",
+			"from": [ 8.2, 5.3, 15.107 ],
+			"to": [ 9.8, 5.55, 15.117 ],
+			"faces": {
+				"south": { "uv": [ 6, 0, 10, 1 ], "texture": "#scanline" }
+			}
+		}
+	]
+}
