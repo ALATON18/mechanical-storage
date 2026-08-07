@@ -139,7 +139,7 @@
 					"texture": "#gearbox"
 				},
 				"south": {
-					"uv": [ 3, 3, 13, 13 ],
+					"uv": [ 2, 2, 14, 14 ],
 					"texture": "#panel"
 				}
 			}
