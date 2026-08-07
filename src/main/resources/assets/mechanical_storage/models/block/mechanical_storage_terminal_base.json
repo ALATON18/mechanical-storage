@@ -2,9 +2,10 @@
 	"credit": "Based on Create encased chain drive shape",
 	"parent": "minecraft:block/block",
 	"textures": {
-		"particle": "create:block/encased_chain_drive",
-		"chain": "create:block/encased_chain_drive",
-		"gearbox": "create:block/gearbox",
+		"particle": "mechanical_storage:block/terminal_copper_chain_drive",
+		"chain": "mechanical_storage:block/terminal_copper_chain_drive",
+		"gearbox": "mechanical_storage:block/terminal_copper_gearbox",
+		"panel": "create:block/encased_chain_drive",
 		"copper": "create:block/copper_casing",
 		"screen": "create:block/flap_display_front"
 	},
@@ -16,7 +17,7 @@
 			"faces": {
 				"south": {
 					"uv": [ 0, 14, 16, 16 ],
-					"texture": "#copper"
+					"texture": "#gearbox"
 				},
 				"west": {
 					"uv": [ 14, 0, 16, 16 ],
@@ -51,7 +52,7 @@
 			"faces": {
 				"south": {
 					"uv": [ 0, 0, 16, 2 ],
-					"texture": "#copper"
+					"texture": "#gearbox"
 				},
 				"west": {
 					"uv": [ 0, 0, 2, 16 ],
@@ -85,7 +86,7 @@
 			"faces": {
 				"south": {
 					"uv": [ 14, 2, 16, 14 ],
-					"texture": "#copper"
+					"texture": "#gearbox"
 				},
 				"west": {
 					"uv": [ 2, 0, 14, 16 ],
@@ -110,7 +111,7 @@
 			"faces": {
 				"south": {
 					"uv": [ 0, 2, 2, 14 ],
-					"texture": "#copper"
+					"texture": "#gearbox"
 				},
 				"west": {
 					"uv": [ 2, 0, 14, 16 ],
@@ -138,8 +139,8 @@
 					"texture": "#gearbox"
 				},
 				"south": {
-					"uv": [ 2, 2, 14, 14 ],
-					"texture": "#copper"
+					"uv": [ 3, 3, 13, 13 ],
+					"texture": "#panel"
 				}
 			}
 		},
@@ -185,3 +186,4 @@
 		}
 	]
 }
+

@@ -26,7 +26,7 @@ import java.util.Map;
 import java.util.WeakHashMap;
 
 public class MechanicalStorageShaftRenderer<T extends KineticBlockEntity> implements BlockEntityRenderer<T> {
-	private static final float SCREEN_TRAVEL_BLOCKS = 5.0F / 16.0F;
+	private static final int SCREEN_FRAME_COUNT = 6;
 	private static final float RPM_PER_SCREEN_CYCLE = 16.0F;
 	private static final float MAX_SCREEN_CYCLES_PER_SECOND = 8.0F;
 
@@ -79,10 +79,10 @@ public class MechanicalStorageShaftRenderer<T extends KineticBlockEntity> implem
 			animation.phase -= Mth.floor(animation.phase);
 		}
 
-		SuperByteBuffer scanline = CachedBuffers.partialFacing(
-				MechanicalStoragePartialModels.TERMINAL_SCREEN_SCANLINE, state, front);
-		scanline.translate(0, animation.phase * SCREEN_TRAVEL_BLOCKS, 0)
-				.light(LightTexture.FULL_BRIGHT)
+		int frame = Mth.floor(animation.phase * SCREEN_FRAME_COUNT) % SCREEN_FRAME_COUNT;
+		SuperByteBuffer screen = CachedBuffers.partialFacing(
+				MechanicalStoragePartialModels.TERMINAL_SCREEN_FRAMES[frame], state, front);
+		screen.light(LightTexture.FULL_BRIGHT)
 				.renderInto(poseStack, buffer.getBuffer(RenderType.cutoutMipped()));
 	}
 
@@ -102,3 +102,4 @@ public class MechanicalStorageShaftRenderer<T extends KineticBlockEntity> implem
 		}
 	}
 }
+

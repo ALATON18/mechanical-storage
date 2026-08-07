@@ -7,7 +7,7 @@
 		"casing": "create:block/andesite_casing",
 		"side": "create:block/andesite_encased_cogwheel_side",
 		"inner": "create:block/andesite_casing",
-		"brass": "create:block/brass_casing",
+		"copper": "create:block/copper_casing",
 		"dark": "minecraft:block/deepslate_tiles"
 	},
 	"elements": [
@@ -95,11 +95,11 @@
 			}
 		},
 		{
-			"name": "Recessed front andesite panel",
+			"name": "Recessed connector copper panel",
 			"from": [ 2, 10, 2 ],
 			"to": [ 14, 15.05, 14 ],
 			"faces": {
-				"up": { "uv": [ 2, 2, 14, 14 ], "texture": "#casing" },
+				"up": { "uv": [ 2, 2, 14, 14 ], "texture": "#copper" },
 				"down": { "uv": [ 2, 2, 14, 14 ], "texture": "#inner" }
 			}
 		},
@@ -112,11 +112,11 @@
 			}
 		},
 		{
-			"name": "Front intake brass",
+			"name": "Front intake andesite border",
 			"from": [ 5, 15.14, 5 ],
 			"to": [ 11, 15.15, 11 ],
 			"faces": {
-				"up": { "uv": [ 5, 5, 11, 11 ], "texture": "#brass" }
+				"up": { "uv": [ 5, 5, 11, 11 ], "texture": "#casing" }
 			}
 		},
 		{
@@ -129,3 +129,4 @@
 		}
 	]
 }
+
