@@ -5,7 +5,6 @@ import com.mechanicalstorage.block.MechanicalStorageTerminalBlock;
 import com.mechanicalstorage.blockentity.MechanicalStorageConnectorBlockEntity;
 import com.mechanicalstorage.blockentity.TerminalBlockEntity;
 import com.mechanicalstorage.client.MechanicalStorageClient;
-import com.mechanicalstorage.client.MechanicalStorageShaftRenderer;
 import com.mechanicalstorage.menu.TerminalMenu;
 import com.mojang.logging.LogUtils;
 import com.simibubi.create.foundation.data.CreateRegistrate;
@@ -53,13 +52,11 @@ public class MechanicalStorage {
 	public static final BlockEntityEntry<MechanicalStorageConnectorBlockEntity> MECHANICAL_STORAGE_CONNECTOR_BLOCK_ENTITY = REGISTRATE
 			.<MechanicalStorageConnectorBlockEntity>blockEntity("mechanical_storage_connector", MechanicalStorageConnectorBlockEntity::new)
 			.validBlocks(MECHANICAL_STORAGE_CONNECTOR)
-			.renderer(() -> MechanicalStorageShaftRenderer::new)
 			.register();
 
 	public static final BlockEntityEntry<TerminalBlockEntity> MECHANICAL_STORAGE_TERMINAL_BLOCK_ENTITY = REGISTRATE
 			.<TerminalBlockEntity>blockEntity("mechanical_storage_terminal", TerminalBlockEntity::new)
 			.validBlocks(MECHANICAL_STORAGE_TERMINAL)
-			.renderer(() -> MechanicalStorageShaftRenderer::new)
 			.register();
 
 	public static final DeferredHolder<MenuType<?>, MenuType<TerminalMenu>> TERMINAL_MENU = MENU_TYPES.register("terminal", () ->
