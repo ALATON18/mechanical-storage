@@ -1,15 +1,12 @@
 package com.mechanicalstorage.blockentity;
 
 import com.mechanicalstorage.MechanicalStorage;
-import com.mechanicalstorage.block.DirectionalMachineBlock;
 import com.mechanicalstorage.menu.TerminalMenu;
 import com.mechanicalstorage.network.StorageNetworkRegistry;
 import com.simibubi.create.content.logistics.filter.AttributeFilterItem;
 import com.simibubi.create.content.logistics.filter.FilterItemStack;
 import com.simibubi.create.content.logistics.filter.ListFilterItem;
-import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
@@ -23,7 +20,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.items.IItemHandler;
@@ -36,8 +32,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
-public class TerminalBlockEntity extends KineticBlockEntity implements MenuProvider {
+public class TerminalBlockEntity extends FixedStressKineticBlockEntity implements MenuProvider {
 	public static final int MAX_CONNECTORS = 64;
+	public static final float FIXED_STRESS_UNITS = 256.0F;
 	private static final int MAX_SUMMARY_ITEMS = 8;
 	public static final int LIST_FILTER_SLOT = 0;
 	public static final int ATTRIBUTE_FILTER_SLOT = 1;
@@ -75,7 +72,7 @@ public class TerminalBlockEntity extends KineticBlockEntity implements MenuProvi
 	};
 
 	public TerminalBlockEntity(BlockEntityType<? extends TerminalBlockEntity> type, BlockPos pos, BlockState blockState) {
-		super(type, pos, blockState);
+		super(type, pos, blockState, FIXED_STRESS_UNITS);
 	}
 
 	public TerminalBlockEntity(BlockPos pos, BlockState blockState) {
@@ -127,7 +124,7 @@ public class TerminalBlockEntity extends KineticBlockEntity implements MenuProvi
 	}
 
 	public boolean isOnline() {
-		return getSpeed() != 0 && hasNetwork();
+		return isSpeedRequirementFulfilled() && hasNetwork();
 	}
 
 	public NetworkStatus getNetworkStatus() {
@@ -135,17 +132,13 @@ public class TerminalBlockEntity extends KineticBlockEntity implements MenuProvi
 			return NetworkStatus.ONLINE;
 		}
 
-		return hasKineticConnection() ? NetworkStatus.OVERSTRESSED : NetworkStatus.DISCONNECTED;
-	}
-
-	private boolean hasKineticConnection() {
-		if (level == null) {
-			return false;
+		if (isOverStressed()) {
+			return NetworkStatus.OVERSTRESSED;
 		}
-
-		Direction facing = getBlockState().getValue(DirectionalMachineBlock.FACING);
-		BlockEntity neighbour = level.getBlockEntity(worldPosition.relative(facing.getOpposite()));
-		return neighbour instanceof KineticBlockEntity;
+		if (getTheoreticalSpeed() != 0) {
+			return NetworkStatus.TOO_SLOW;
+		}
+		return NetworkStatus.DISCONNECTED;
 	}
 
 	@Override
@@ -516,13 +509,15 @@ public class TerminalBlockEntity extends KineticBlockEntity implements MenuProvi
 	public enum NetworkStatus {
 		ONLINE,
 		OVERSTRESSED,
-		DISCONNECTED;
+		DISCONNECTED,
+		TOO_SLOW;
 
 		public Component message() {
 			return switch (this) {
 				case ONLINE -> Component.translatable("status.mechanical_storage.online");
 				case OVERSTRESSED -> Component.translatable("status.mechanical_storage.overstressed");
 				case DISCONNECTED -> Component.translatable("status.mechanical_storage.disconnected");
+				case TOO_SLOW -> Component.translatable("status.mechanical_storage.too_slow");
 			};
 		}
 	}
