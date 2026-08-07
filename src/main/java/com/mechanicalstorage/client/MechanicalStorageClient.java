@@ -11,6 +11,8 @@ import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
 
 public final class MechanicalStorageClient {
+	private static final StackWalker STACK_WALKER = StackWalker.getInstance();
+
 	private MechanicalStorageClient() {
 	}
 
@@ -38,6 +40,9 @@ public final class MechanicalStorageClient {
 				&& !event.getItemStack().is(MechanicalStorage.MECHANICAL_STORAGE_TERMINAL.get().asItem())) {
 			return;
 		}
+		if (isJeiBuildingIngredientTooltip()) {
+			return;
+		}
 
 		String modName = ModList.get().getModContainerById(MechanicalStorage.MODID)
 				.map(container -> container.getModInfo().getDisplayName())
@@ -45,5 +50,11 @@ public final class MechanicalStorageClient {
 		if (event.getToolTip().stream().noneMatch(line -> line.getString().equals(modName))) {
 			event.getToolTip().add(Component.literal(modName).withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
 		}
+	}
+
+	private static boolean isJeiBuildingIngredientTooltip() {
+		return STACK_WALKER.walk(frames -> frames
+				.map(StackWalker.StackFrame::getClassName)
+				.anyMatch(className -> className.startsWith("mezz.jei.")));
 	}
 }
