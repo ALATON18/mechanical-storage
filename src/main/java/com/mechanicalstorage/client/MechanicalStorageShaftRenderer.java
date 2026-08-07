@@ -1,6 +1,7 @@
 package com.mechanicalstorage.client;
 
 import com.mechanicalstorage.block.DirectionalMachineBlock;
+import com.mechanicalstorage.block.OrientedConnectorBlock;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.AllPartialModels;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
@@ -13,6 +14,7 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.core.Direction;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class MechanicalStorageShaftRenderer<T extends KineticBlockEntity> implements BlockEntityRenderer<T> {
 	public MechanicalStorageShaftRenderer(BlockEntityRendererProvider.Context context) {
@@ -24,9 +26,12 @@ public class MechanicalStorageShaftRenderer<T extends KineticBlockEntity> implem
 			return;
 		}
 
-		Direction front = be.getBlockState().getValue(DirectionalMachineBlock.FACING);
+		BlockState state = be.getBlockState();
+		Direction front = state.getBlock() instanceof OrientedConnectorBlock
+				? state.getValue(OrientedConnectorBlock.FACING)
+				: state.getValue(DirectionalMachineBlock.FACING);
 		Direction shaftDirection = front.getOpposite();
-		SuperByteBuffer shaft = CachedBuffers.partialFacing(AllPartialModels.SHAFT_HALF, be.getBlockState(), shaftDirection);
+		SuperByteBuffer shaft = CachedBuffers.partialFacing(AllPartialModels.SHAFT_HALF, state, shaftDirection);
 		int rearLight = LevelRenderer.getLightColor(be.getLevel(), be.getBlockPos().relative(shaftDirection));
 		KineticBlockEntityRenderer.standardKineticRotationTransform(shaft, be, rearLight)
 				.renderInto(poseStack, buffer.getBuffer(RenderType.cutoutMipped()));

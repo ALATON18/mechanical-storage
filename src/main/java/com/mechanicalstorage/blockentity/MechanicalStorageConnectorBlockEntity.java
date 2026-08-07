@@ -1,7 +1,7 @@
 package com.mechanicalstorage.blockentity;
 
 import com.mechanicalstorage.MechanicalStorage;
-import com.mechanicalstorage.block.DirectionalMachineBlock;
+import com.mechanicalstorage.block.OrientedConnectorBlock;
 import com.mechanicalstorage.network.StorageNetworkRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -85,7 +85,7 @@ public class MechanicalStorageConnectorBlockEntity extends FixedStressKineticBlo
 	}
 
 	public BlockPos getTargetPos() {
-		Direction facing = getBlockState().getValue(DirectionalMachineBlock.FACING);
+		Direction facing = getBlockState().getValue(OrientedConnectorBlock.FACING);
 		return worldPosition.relative(facing);
 	}
 
@@ -95,7 +95,7 @@ public class MechanicalStorageConnectorBlockEntity extends FixedStressKineticBlo
 			return null;
 		}
 
-		Direction facing = getBlockState().getValue(DirectionalMachineBlock.FACING);
+		Direction facing = getBlockState().getValue(OrientedConnectorBlock.FACING);
 		BlockPos targetPos = getTargetPos();
 		BlockState targetState = level.getBlockState(targetPos);
 		BlockEntity targetBlockEntity = level.getBlockEntity(targetPos);

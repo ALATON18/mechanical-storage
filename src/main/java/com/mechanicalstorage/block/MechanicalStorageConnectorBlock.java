@@ -3,21 +3,24 @@ package com.mechanicalstorage.block;
 import com.mechanicalstorage.blockentity.MechanicalStorageConnectorBlockEntity;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntityTicker;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.ItemInteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
+import net.neoforged.neoforge.common.Tags.Items;
 import org.jetbrains.annotations.Nullable;
 
-public class MechanicalStorageConnectorBlock extends DirectionalMachineBlock implements EntityBlock {
+public class MechanicalStorageConnectorBlock extends OrientedConnectorBlock implements EntityBlock {
     public MechanicalStorageConnectorBlock(Properties properties) {
         super(properties);
     }
@@ -35,6 +38,11 @@ public class MechanicalStorageConnectorBlock extends DirectionalMachineBlock imp
     }
 
     @Override
+    public boolean hasShaftTowards(LevelReader world, BlockPos pos, BlockState state, Direction face) {
+        return face == state.getValue(FACING).getOpposite();
+    }
+
+    @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
         if (!level.isClientSide && player instanceof ServerPlayer serverPlayer && level.getBlockEntity(pos) instanceof MechanicalStorageConnectorBlockEntity connector) {
             serverPlayer.sendSystemMessage(connector.describeTargetInventory());
@@ -45,6 +53,10 @@ public class MechanicalStorageConnectorBlock extends DirectionalMachineBlock imp
 
     @Override
     protected ItemInteractionResult useItemOn(net.minecraft.world.item.ItemStack stack, BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
+        if (stack.is(Items.TOOLS_WRENCH)) {
+            return ItemInteractionResult.SKIP_DEFAULT_BLOCK_INTERACTION;
+        }
+
         useWithoutItem(state, level, pos, player, hitResult);
         return ItemInteractionResult.SUCCESS;
     }
