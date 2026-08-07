@@ -1,7 +1,7 @@
 package com.mechanicalstorage;
 
-import com.mechanicalstorage.block.MechanicalStorageConnectorBlock;
 import com.mechanicalstorage.block.MechanicalStorageCogwheelConnectorBlock;
+import com.mechanicalstorage.block.MechanicalStorageConnectorBlock;
 import com.mechanicalstorage.block.MechanicalStorageTerminalBlock;
 import com.mechanicalstorage.blockentity.MechanicalStorageConnectorBlockEntity;
 import com.mechanicalstorage.blockentity.TerminalBlockEntity;
@@ -11,6 +11,7 @@ import com.mojang.logging.LogUtils;
 import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.tterrag.registrate.util.entry.BlockEntityEntry;
 import com.tterrag.registrate.util.entry.BlockEntry;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -46,6 +47,7 @@ public class MechanicalStorage {
 
 	public static final BlockEntry<MechanicalStorageCogwheelConnectorBlock> MECHANICAL_STORAGE_COGWHEEL_CONNECTOR = REGISTRATE
 			.block("mechanical_storage_cogwheel_connector", properties -> new MechanicalStorageCogwheelConnectorBlock(machineProperties(MapColor.COLOR_GRAY).noOcclusion()))
+			.addLayer(() -> RenderType::cutoutMipped)
 			.item()
 			.build()
 			.register();

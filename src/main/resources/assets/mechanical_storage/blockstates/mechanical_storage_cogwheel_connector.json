@@ -1,83 +1,29 @@
 {
-	"multipart": [
-		{
-			"when": { "facing": "down" },
-			"apply": { "model": "create:block/andesite_encased_cogwheel" }
+	"variants": {
+		"facing=down": {
+			"model": "mechanical_storage:block/mechanical_storage_cogwheel_connector_base",
+			"x": 180
 		},
-		{
-			"when": { "facing": "down" },
-			"apply": {
-				"model": "mechanical_storage:block/mechanical_storage_cogwheel_connector_front",
-				"x": 270
-			}
+		"facing=east": {
+			"model": "mechanical_storage:block/mechanical_storage_cogwheel_connector_base",
+			"x": 270,
+			"y": 270
 		},
-		{
-			"when": { "facing": "north" },
-			"apply": {
-				"model": "create:block/andesite_encased_cogwheel",
-				"x": 90,
-				"y": 180
-			}
+		"facing=north": {
+			"model": "mechanical_storage:block/mechanical_storage_cogwheel_connector_base",
+			"x": 90
 		},
-		{
-			"when": { "facing": "north" },
-			"apply": {
-				"model": "mechanical_storage:block/mechanical_storage_cogwheel_connector_front",
-				"y": 180
-			}
+		"facing=south": {
+			"model": "mechanical_storage:block/mechanical_storage_cogwheel_connector_base",
+			"x": 270
 		},
-		{
-			"when": { "facing": "east" },
-			"apply": {
-				"model": "create:block/andesite_encased_cogwheel",
-				"x": 90,
-				"y": 90
-			}
+		"facing=up": {
+			"model": "mechanical_storage:block/mechanical_storage_cogwheel_connector_base"
 		},
-		{
-			"when": { "facing": "east" },
-			"apply": {
-				"model": "mechanical_storage:block/mechanical_storage_cogwheel_connector_front",
-				"y": 270
-			}
-		},
-		{
-			"when": { "facing": "south" },
-			"apply": {
-				"model": "create:block/andesite_encased_cogwheel",
-				"x": 90,
-				"y": 180
-			}
-		},
-		{
-			"when": { "facing": "south" },
-			"apply": { "model": "mechanical_storage:block/mechanical_storage_cogwheel_connector_front" }
-		},
-		{
-			"when": { "facing": "up" },
-			"apply": { "model": "create:block/andesite_encased_cogwheel" }
-		},
-		{
-			"when": { "facing": "up" },
-			"apply": {
-				"model": "mechanical_storage:block/mechanical_storage_cogwheel_connector_front",
-				"x": 90
-			}
-		},
-		{
-			"when": { "facing": "west" },
-			"apply": {
-				"model": "create:block/andesite_encased_cogwheel",
-				"x": 90,
-				"y": 90
-			}
-		},
-		{
-			"when": { "facing": "west" },
-			"apply": {
-				"model": "mechanical_storage:block/mechanical_storage_cogwheel_connector_front",
-				"y": 90
-			}
+		"facing=west": {
+			"model": "mechanical_storage:block/mechanical_storage_cogwheel_connector_base",
+			"x": 270,
+			"y": 90
 		}
-	]
+	}
 }

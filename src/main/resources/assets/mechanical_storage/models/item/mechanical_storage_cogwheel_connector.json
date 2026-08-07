@@ -1,16 +1,26 @@
 {
+	"parent": "minecraft:block/block",
 	"loader": "neoforge:composite",
+	"render_type": "minecraft:cutout_mipped",
 	"children": {
-		"encased_cogwheel": {
-			"parent": "create:item/andesite_encased_cogwheel"
+		"casing": {
+			"parent": "mechanical_storage:block/mechanical_storage_cogwheel_connector_base",
+			"transform": {
+				"rotation": { "x": 90 },
+				"origin": "center"
+			}
 		},
-		"connector_front": {
-			"parent": "mechanical_storage:block/mechanical_storage_cogwheel_connector_item_front"
+		"cogwheel": {
+			"parent": "create:block/cogwheel_shaftless",
+			"transform": {
+				"rotation": { "x": 90 },
+				"origin": "center"
+			}
 		}
 	},
 	"display": {
 		"gui": {
-			"rotation": [ 30, 225, 0 ],
+			"rotation": [ 30, 45, 0 ],
 			"translation": [ 0, 0, 0 ],
 			"scale": [ 0.625, 0.625, 0.625 ]
 		}
