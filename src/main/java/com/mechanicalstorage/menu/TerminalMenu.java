@@ -6,19 +6,31 @@ import com.simibubi.create.content.logistics.filter.AttributeFilterItem;
 import com.simibubi.create.content.logistics.filter.ListFilterItem;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.DataSlot;
+import net.minecraft.world.inventory.ResultContainer;
+import net.minecraft.world.inventory.ResultSlot;
 import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.inventory.TransientCraftingContainer;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.CraftingInput;
+import net.minecraft.world.item.crafting.CraftingRecipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.item.crafting.RecipeType;
+import net.neoforged.neoforge.items.ItemHandlerHelper;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import net.neoforged.neoforge.items.SlotItemHandler;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class TerminalMenu extends AbstractContainerMenu {
 	public static final int GRID_COLUMNS = 9;
@@ -29,10 +41,14 @@ public class TerminalMenu extends AbstractContainerMenu {
 	public static final int NETWORK_SLOT_X = 32;
 	public static final int NETWORK_SLOT_Y = 39;
 	public static final int PLAYER_INVENTORY_Y = NETWORK_SLOT_Y + MAX_GRID_ROWS * 18 + 11;
-	public static final int HOTBAR_Y = PLAYER_INVENTORY_Y + 58;
 	public static final int FILTER_SLOT_X = 212;
 	public static final int FILTER_SLOT_Y = 17;
 	public static final int FILTER_SLOT_SPACING = 18;
+	public static final int CRAFTING_INPUT_X = NETWORK_SLOT_X;
+	public static final int CRAFTING_INPUT_Y = PLAYER_INVENTORY_Y;
+	public static final int CRAFTING_RESULT_X = 140;
+	public static final int CRAFTING_RESULT_Y = CRAFTING_INPUT_Y + 18;
+	public static final int CRAFTING_SECTION_HEIGHT = 69;
 	public static final int SEARCH_CLEAR_BUTTON = 100000;
 	public static final int SEARCH_BACKSPACE_BUTTON = 100001;
 	public static final int SEARCH_APPLY_BUTTON = 100002;
@@ -42,6 +58,7 @@ public class TerminalMenu extends AbstractContainerMenu {
 	public static final int SCROLL_DOWN_BUTTON = 100006;
 	public static final int SINGLE_DEPOSIT_BUTTON = 100007;
 	public static final int TOGGLE_FILTER_BUTTON_BASE = 100008;
+	public static final int RETURN_CRAFTING_BUTTON = 100012;
 	public static final int SEARCH_CHAR_BASE_BUTTON = 200000;
 	public static final int SINGLE_EXTRACT_SLOT_BASE_BUTTON = 300000;
 	public static final int GRID_ROWS_BUTTON_BASE = 400000;
@@ -49,15 +66,21 @@ public class TerminalMenu extends AbstractContainerMenu {
 	public static final int SEARCH_MAX_LENGTH = 64;
 
 	public static final int FILTER_SLOT_START = NETWORK_SLOTS;
-	private static final int PLAYER_INVENTORY_START = FILTER_SLOT_START + FILTER_SLOTS;
+	public static final int CRAFTING_INPUT_SLOT_START = FILTER_SLOT_START + FILTER_SLOTS;
+	public static final int CRAFTING_INPUT_SLOTS = 9;
+	public static final int CRAFTING_RESULT_SLOT = CRAFTING_INPUT_SLOT_START + CRAFTING_INPUT_SLOTS;
 	private static final int PLAYER_INVENTORY_SLOTS = 27;
-	private static final int HOTBAR_START = PLAYER_INVENTORY_START + PLAYER_INVENTORY_SLOTS;
 	private static final int HOTBAR_SLOTS = 9;
 
 	private final ItemStackHandler displayItems = new ItemStackHandler(NETWORK_SLOTS);
 	private final ItemStackHandler filterItems;
 	private final Inventory playerInventory;
 	private final BlockPos terminalPos;
+	private final boolean craftingTerminal;
+	private final TransientCraftingContainer craftingItems = new TransientCraftingContainer(this, 3, 3);
+	private final ResultContainer craftingResult = new ResultContainer();
+	private final int playerInventoryStart;
+	private final int hotbarStart;
 	private final DataSlot scrollRow = DataSlot.standalone();
 	private final DataSlot totalMatchingItems = DataSlot.standalone();
 	private final DataSlot networkStatus = DataSlot.standalone();
@@ -73,24 +96,33 @@ public class TerminalMenu extends AbstractContainerMenu {
 	private int refreshCooldown;
 
 	public TerminalMenu(int containerId, Inventory playerInventory, RegistryFriendlyByteBuf buffer) {
-		this(containerId, playerInventory, buffer.readBlockPos(), null);
+		this(containerId, playerInventory, readOpeningData(buffer), null);
 	}
 
 	public TerminalMenu(int containerId, Inventory playerInventory, TerminalBlockEntity terminal) {
-		this(containerId, playerInventory, terminal.getBlockPos(), terminal);
+		this(containerId, playerInventory,
+				new OpeningData(terminal.getBlockPos(), terminal.isCraftingTerminal()), terminal);
 	}
 
-	private TerminalMenu(int containerId, Inventory playerInventory, BlockPos terminalPos, @Nullable TerminalBlockEntity terminal) {
+	private TerminalMenu(int containerId, Inventory playerInventory, OpeningData openingData,
+			@Nullable TerminalBlockEntity terminal) {
 		super(MechanicalStorage.TERMINAL_MENU.get(), containerId);
 		this.playerInventory = playerInventory;
-		this.terminalPos = terminalPos;
+		this.terminalPos = openingData.terminalPos();
+		this.craftingTerminal = openingData.craftingTerminal();
 		this.terminal = terminal;
 		this.filterItems = terminal == null ? new ItemStackHandler(FILTER_SLOTS) : terminal.getTerminalFilters();
+		this.playerInventoryStart = CRAFTING_INPUT_SLOT_START
+				+ (craftingTerminal ? CRAFTING_INPUT_SLOTS + 1 : 0);
+		this.hotbarStart = playerInventoryStart + PLAYER_INVENTORY_SLOTS;
 		this.visibleRows.set(DEFAULT_GRID_ROWS);
 		setSortState(SortMode.COUNT, true);
 
 		addNetworkSlots();
 		addTerminalFilterSlots();
+		if (craftingTerminal) {
+			addCraftingSlots(playerInventory.player);
+		}
 		addPlayerInventorySlots(playerInventory);
 		addDataSlot(scrollRow);
 		addDataSlot(totalMatchingItems);
@@ -111,9 +143,22 @@ public class TerminalMenu extends AbstractContainerMenu {
 		refreshDisplay();
 	}
 
+	private static OpeningData readOpeningData(RegistryFriendlyByteBuf buffer) {
+		return new OpeningData(buffer.readBlockPos(), buffer.readBoolean());
+	}
+
 	@Override
 	public boolean stillValid(Player player) {
-		return AbstractContainerMenu.stillValid(ContainerLevelAccess.create(player.level(), terminalPos), player, MechanicalStorage.MECHANICAL_STORAGE_TERMINAL.get());
+		return AbstractContainerMenu.stillValid(ContainerLevelAccess.create(player.level(), terminalPos), player,
+				craftingTerminal
+						? MechanicalStorage.MECHANICAL_STORAGE_CRAFTING_TERMINAL.get()
+						: MechanicalStorage.MECHANICAL_STORAGE_TERMINAL.get());
+	}
+
+	@Override
+	public boolean canTakeItemForPickAll(ItemStack stack, Slot slot) {
+		return (!craftingTerminal || slots.indexOf(slot) != CRAFTING_RESULT_SLOT)
+				&& super.canTakeItemForPickAll(stack, slot);
 	}
 
 	@Override
@@ -172,6 +217,12 @@ public class TerminalMenu extends AbstractContainerMenu {
 
 		if (id == SINGLE_DEPOSIT_BUTTON) {
 			depositCarriedStack(1);
+			refreshAfterInteraction();
+			return true;
+		}
+
+		if (id == RETURN_CRAFTING_BUTTON && craftingTerminal) {
+			returnCraftingItemsToStorage();
 			refreshAfterInteraction();
 			return true;
 		}
@@ -236,13 +287,35 @@ public class TerminalMenu extends AbstractContainerMenu {
 		}
 
 		if (isFilterSlot(index)) {
-			if (!moveItemStackTo(clickedStack, PLAYER_INVENTORY_START, HOTBAR_START + HOTBAR_SLOTS, true)) {
+			if (!moveItemStackTo(clickedStack, playerInventoryStart, hotbarStart + HOTBAR_SLOTS, true)) {
 				return ItemStack.EMPTY;
 			}
 
 			slot.set(clickedStack.isEmpty() ? ItemStack.EMPTY : clickedStack);
 			slot.setChanged();
 			refreshDisplay();
+			return originalStack;
+		}
+
+		if (isCraftingResultSlot(index)) {
+			return quickMoveCraftingResult(player);
+		}
+
+		if (isCraftingInputSlot(index)) {
+			ItemStack remaining = insertIntoNetwork(clickedStack.copy());
+			if (!ItemStack.matches(remaining, clickedStack)) {
+				slot.set(remaining.isEmpty() ? ItemStack.EMPTY : remaining);
+				slot.setChanged();
+				refreshDisplay();
+				return originalStack;
+			}
+
+			if (!moveItemStackTo(clickedStack, playerInventoryStart, hotbarStart + HOTBAR_SLOTS, true)) {
+				return ItemStack.EMPTY;
+			}
+
+			slot.set(clickedStack.isEmpty() ? ItemStack.EMPTY : clickedStack);
+			slot.setChanged();
 			return originalStack;
 		}
 
@@ -276,6 +349,14 @@ public class TerminalMenu extends AbstractContainerMenu {
 
 	@Override
 	public void clicked(int slotId, int button, ClickType clickType, Player player) {
+		if (isCraftingResultSlot(slotId) && clickType == ClickType.QUICK_MOVE) {
+			if (terminal != null) {
+				craftOneStackToInventory(player);
+				refreshAfterInteraction();
+			}
+			return;
+		}
+
 		if (isNetworkSlot(slotId)) {
 			ItemStack carried = getCarried();
 			if (!carried.isEmpty()) {
@@ -311,6 +392,47 @@ public class TerminalMenu extends AbstractContainerMenu {
 	}
 
 	@Override
+	public void slotsChanged(Container container) {
+		if (craftingTerminal && container == craftingItems && terminal != null
+				&& playerInventory.player instanceof ServerPlayer serverPlayer) {
+			List<ItemStack> inputItems = new ArrayList<>(CRAFTING_INPUT_SLOTS);
+			for (int slot = 0; slot < CRAFTING_INPUT_SLOTS; slot++) {
+				inputItems.add(craftingItems.getItem(slot));
+			}
+			CraftingInput input = CraftingInput.of(3, 3, inputItems);
+			Optional<RecipeHolder<CraftingRecipe>> recipe = serverPlayer.level().getRecipeManager()
+					.getRecipeFor(RecipeType.CRAFTING, input, serverPlayer.level());
+			ItemStack result = ItemStack.EMPTY;
+			if (recipe.isPresent()
+					&& craftingResult.setRecipeUsed(serverPlayer.level(), serverPlayer, recipe.get())) {
+				result = recipe.get().value().assemble(input, serverPlayer.level().registryAccess());
+			}
+			craftingResult.setItem(0, result);
+		}
+		super.slotsChanged(container);
+	}
+
+	@Override
+	public void removed(Player player) {
+		super.removed(player);
+		if (!craftingTerminal || terminal == null || player.level().isClientSide) {
+			return;
+		}
+
+		for (int slot = 0; slot < craftingItems.getContainerSize(); slot++) {
+			ItemStack stack = craftingItems.removeItemNoUpdate(slot);
+			if (stack.isEmpty()) {
+				continue;
+			}
+
+			ItemStack remaining = insertIntoNetwork(stack);
+			if (!remaining.isEmpty()) {
+				ItemHandlerHelper.giveItemToPlayer(player, remaining);
+			}
+		}
+	}
+
+	@Override
 	public void broadcastChanges() {
 		if (terminal != null) {
 			refreshCooldown--;
@@ -343,6 +465,14 @@ public class TerminalMenu extends AbstractContainerMenu {
 
 	public int getVisibleRows() {
 		return Math.max(1, Math.min(MAX_GRID_ROWS, visibleRows.get()));
+	}
+
+	public boolean isCraftingTerminal() {
+		return craftingTerminal;
+	}
+
+	public int getFirstTranslatedSlotIndex() {
+		return craftingTerminal ? CRAFTING_INPUT_SLOT_START : playerInventoryStart;
 	}
 
 	public boolean isSortingByName() {
@@ -399,15 +529,29 @@ public class TerminalMenu extends AbstractContainerMenu {
 		}
 	}
 
+	private void addCraftingSlots(Player player) {
+		for (int row = 0; row < 3; row++) {
+			for (int column = 0; column < 3; column++) {
+				this.addSlot(new Slot(craftingItems, column + row * 3,
+						CRAFTING_INPUT_X + column * 18, CRAFTING_INPUT_Y + row * 18));
+			}
+		}
+
+		this.addSlot(new ResultSlot(player, craftingItems, craftingResult, 0,
+				CRAFTING_RESULT_X, CRAFTING_RESULT_Y));
+	}
+
 	private void addPlayerInventorySlots(Inventory inventory) {
+		int inventoryY = PLAYER_INVENTORY_Y + (craftingTerminal ? CRAFTING_SECTION_HEIGHT : 0);
 		for (int row = 0; row < 3; row++) {
 			for (int column = 0; column < 9; column++) {
-				this.addSlot(new Slot(inventory, column + row * 9 + 9, NETWORK_SLOT_X + column * 18, PLAYER_INVENTORY_Y + row * 18));
+				this.addSlot(new Slot(inventory, column + row * 9 + 9,
+						NETWORK_SLOT_X + column * 18, inventoryY + row * 18));
 			}
 		}
 
 		for (int column = 0; column < 9; column++) {
-			this.addSlot(new Slot(inventory, column, NETWORK_SLOT_X + column * 18, HOTBAR_Y));
+			this.addSlot(new Slot(inventory, column, NETWORK_SLOT_X + column * 18, inventoryY + 58));
 		}
 	}
 
@@ -416,11 +560,19 @@ public class TerminalMenu extends AbstractContainerMenu {
 	}
 
 	private boolean isPlayerSlot(int index) {
-		return index >= PLAYER_INVENTORY_START && index < HOTBAR_START + HOTBAR_SLOTS;
+		return index >= playerInventoryStart && index < hotbarStart + HOTBAR_SLOTS;
 	}
 
 	private boolean isFilterSlot(int index) {
 		return index >= FILTER_SLOT_START && index < FILTER_SLOT_START + FILTER_SLOTS;
+	}
+
+	private boolean isCraftingInputSlot(int index) {
+		return craftingTerminal && index >= CRAFTING_INPUT_SLOT_START && index < CRAFTING_RESULT_SLOT;
+	}
+
+	private boolean isCraftingResultSlot(int index) {
+		return craftingTerminal && index == CRAFTING_RESULT_SLOT;
 	}
 
 	private void refreshDisplay() {
@@ -570,6 +722,105 @@ public class TerminalMenu extends AbstractContainerMenu {
 		}
 	}
 
+	private void returnCraftingItemsToStorage() {
+		if (!craftingTerminal || terminal == null) {
+			return;
+		}
+
+		for (int slot = 0; slot < craftingItems.getContainerSize(); slot++) {
+			ItemStack stack = craftingItems.getItem(slot);
+			if (stack.isEmpty()) {
+				continue;
+			}
+
+			ItemStack remaining = insertIntoNetwork(stack.copy());
+			if (!ItemStack.matches(remaining, stack)) {
+				craftingItems.setItem(slot, remaining.isEmpty() ? ItemStack.EMPTY : remaining);
+			}
+		}
+	}
+
+	private void craftOneStackToInventory(Player player) {
+		if (!craftingTerminal || terminal == null) {
+			return;
+		}
+
+		ItemStack firstResult = craftingResult.getItem(0);
+		if (firstResult.isEmpty()) {
+			return;
+		}
+
+		ItemStack resultType = firstResult.copyWithCount(1);
+		int maximumCrafted = firstResult.getMaxStackSize();
+		int crafted = 0;
+		int attempts = 0;
+		while (attempts++ < 64) {
+			ItemStack nextResult = craftingResult.getItem(0);
+			if (nextResult.isEmpty()
+					|| !ItemStack.isSameItemSameComponents(resultType, nextResult)
+					|| crafted + nextResult.getCount() > maximumCrafted
+					|| !canFullyFitInPlayerInventory(nextResult)) {
+				break;
+			}
+
+			ItemStack moved = quickMoveCraftingResult(player);
+			if (moved.isEmpty()) {
+				break;
+			}
+			crafted += moved.getCount();
+		}
+	}
+
+	private ItemStack quickMoveCraftingResult(Player player) {
+		if (!craftingTerminal || CRAFTING_RESULT_SLOT >= slots.size()) {
+			return ItemStack.EMPTY;
+		}
+
+		Slot slot = slots.get(CRAFTING_RESULT_SLOT);
+		if (!slot.hasItem()) {
+			return ItemStack.EMPTY;
+		}
+
+		ItemStack result = slot.getItem();
+		ItemStack original = result.copy();
+		if (!moveItemStackTo(result, playerInventoryStart, hotbarStart + HOTBAR_SLOTS, true)) {
+			return ItemStack.EMPTY;
+		}
+
+		slot.onQuickCraft(result, original);
+		if (result.isEmpty()) {
+			slot.set(ItemStack.EMPTY);
+		} else {
+			slot.setChanged();
+		}
+
+		if (result.getCount() == original.getCount()) {
+			return ItemStack.EMPTY;
+		}
+
+		slot.onTake(player, result);
+		if (!result.isEmpty()) {
+			player.drop(result, false);
+		}
+		return original;
+	}
+
+	private boolean canFullyFitInPlayerInventory(ItemStack stack) {
+		int remaining = stack.getCount();
+		for (int slotIndex = playerInventoryStart;
+				slotIndex < hotbarStart + HOTBAR_SLOTS && remaining > 0; slotIndex++) {
+			Slot slot = slots.get(slotIndex);
+			ItemStack existing = slot.getItem();
+			if (existing.isEmpty()) {
+				remaining -= Math.min(stack.getMaxStackSize(), slot.getMaxStackSize(stack));
+			} else if (ItemStack.isSameItemSameComponents(existing, stack)) {
+				remaining -= Math.max(0, Math.min(existing.getMaxStackSize(), slot.getMaxStackSize(stack))
+						- existing.getCount());
+			}
+		}
+		return remaining <= 0;
+	}
+
 	private ItemStack insertIntoNetwork(ItemStack stack) {
 		if (terminal == null || stack.isEmpty()) {
 			return stack;
@@ -595,6 +846,9 @@ public class TerminalMenu extends AbstractContainerMenu {
 	private void setSortState(SortMode mode, boolean descending) {
 		sortModeState.set(mode.ordinal());
 		sortDescendingState.set(descending ? 1 : 0);
+	}
+
+	private record OpeningData(BlockPos terminalPos, boolean craftingTerminal) {
 	}
 
 	private enum SortMode {

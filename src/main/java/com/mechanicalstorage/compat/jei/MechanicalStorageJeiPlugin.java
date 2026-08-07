@@ -25,7 +25,8 @@ public class MechanicalStorageJeiPlugin implements IModPlugin {
 		registration.addExtraItemStacks(List.of(
 				MechanicalStorage.MECHANICAL_STORAGE_CONNECTOR.get().asItem().getDefaultInstance(),
 				MechanicalStorage.MECHANICAL_STORAGE_COGWHEEL_CONNECTOR.get().asItem().getDefaultInstance(),
-				MechanicalStorage.MECHANICAL_STORAGE_TERMINAL.get().asItem().getDefaultInstance()
+				MechanicalStorage.MECHANICAL_STORAGE_TERMINAL.get().asItem().getDefaultInstance(),
+				MechanicalStorage.MECHANICAL_STORAGE_CRAFTING_TERMINAL.get().asItem().getDefaultInstance()
 		));
 	}
 

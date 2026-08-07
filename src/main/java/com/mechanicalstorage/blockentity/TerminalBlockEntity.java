@@ -143,7 +143,13 @@ public class TerminalBlockEntity extends FixedStressKineticBlockEntity implement
 
 	@Override
 	public Component getDisplayName() {
-		return Component.translatable("container.mechanical_storage.terminal");
+		return Component.translatable(isCraftingTerminal()
+				? "container.mechanical_storage.crafting_terminal"
+				: "container.mechanical_storage.terminal");
+	}
+
+	public boolean isCraftingTerminal() {
+		return getBlockState().is(MechanicalStorage.MECHANICAL_STORAGE_CRAFTING_TERMINAL.get());
 	}
 
 	@Nullable

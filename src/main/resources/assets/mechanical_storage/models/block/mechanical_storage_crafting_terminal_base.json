@@ -1,0 +1,159 @@
+{
+	"credit": "Crafting Terminal with brass two-pixel trim",
+	"parent": "minecraft:block/block",
+	"textures": {
+		"particle": "create:block/brass_casing",
+		"brass": "create:block/brass_casing",
+		"panel": "create:block/encased_chain_drive",
+		"screen": "create:block/flap_display_front"
+	},
+	"elements": [
+		{
+			"name": "Bottom brass band",
+			"from": [ 0, 0, 0 ],
+			"to": [ 16, 2, 16 ],
+			"faces": {
+				"north": { "texture": "#brass" },
+				"east": { "texture": "#brass" },
+				"south": { "texture": "#brass" },
+				"west": { "texture": "#brass" },
+				"up": { "texture": "#brass" },
+				"down": { "texture": "#brass", "cullface": "down" }
+			}
+		},
+		{
+			"name": "Top brass band",
+			"from": [ 0, 14, 0 ],
+			"to": [ 16, 16, 16 ],
+			"faces": {
+				"north": { "texture": "#brass" },
+				"east": { "texture": "#brass" },
+				"south": { "texture": "#brass" },
+				"west": { "texture": "#brass" },
+				"up": { "texture": "#brass", "cullface": "up" },
+				"down": { "texture": "#brass" }
+			}
+		},
+		{
+			"name": "Left brass band",
+			"from": [ 0, 2, 0 ],
+			"to": [ 2, 14, 16 ],
+			"faces": {
+				"north": { "texture": "#brass" },
+				"east": { "texture": "#brass" },
+				"south": { "texture": "#brass" },
+				"west": { "texture": "#brass" }
+			}
+		},
+		{
+			"name": "Right brass band",
+			"from": [ 14, 2, 0 ],
+			"to": [ 16, 14, 16 ],
+			"faces": {
+				"north": { "texture": "#brass" },
+				"east": { "texture": "#brass" },
+				"south": { "texture": "#brass" },
+				"west": { "texture": "#brass" }
+			}
+		},
+		{
+			"name": "Wooden front and rear",
+			"from": [ 2, 2, 0.95 ],
+			"to": [ 14, 14, 15.05 ],
+			"faces": {
+				"north": {
+					"uv": [ 2, 2, 14, 14 ],
+					"texture": "#panel"
+				},
+				"south": {
+					"uv": [ 2, 2, 14, 14 ],
+					"texture": "#panel"
+				}
+			}
+		},
+		{
+			"name": "West wooden panel",
+			"from": [ -0.01, 2, 2 ],
+			"to": [ 0, 14, 14 ],
+			"faces": {
+				"west": {
+					"uv": [ 2, 2, 14, 14 ],
+					"texture": "#panel"
+				}
+			}
+		},
+		{
+			"name": "East wooden panel",
+			"from": [ 16, 2, 2 ],
+			"to": [ 16.01, 14, 14 ],
+			"faces": {
+				"east": {
+					"uv": [ 2, 2, 14, 14 ],
+					"texture": "#panel"
+				}
+			}
+		},
+		{
+			"name": "Top wooden panel",
+			"from": [ 2, 16, 2 ],
+			"to": [ 14, 16.01, 14 ],
+			"faces": {
+				"up": {
+					"uv": [ 2, 2, 14, 14 ],
+					"texture": "#panel"
+				}
+			}
+		},
+		{
+			"name": "Bottom wooden panel",
+			"from": [ 2, -0.01, 2 ],
+			"to": [ 14, 0, 14 ],
+			"faces": {
+				"down": {
+					"uv": [ 2, 2, 14, 14 ],
+					"texture": "#panel"
+				}
+			}
+		},
+		{
+			"name": "Front screen",
+			"from": [ 4, 5, 15.09 ],
+			"to": [ 12, 11, 15.1 ],
+			"faces": {
+				"south": { "texture": "#screen" }
+			}
+		},
+		{
+			"name": "Top brass strip",
+			"from": [ 4, 12, 15.14 ],
+			"to": [ 12, 13, 15.15 ],
+			"faces": {
+				"south": { "texture": "#brass" }
+			}
+		},
+		{
+			"name": "Button left",
+			"from": [ 4, 3, 15.14 ],
+			"to": [ 5, 4, 15.15 ],
+			"faces": {
+				"south": { "texture": "#brass" }
+			}
+		},
+		{
+			"name": "Button middle",
+			"from": [ 7, 3, 15.14 ],
+			"to": [ 9, 4, 15.15 ],
+			"faces": {
+				"south": { "texture": "#brass" }
+			}
+		},
+		{
+			"name": "Button right",
+			"from": [ 11, 3, 15.14 ],
+			"to": [ 12, 4, 15.15 ],
+			"faces": {
+				"south": { "texture": "#brass" }
+			}
+		}
+	]
+}

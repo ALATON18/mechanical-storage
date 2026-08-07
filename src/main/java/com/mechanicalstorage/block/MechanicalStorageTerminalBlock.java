@@ -38,7 +38,10 @@ public class MechanicalStorageTerminalBlock extends DirectionalMachineBlock impl
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
         if (!level.isClientSide && level.getBlockEntity(pos) instanceof TerminalBlockEntity terminal) {
             if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-                serverPlayer.openMenu(terminal, buffer -> buffer.writeBlockPos(pos));
+                serverPlayer.openMenu(terminal, buffer -> {
+                    buffer.writeBlockPos(pos);
+                    buffer.writeBoolean(terminal.isCraftingTerminal());
+                });
             }
         }
 

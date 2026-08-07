@@ -1,0 +1,19 @@
+{
+	"type": "minecraft:crafting_shapeless",
+	"category": "redstone",
+	"ingredients": [
+		{
+			"item": "mechanical_storage:mechanical_storage_terminal"
+		},
+		{
+			"item": "minecraft:crafting_table"
+		},
+		{
+			"item": "create:brass_casing"
+		}
+	],
+	"result": {
+		"id": "mechanical_storage:mechanical_storage_crafting_terminal",
+		"count": 1
+	}
+}

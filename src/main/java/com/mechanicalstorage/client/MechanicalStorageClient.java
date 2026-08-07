@@ -39,7 +39,8 @@ public final class MechanicalStorageClient {
 	private static void addMachineItemTooltip(ItemTooltipEvent event) {
 		if (!event.getItemStack().is(MechanicalStorage.MECHANICAL_STORAGE_CONNECTOR.get().asItem())
 				&& !event.getItemStack().is(MechanicalStorage.MECHANICAL_STORAGE_COGWHEEL_CONNECTOR.get().asItem())
-				&& !event.getItemStack().is(MechanicalStorage.MECHANICAL_STORAGE_TERMINAL.get().asItem())) {
+				&& !event.getItemStack().is(MechanicalStorage.MECHANICAL_STORAGE_TERMINAL.get().asItem())
+				&& !event.getItemStack().is(MechanicalStorage.MECHANICAL_STORAGE_CRAFTING_TERMINAL.get().asItem())) {
 			return;
 		}
 		if (isJeiBuildingIngredientTooltip()) {
