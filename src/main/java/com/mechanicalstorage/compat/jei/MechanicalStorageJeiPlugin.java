@@ -4,6 +4,7 @@ import com.mechanicalstorage.MechanicalStorage;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.registration.IExtraIngredientRegistration;
+import mezz.jei.api.registration.IRecipeTransferRegistration;
 import mezz.jei.api.runtime.IIngredientFilter;
 import mezz.jei.api.runtime.IJeiRuntime;
 import net.minecraft.resources.ResourceLocation;
@@ -28,6 +29,12 @@ public class MechanicalStorageJeiPlugin implements IModPlugin {
 				MechanicalStorage.MECHANICAL_STORAGE_TERMINAL.get().asItem().getDefaultInstance(),
 				MechanicalStorage.MECHANICAL_STORAGE_CRAFTING_TERMINAL.get().asItem().getDefaultInstance()
 		));
+	}
+
+	@Override
+	public void registerRecipeTransferHandlers(IRecipeTransferRegistration registration) {
+		registration.addUniversalRecipeTransferHandler(
+				new CraftingTerminalJeiTransferHandler(registration.getTransferHelper()));
 	}
 
 	@Override
