@@ -69,6 +69,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 	private Button countSortButton;
 	private Button sizeButton;
 	private Button returnCraftingButton;
+	private Button craftingToInventoryButton;
 	private Boolean displayedCreateTheme;
 	private int displayedSortState = -1;
 	private SizeMode displayedSize;
@@ -98,7 +99,8 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 		menu.setVisibleRowsClient(rows);
 		sendMenuButton(TerminalMenu.GRID_ROWS_BUTTON_BASE + rows);
 
-		searchBox = new EditBox(this.font, this.leftPos + 84, this.topPos + 14, 108, 14, Component.translatable("container.mechanical_storage.search"));
+		int searchY = menu.isCraftingTerminal() ? 24 : 14;
+		searchBox = new EditBox(this.font, this.leftPos + 84, this.topPos + searchY, 108, 14, Component.translatable("container.mechanical_storage.search"));
 		searchBox.setMaxLength(TerminalMenu.SEARCH_MAX_LENGTH);
 		searchBox.setHint(Component.translatable("container.mechanical_storage.search"));
 		searchBox.setValue(searchQuery);
@@ -122,15 +124,25 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 				.build();
 		addRenderableWidget(sizeButton);
 		if (menu.isCraftingTerminal()) {
+			int craftingY = visualCraftingY(rows);
 			returnCraftingButton = Button.builder(Component.literal("×"),
 					ignored -> sendMenuButton(TerminalMenu.RETURN_CRAFTING_BUTTON))
-					.bounds(this.leftPos + 90, this.topPos + visualCraftingY(rows) + 21, 12, 12)
+					.bounds(this.leftPos + TerminalMenu.CRAFTING_INPUT_X + 56, this.topPos + craftingY, 12, 12)
 					.build();
 			returnCraftingButton.setTooltip(Tooltip.create(
 					Component.translatable("container.mechanical_storage.return_crafting")));
 			addRenderableWidget(returnCraftingButton);
+
+			craftingToInventoryButton = Button.builder(Component.literal("↓"),
+					ignored -> sendMenuButton(TerminalMenu.CRAFTING_TO_INVENTORY_BUTTON))
+					.bounds(this.leftPos + TerminalMenu.CRAFTING_INPUT_X - 18, this.topPos + craftingY + 18, 14, 18)
+					.build();
+			craftingToInventoryButton.setTooltip(Tooltip.create(
+					Component.translatable("container.mechanical_storage.crafting_to_inventory")));
+			addRenderableWidget(craftingToInventoryButton);
 		} else {
 			returnCraftingButton = null;
+			craftingToInventoryButton = null;
 		}
 		displayedCreateTheme = null;
 		displayedSortState = -1;
@@ -149,6 +161,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 		int hotbarGridY = y + visualHotbarY(rows) - 1;
 		int gridWidth = TerminalMenu.GRID_COLUMNS * 18;
 		int networkGridHeight = rows * 18;
+		int craftingGridX = x + TerminalMenu.CRAFTING_INPUT_X - 1;
 		int craftingGridY = y + visualCraftingY(rows) - 1;
 
 		drawInstalledFilterTabBacks(guiGraphics);
@@ -158,7 +171,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 		drawSelectedFilterTabConnections(guiGraphics);
 		drawInsetPanel(guiGraphics, gridX, networkGridY, gridX + gridWidth, networkGridY + networkGridHeight);
 		if (menu.isCraftingTerminal()) {
-			drawInsetPanel(guiGraphics, gridX, craftingGridY, gridX + 3 * 18, craftingGridY + 3 * 18);
+			drawInsetPanel(guiGraphics, craftingGridX, craftingGridY, craftingGridX + 3 * 18, craftingGridY + 3 * 18);
 			drawInsetPanel(guiGraphics, x + TerminalMenu.CRAFTING_RESULT_X - 1,
 					craftingGridY + 18, x + TerminalMenu.CRAFTING_RESULT_X + 17, craftingGridY + 36);
 		}
@@ -167,9 +180,9 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 
 		drawSlotBackgrounds(guiGraphics, gridX, networkGridY, TerminalMenu.GRID_COLUMNS, rows);
 		if (menu.isCraftingTerminal()) {
-			drawSlotBackgrounds(guiGraphics, gridX, craftingGridY, 3, 3);
+			drawSlotBackgrounds(guiGraphics, craftingGridX, craftingGridY, 3, 3);
 			drawRecessedSlot(guiGraphics, x + TerminalMenu.CRAFTING_RESULT_X - 1, craftingGridY + 18);
-			drawCraftingArrow(guiGraphics, x + 111, craftingGridY + 23);
+			drawCraftingArrow(guiGraphics, x + 110, craftingGridY + 21);
 		}
 		drawSlotBackgrounds(guiGraphics, gridX, inventoryGridY, 9, 3);
 		drawSlotBackgrounds(guiGraphics, gridX, hotbarGridY, 9, 1);
@@ -252,7 +265,11 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 			int first = this.menu.getScrollRow() * TerminalMenu.GRID_COLUMNS + 1;
 			int last = Math.min(this.menu.getTotalMatchingItems(), first + this.menu.getVisibleRows() * TerminalMenu.GRID_COLUMNS - 1);
 			String range = first + "-" + last + "/" + this.menu.getTotalMatchingItems();
-			guiGraphics.drawString(this.font, range, 192 - this.font.width(range), 29, TEXT, false);
+			if (menu.isCraftingTerminal()) {
+				guiGraphics.drawString(this.font, range, 32, 29, TEXT, false);
+			} else {
+				guiGraphics.drawString(this.font, range, 192 - this.font.width(range), 29, TEXT, false);
+			}
 		}
 	}
 
@@ -905,10 +922,10 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 	}
 
 	private void drawCraftingArrow(GuiGraphics guiGraphics, int x, int y) {
-		guiGraphics.fill(x, y + 3, x + 18, y + 5, BG_BORDER);
-		guiGraphics.fill(x + 14, y, x + 16, y + 8, BG_BORDER);
-		guiGraphics.fill(x + 16, y + 2, x + 18, y + 6, BG_BORDER);
-		guiGraphics.fill(x, y + 2, x + 14, y + 3, BG_LIGHT);
+		guiGraphics.fill(x, y + 4, x + 22, y + 8, BG_BORDER);
+		guiGraphics.fill(x + 18, y, x + 22, y + 12, BG_BORDER);
+		guiGraphics.fill(x + 22, y + 2, x + 26, y + 10, BG_BORDER);
+		guiGraphics.fill(x, y + 3, x + 18, y + 4, BG_LIGHT);
 	}
 
 	private int layoutDelta() {
@@ -951,11 +968,12 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 			return switch (this) {
 				case SMALL -> craftingTerminal ? TerminalMenu.DEFAULT_GRID_ROWS + 1 : 4;
 				case MEDIUM -> TerminalMenu.DEFAULT_GRID_ROWS + 1;
-				case LARGE -> 10;
+				case LARGE -> craftingTerminal ? 8 : 10;
 				case STRETCH -> Math.max(craftingTerminal ? TerminalMenu.DEFAULT_GRID_ROWS + 1 : 3,
 						Math.min(TerminalMenu.MAX_GRID_ROWS,
 								(screenHeight - BASE_IMAGE_HEIGHT
-										- (craftingTerminal ? TerminalMenu.CRAFTING_SECTION_HEIGHT : 0) - 20) / 18));
+										- (craftingTerminal ? TerminalMenu.CRAFTING_SECTION_HEIGHT : 0)
+										- (craftingTerminal ? 48 : 20)) / 18));
 			};
 		}
 
