@@ -8,6 +8,7 @@
 	"container.mechanical_storage.crafting_terminal": "Crafting Terminal",
 	"container.mechanical_storage.crafting": "Crafting",
 	"container.mechanical_storage.return_crafting": "Return crafting items to storage",
+	"container.mechanical_storage.crafting_to_inventory": "Move staged crafting ingredients to inventory",
 	"container.mechanical_storage.search": "Search",
 	"container.mechanical_storage.jei_sync_on": "JEI search sync: On",
 	"container.mechanical_storage.jei_sync_off": "JEI search sync: Off",
