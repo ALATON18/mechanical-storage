@@ -49,8 +49,8 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 	private static final int SCROLLBAR_X = 194;
 	private static final int SCROLLBAR_WIDTH = 5;
 	private static final int MIN_SCROLLBAR_THUMB_HEIGHT = 12;
-	private static final int FILTER_TAB_START_X = 31;
-	private static final int FILTER_TAB_Y = -12;
+	private static final int FILTER_TAB_X = 206;
+	private static final int FILTER_TAB_START_Y = 97;
 	private static final int FILTER_TAB_WIDTH = 28;
 	private static final int FILTER_TAB_HEIGHT = 24;
 	private static final int[] FILTER_TAB_SLOTS = {0, 1, 2, 3};
@@ -683,8 +683,8 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 		}
 
 		boolean active = menu.isFilterActive(filterSlot);
-		int x = this.leftPos + filterTabX(filterSlot);
-		int y = this.topPos + FILTER_TAB_Y;
+		int x = this.leftPos + FILTER_TAB_X;
+		int y = this.topPos + filterTabY(filterSlot);
 		int bottom = y + FILTER_TAB_HEIGHT;
 		int fill = active ? BG : BG_DARK;
 
@@ -714,11 +714,12 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 				continue;
 			}
 
-			int x = this.leftPos + filterTabX(filterSlot);
-			int panelTop = this.topPos + PANEL_TOP;
-			guiGraphics.fill(x + 2, panelTop - 1, x + FILTER_TAB_WIDTH - 2, panelTop + 3, BG);
-			guiGraphics.fill(x + 1, panelTop, x + 2, panelTop + 2, BG_LIGHT);
-			guiGraphics.fill(x + FILTER_TAB_WIDTH - 2, panelTop, x + FILTER_TAB_WIDTH - 1, panelTop + 2, BG_BORDER);
+			int x = this.leftPos + FILTER_TAB_X;
+			int y = this.topPos + filterTabY(filterSlot);
+			int panelRight = this.leftPos + PANEL_WIDTH - 4;
+			guiGraphics.fill(panelRight - 1, y + 3, x + 3, y + FILTER_TAB_HEIGHT - 3, BG);
+			guiGraphics.fill(panelRight - 1, y + 3, panelRight, y + FILTER_TAB_HEIGHT - 3, BG_LIGHT);
+			guiGraphics.fill(x + 2, y + 3, x + 3, y + FILTER_TAB_HEIGHT - 3, BG);
 		}
 	}
 
@@ -747,8 +748,8 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 	}
 
 	private boolean isMouseOverFilterTab(double mouseX, double mouseY, int filterSlot) {
-		int left = this.leftPos + filterTabX(filterSlot);
-		int top = this.topPos + FILTER_TAB_Y;
+		int left = this.leftPos + FILTER_TAB_X;
+		int top = this.topPos + filterTabY(filterSlot);
 		return mouseX >= left && mouseX < left + FILTER_TAB_WIDTH
 				&& mouseY >= top && mouseY < top + FILTER_TAB_HEIGHT;
 	}
@@ -763,17 +764,17 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 		}
 	}
 
-	private int filterTabX(int filterSlot) {
+	private int filterTabY(int filterSlot) {
 		int visibleIndex = 0;
 		for (int candidate : FILTER_TAB_SLOTS) {
 			if (candidate == filterSlot) {
-				return FILTER_TAB_START_X + visibleIndex * FILTER_TAB_WIDTH;
+				return FILTER_TAB_START_Y + visibleIndex * FILTER_TAB_HEIGHT;
 			}
 			if (!menu.getTerminalFilter(candidate).isEmpty()) {
 				visibleIndex++;
 			}
 		}
-		return FILTER_TAB_START_X;
+		return FILTER_TAB_START_Y;
 	}
 
 	private List<Component> filterContentsTooltip(int slot) {
@@ -966,14 +967,14 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 
 		private int rowsFor(int screenHeight, boolean craftingTerminal) {
 			return switch (this) {
-				case SMALL -> craftingTerminal ? TerminalMenu.DEFAULT_GRID_ROWS + 1 : 4;
-				case MEDIUM -> TerminalMenu.DEFAULT_GRID_ROWS + 1;
-				case LARGE -> craftingTerminal ? 8 : 10;
-				case STRETCH -> Math.max(craftingTerminal ? TerminalMenu.DEFAULT_GRID_ROWS + 1 : 3,
+				case SMALL -> 4;
+				case MEDIUM -> craftingTerminal ? 4 : TerminalMenu.DEFAULT_GRID_ROWS + 1;
+				case LARGE -> craftingTerminal ? 7 : 10;
+				case STRETCH -> Math.max(craftingTerminal ? 4 : 3,
 						Math.min(TerminalMenu.MAX_GRID_ROWS,
 								(screenHeight - BASE_IMAGE_HEIGHT
 										- (craftingTerminal ? TerminalMenu.CRAFTING_SECTION_HEIGHT : 0)
-										- (craftingTerminal ? 48 : 20)) / 18));
+										- 12) / 18));
 			};
 		}
 
