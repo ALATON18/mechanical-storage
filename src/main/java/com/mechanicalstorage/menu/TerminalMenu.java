@@ -5,6 +5,7 @@ import com.mechanicalstorage.blockentity.TerminalBlockEntity;
 import com.simibubi.create.content.logistics.filter.AttributeFilterItem;
 import com.simibubi.create.content.logistics.filter.ListFilterItem;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
@@ -18,6 +19,7 @@ import net.minecraft.world.inventory.ResultContainer;
 import net.minecraft.world.inventory.ResultSlot;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.inventory.TransientCraftingContainer;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.CraftingRecipe;
@@ -44,11 +46,14 @@ public class TerminalMenu extends AbstractContainerMenu {
 	public static final int FILTER_SLOT_X = 212;
 	public static final int FILTER_SLOT_Y = 17;
 	public static final int FILTER_SLOT_SPACING = 18;
-	public static final int CRAFTING_INPUT_X = NETWORK_SLOT_X;
+	public static final int CRAFTING_INPUT_X = NETWORK_SLOT_X + 18;
 	public static final int CRAFTING_INPUT_Y = PLAYER_INVENTORY_Y;
 	public static final int CRAFTING_RESULT_X = 140;
 	public static final int CRAFTING_RESULT_Y = CRAFTING_INPUT_Y + 18;
 	public static final int CRAFTING_SECTION_HEIGHT = 69;
+	public static final int JEI_TRANSFER_BEGIN_BUTTON = 90000;
+	public static final int JEI_TRANSFER_BEGIN_MAX_BUTTON = 90001;
+	public static final int JEI_TRANSFER_FINISH_BUTTON = 90002;
 	public static final int SEARCH_CLEAR_BUTTON = 100000;
 	public static final int SEARCH_BACKSPACE_BUTTON = 100001;
 	public static final int SEARCH_APPLY_BUTTON = 100002;
@@ -59,11 +64,17 @@ public class TerminalMenu extends AbstractContainerMenu {
 	public static final int SINGLE_DEPOSIT_BUTTON = 100007;
 	public static final int TOGGLE_FILTER_BUTTON_BASE = 100008;
 	public static final int RETURN_CRAFTING_BUTTON = 100012;
+	public static final int CRAFTING_TO_INVENTORY_BUTTON = 100013;
 	public static final int SEARCH_CHAR_BASE_BUTTON = 200000;
 	public static final int SINGLE_EXTRACT_SLOT_BASE_BUTTON = 300000;
 	public static final int GRID_ROWS_BUTTON_BASE = 400000;
 	public static final int SCROLL_TO_ROW_BASE_BUTTON = 500000;
 	public static final int SEARCH_MAX_LENGTH = 64;
+
+	private static final int JEI_TRANSFER_ITEM_FLAG = 0x40000000;
+	private static final int JEI_TRANSFER_SLOT_SHIFT = 26;
+	private static final int JEI_TRANSFER_COUNT_SHIFT = 20;
+	private static final int JEI_TRANSFER_ITEM_MASK = 0xFFFFF;
 
 	public static final int FILTER_SLOT_START = NETWORK_SLOTS;
 	public static final int CRAFTING_INPUT_SLOT_START = FILTER_SLOT_START + FILTER_SLOTS;
@@ -94,6 +105,7 @@ public class TerminalMenu extends AbstractContainerMenu {
 	private final TerminalBlockEntity terminal;
 	private String searchText = "";
 	private int refreshCooldown;
+	private boolean jeiMaxTransfer;
 
 	public TerminalMenu(int containerId, Inventory playerInventory, RegistryFriendlyByteBuf buffer) {
 		this(containerId, playerInventory, readOpeningData(buffer), null);
@@ -147,6 +159,18 @@ public class TerminalMenu extends AbstractContainerMenu {
 		return new OpeningData(buffer.readBlockPos(), buffer.readBoolean());
 	}
 
+	public static int encodeJeiTransferItemButton(int craftingSlot, int rawItemId, int count) {
+		if (craftingSlot < 0 || craftingSlot >= CRAFTING_INPUT_SLOTS
+				|| rawItemId < 0 || rawItemId > JEI_TRANSFER_ITEM_MASK) {
+			return -1;
+		}
+		int encodedCount = Math.max(0, Math.min(63, count - 1));
+		return JEI_TRANSFER_ITEM_FLAG
+				| ((craftingSlot & 0xF) << JEI_TRANSFER_SLOT_SHIFT)
+				| ((encodedCount & 0x3F) << JEI_TRANSFER_COUNT_SHIFT)
+				| (rawItemId & JEI_TRANSFER_ITEM_MASK);
+	}
+
 	@Override
 	public boolean stillValid(Player player) {
 		return AbstractContainerMenu.stillValid(ContainerLevelAccess.create(player.level(), terminalPos), player,
@@ -163,6 +187,30 @@ public class TerminalMenu extends AbstractContainerMenu {
 
 	@Override
 	public boolean clickMenuButton(Player player, int id) {
+		if (id == JEI_TRANSFER_BEGIN_BUTTON || id == JEI_TRANSFER_BEGIN_MAX_BUTTON) {
+			if (craftingTerminal && terminal != null) {
+				prepareCraftingGridForJei(player);
+				jeiMaxTransfer = id == JEI_TRANSFER_BEGIN_MAX_BUTTON;
+				refreshAfterInteraction();
+			}
+			return true;
+		}
+
+		if ((id & JEI_TRANSFER_ITEM_FLAG) != 0) {
+			if (craftingTerminal && terminal != null) {
+				handleJeiTransferItemButton(id);
+			}
+			return true;
+		}
+
+		if (id == JEI_TRANSFER_FINISH_BUTTON) {
+			if (craftingTerminal && terminal != null) {
+				slotsChanged(craftingItems);
+				refreshAfterInteraction();
+			}
+			return true;
+		}
+
 		if (id == SEARCH_CLEAR_BUTTON) {
 			searchText = "";
 			scrollRow.set(0);
@@ -223,6 +271,12 @@ public class TerminalMenu extends AbstractContainerMenu {
 
 		if (id == RETURN_CRAFTING_BUTTON && craftingTerminal) {
 			returnCraftingItemsToStorage();
+			refreshAfterInteraction();
+			return true;
+		}
+
+		if (id == CRAFTING_TO_INVENTORY_BUTTON && craftingTerminal) {
+			moveCraftingItemsToInventory(player);
 			refreshAfterInteraction();
 			return true;
 		}
@@ -738,6 +792,105 @@ public class TerminalMenu extends AbstractContainerMenu {
 				craftingItems.setItem(slot, remaining.isEmpty() ? ItemStack.EMPTY : remaining);
 			}
 		}
+	}
+
+	private void moveCraftingItemsToInventory(Player player) {
+		if (!craftingTerminal) {
+			return;
+		}
+
+		for (int slot = 0; slot < craftingItems.getContainerSize(); slot++) {
+			ItemStack stack = craftingItems.removeItemNoUpdate(slot);
+			if (!stack.isEmpty()) {
+				ItemHandlerHelper.giveItemToPlayer(player, stack);
+			}
+		}
+		slotsChanged(craftingItems);
+	}
+
+	private void prepareCraftingGridForJei(Player player) {
+		if (!craftingTerminal || terminal == null) {
+			return;
+		}
+
+		for (int slot = 0; slot < craftingItems.getContainerSize(); slot++) {
+			ItemStack stack = craftingItems.removeItemNoUpdate(slot);
+			if (stack.isEmpty()) {
+				continue;
+			}
+
+			ItemStack remaining = insertIntoNetwork(stack);
+			if (!remaining.isEmpty()) {
+				ItemHandlerHelper.giveItemToPlayer(player, remaining);
+			}
+		}
+		craftingResult.setItem(0, ItemStack.EMPTY);
+	}
+
+	private void handleJeiTransferItemButton(int id) {
+		int targetSlot = (id >>> JEI_TRANSFER_SLOT_SHIFT) & 0xF;
+		if (targetSlot < 0 || targetSlot >= CRAFTING_INPUT_SLOTS || !craftingItems.getItem(targetSlot).isEmpty()) {
+			return;
+		}
+
+		int rawItemId = id & JEI_TRANSFER_ITEM_MASK;
+		Item item = BuiltInRegistries.ITEM.byId(rawItemId);
+		if (item == null) {
+			return;
+		}
+
+		int recipeCount = ((id >>> JEI_TRANSFER_COUNT_SHIFT) & 0x3F) + 1;
+		ItemStack template = new ItemStack(item);
+		int requested = jeiMaxTransfer ? template.getMaxStackSize() : recipeCount;
+		ItemStack collected = terminal.extractMatchingStack(template, requested);
+		int remaining = requested - collected.getCount();
+
+		if (remaining > 0) {
+			ItemStack fromPlayer = extractMatchingFromPlayerInventory(template, remaining);
+			if (!fromPlayer.isEmpty()) {
+				if (collected.isEmpty()) {
+					collected = fromPlayer;
+				} else if (ItemStack.isSameItemSameComponents(collected, fromPlayer)) {
+					collected.grow(fromPlayer.getCount());
+				} else {
+					ItemHandlerHelper.giveItemToPlayer(playerInventory.player, fromPlayer);
+				}
+			}
+		}
+
+		if (!collected.isEmpty()) {
+			craftingItems.setItem(targetSlot, collected);
+		}
+	}
+
+	private ItemStack extractMatchingFromPlayerInventory(ItemStack template, int amount) {
+		ItemStack collected = ItemStack.EMPTY;
+		int remaining = amount;
+		for (int slotIndex = playerInventoryStart;
+				slotIndex < hotbarStart + HOTBAR_SLOTS && remaining > 0; slotIndex++) {
+			Slot slot = slots.get(slotIndex);
+			ItemStack existing = slot.getItem();
+			if (existing.isEmpty() || existing.getItem() != template.getItem()) {
+				continue;
+			}
+
+			int take = Math.min(remaining, existing.getCount());
+			ItemStack removed = slot.remove(take);
+			if (removed.isEmpty()) {
+				continue;
+			}
+
+			if (collected.isEmpty()) {
+				collected = removed;
+			} else if (ItemStack.isSameItemSameComponents(collected, removed)) {
+				collected.grow(removed.getCount());
+			} else {
+				ItemHandlerHelper.giveItemToPlayer(playerInventory.player, removed);
+				continue;
+			}
+			remaining -= removed.getCount();
+		}
+		return collected;
 	}
 
 	private void craftOneStackToInventory(Player player) {
