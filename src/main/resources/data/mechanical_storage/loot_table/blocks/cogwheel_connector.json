@@ -6,7 +6,7 @@
 			"entries": [
 				{
 					"type": "minecraft:item",
-					"name": "mechanical_storage:mechanical_storage_crafting_terminal"
+					"name": "mechanical_storage:cogwheel_connector"
 				}
 			],
 			"conditions": [

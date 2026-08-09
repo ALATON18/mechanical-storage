@@ -31,10 +31,10 @@ public final class MechanicalStorageClient {
 
 	private static void registerBlockEntityRenderers(EntityRenderersEvent.RegisterRenderers event) {
 		event.registerBlockEntityRenderer(
-				MechanicalStorage.MECHANICAL_STORAGE_CONNECTOR_BLOCK_ENTITY.get(),
+				MechanicalStorage.CONNECTOR_BLOCK_ENTITY.get(),
 				MechanicalStorageShaftRenderer::new);
 		event.registerBlockEntityRenderer(
-				MechanicalStorage.MECHANICAL_STORAGE_TERMINAL_BLOCK_ENTITY.get(),
+				MechanicalStorage.TERMINAL_BLOCK_ENTITY.get(),
 				MechanicalStorageShaftRenderer::new);
 	}
 
@@ -45,10 +45,10 @@ public final class MechanicalStorageClient {
 
 		ItemStack stack = event.getItemStack();
 		boolean inTerminal = Minecraft.getInstance().screen instanceof TerminalScreen;
-		boolean mechanicalStorageItem = stack.is(MechanicalStorage.MECHANICAL_STORAGE_CONNECTOR.get().asItem())
-				|| stack.is(MechanicalStorage.MECHANICAL_STORAGE_COGWHEEL_CONNECTOR.get().asItem())
-				|| stack.is(MechanicalStorage.MECHANICAL_STORAGE_TERMINAL.get().asItem())
-				|| stack.is(MechanicalStorage.MECHANICAL_STORAGE_CRAFTING_TERMINAL.get().asItem());
+		boolean mechanicalStorageItem = stack.is(MechanicalStorage.CONNECTOR.get().asItem())
+				|| stack.is(MechanicalStorage.COGWHEEL_CONNECTOR.get().asItem())
+				|| stack.is(MechanicalStorage.TERMINAL.get().asItem())
+				|| stack.is(MechanicalStorage.CRAFTING_TERMINAL.get().asItem());
 
 		if (!inTerminal && !mechanicalStorageItem) {
 			return;

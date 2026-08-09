@@ -4,7 +4,7 @@
 	"render_type": "minecraft:cutout_mipped",
 	"children": {
 		"casing": {
-			"parent": "mechanical_storage:block/mechanical_storage_cogwheel_connector_base",
+			"parent": "mechanical_storage:block/cogwheel_connector_base",
 			"transform": {
 				"rotation": { "x": 90 },
 				"origin": "center"

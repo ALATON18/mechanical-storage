@@ -22,7 +22,7 @@ public class MechanicalStorageConnectorBlockEntity extends FixedStressKineticBlo
 	}
 
 	public MechanicalStorageConnectorBlockEntity(BlockPos pos, BlockState blockState) {
-		this(MechanicalStorage.MECHANICAL_STORAGE_CONNECTOR_BLOCK_ENTITY.get(), pos, blockState);
+		this(MechanicalStorage.CONNECTOR_BLOCK_ENTITY.get(), pos, blockState);
 	}
 
 	public boolean isOnline() {

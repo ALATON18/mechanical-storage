@@ -7,7 +7,6 @@ import com.mechanicalstorage.menu.TerminalMenu;
 import com.simibubi.create.content.logistics.filter.FilterItemStack;
 import com.simibubi.create.content.logistics.filter.ListFilterItem;
 import com.simibubi.create.content.logistics.item.filter.attribute.attributes.AddedByAttribute;
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
@@ -68,8 +67,6 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 	private Button nameSortButton;
 	private Button countSortButton;
 	private Button sizeButton;
-	private Button returnCraftingButton;
-	private Button craftingToInventoryButton;
 	private Boolean displayedCreateTheme;
 	private int displayedSortState = -1;
 	private SizeMode displayedSize;
@@ -103,6 +100,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 		searchBox = new EditBox(this.font, this.leftPos + 84, this.topPos + searchY, 108, 14, Component.translatable("container.mechanical_storage.search"));
 		searchBox.setMaxLength(TerminalMenu.SEARCH_MAX_LENGTH);
 		searchBox.setHint(Component.translatable("container.mechanical_storage.search"));
+		searchBox.setTooltip(Tooltip.create(Component.translatable("container.mechanical_storage.search_help")));
 		searchBox.setValue(searchQuery);
 		searchBox.setResponder(this::onSearchChanged);
 		searchBox.setFocused(false);
@@ -125,7 +123,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 		addRenderableWidget(sizeButton);
 		if (menu.isCraftingTerminal()) {
 			int craftingY = visualCraftingY(rows);
-			returnCraftingButton = Button.builder(Component.literal("×"),
+			Button returnCraftingButton = Button.builder(Component.literal("×"),
 					ignored -> sendMenuButton(TerminalMenu.RETURN_CRAFTING_BUTTON))
 					.bounds(this.leftPos + TerminalMenu.CRAFTING_INPUT_X + 56, this.topPos + craftingY, 12, 12)
 					.build();
@@ -133,16 +131,13 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 					Component.translatable("container.mechanical_storage.return_crafting")));
 			addRenderableWidget(returnCraftingButton);
 
-			craftingToInventoryButton = Button.builder(Component.literal("↓"),
+			Button craftingToInventoryButton = Button.builder(Component.literal("↓"),
 					ignored -> sendMenuButton(TerminalMenu.CRAFTING_TO_INVENTORY_BUTTON))
-					.bounds(this.leftPos + TerminalMenu.CRAFTING_INPUT_X - 18, this.topPos + craftingY + 18, 14, 18)
+					.bounds(this.leftPos + TerminalMenu.CRAFTING_INPUT_X - 18, this.topPos + craftingY, 14, 18)
 					.build();
 			craftingToInventoryButton.setTooltip(Tooltip.create(
 					Component.translatable("container.mechanical_storage.crafting_to_inventory")));
 			addRenderableWidget(craftingToInventoryButton);
-		} else {
-			returnCraftingButton = null;
-			craftingToInventoryButton = null;
 		}
 		displayedCreateTheme = null;
 		displayedSortState = -1;
@@ -168,7 +163,6 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 		drawModernPanel(guiGraphics, x + 24, y + PANEL_TOP, x + PANEL_WIDTH - 4, y + imageHeight - 4);
 		drawModernPanel(guiGraphics, x + PANEL_WIDTH, y + PANEL_TOP, x + imageWidth,
 				y + TerminalMenu.FILTER_SLOT_Y + TerminalMenu.FILTER_SLOTS * TerminalMenu.FILTER_SLOT_SPACING + 4);
-		drawSelectedFilterTabConnections(guiGraphics);
 		drawInsetPanel(guiGraphics, gridX, networkGridY, gridX + gridWidth, networkGridY + networkGridHeight);
 		if (menu.isCraftingTerminal()) {
 			drawInsetPanel(guiGraphics, craftingGridX, craftingGridY, craftingGridX + 3 * 18, craftingGridY + 3 * 18);
@@ -271,30 +265,6 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 				guiGraphics.drawString(this.font, range, 192 - this.font.width(range), 29, TEXT, false);
 			}
 		}
-	}
-
-	@Override
-	protected List<Component> getTooltipFromContainerItem(ItemStack stack) {
-		List<Component> tooltip = super.getTooltipFromContainerItem(stack);
-		if (this.hoveredSlot == null) {
-			return tooltip;
-		}
-
-		int slotIndex = this.menu.slots.indexOf(this.hoveredSlot);
-		if (slotIndex < 0 || slotIndex >= TerminalMenu.NETWORK_SLOTS) {
-			return tooltip;
-		}
-
-		String modId = stack.getItem().getCreatorModId(stack);
-		if (modId == null) {
-			return tooltip;
-		}
-
-		String modName = modDisplayName(modId);
-		if (tooltip.stream().noneMatch(line -> line.getString().equals(modName))) {
-			tooltip.add(Component.literal(modName).withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
-		}
-		return tooltip;
 	}
 
 	@Override
@@ -708,21 +678,6 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 		guiGraphics.renderItem(icon, x + 6, y + 4);
 	}
 
-	private void drawSelectedFilterTabConnections(GuiGraphics guiGraphics) {
-		for (int filterSlot : FILTER_TAB_SLOTS) {
-			if (menu.getTerminalFilter(filterSlot).isEmpty() || !menu.isFilterActive(filterSlot)) {
-				continue;
-			}
-
-			int x = this.leftPos + FILTER_TAB_X;
-			int y = this.topPos + filterTabY(filterSlot);
-			int panelRight = this.leftPos + PANEL_WIDTH - 4;
-			guiGraphics.fill(panelRight - 1, y + 3, x + 3, y + FILTER_TAB_HEIGHT - 3, BG);
-			guiGraphics.fill(panelRight - 1, y + 3, panelRight, y + FILTER_TAB_HEIGHT - 3, BG_LIGHT);
-			guiGraphics.fill(x + 2, y + 3, x + 3, y + FILTER_TAB_HEIGHT - 3, BG);
-		}
-	}
-
 	private ItemStack filterTabIcon(int filterSlot, ItemStack filter) {
 		if (filter.getItem() instanceof ListFilterItem) {
 			FilterItemStack wrapped = FilterItemStack.of(filter.copy());
@@ -925,7 +880,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 	private void drawCraftingArrow(GuiGraphics guiGraphics, int x, int y) {
 		guiGraphics.fill(x, y + 4, x + 22, y + 8, BG_BORDER);
 		guiGraphics.fill(x + 18, y, x + 22, y + 12, BG_BORDER);
-		guiGraphics.fill(x + 22, y + 2, x + 26, y + 10, BG_BORDER);
+		guiGraphics.fill(x + 22, y + 3, x + 26, y + 9, BG_BORDER);
 		guiGraphics.fill(x, y + 3, x + 18, y + 4, BG_LIGHT);
 	}
 

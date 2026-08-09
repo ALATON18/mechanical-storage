@@ -3,7 +3,7 @@
   "loader": "create:kinetic_model",
   "children": {
     "base": {
-      "model": "mechanical_storage:block/mechanical_storage_terminal_base"
+      "model": "mechanical_storage:block/connector_base"
     }
   },
   "textures": {
@@ -12,6 +12,6 @@
     "gearbox": "create:block/gearbox",
     "copper": "create:block/copper_casing",
     "brass": "create:block/brass_casing",
-    "screen": "create:block/display_board"
+    "dark": "minecraft:block/deepslate_tiles"
   }
 }

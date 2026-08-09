@@ -24,10 +24,10 @@ public class MechanicalStorageJeiPlugin implements IModPlugin {
 	@Override
 	public void registerExtraIngredients(IExtraIngredientRegistration registration) {
 		registration.addExtraItemStacks(List.of(
-				MechanicalStorage.MECHANICAL_STORAGE_CONNECTOR.get().asItem().getDefaultInstance(),
-				MechanicalStorage.MECHANICAL_STORAGE_COGWHEEL_CONNECTOR.get().asItem().getDefaultInstance(),
-				MechanicalStorage.MECHANICAL_STORAGE_TERMINAL.get().asItem().getDefaultInstance(),
-				MechanicalStorage.MECHANICAL_STORAGE_CRAFTING_TERMINAL.get().asItem().getDefaultInstance()
+				MechanicalStorage.CONNECTOR.get().asItem().getDefaultInstance(),
+				MechanicalStorage.COGWHEEL_CONNECTOR.get().asItem().getDefaultInstance(),
+				MechanicalStorage.TERMINAL.get().asItem().getDefaultInstance(),
+				MechanicalStorage.CRAFTING_TERMINAL.get().asItem().getDefaultInstance()
 		));
 	}
 

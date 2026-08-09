@@ -2,10 +2,10 @@
 	"credit": "Crafting Terminal with brass two-pixel trim",
 	"parent": "minecraft:block/block",
 	"textures": {
-		"particle": "create:block/encased_chain_drive",
+		"particle": "mechanical_storage:block/terminal_brass_chain_drive",
 		"brass": "create:block/brass_casing",
-		"panel": "create:block/encased_chain_drive",
-		"rear": "mechanical_storage:block/terminal_copper_gearbox",
+		"panel": "mechanical_storage:block/terminal_brass_chain_drive",
+		"rear": "mechanical_storage:block/terminal_brass_gearbox",
 		"screen": "create:block/flap_display_front"
 	},
 	"elements": [

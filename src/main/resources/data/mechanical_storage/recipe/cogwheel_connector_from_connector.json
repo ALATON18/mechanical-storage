@@ -3,11 +3,11 @@
 	"category": "redstone",
 	"ingredients": [
 		{
-			"item": "mechanical_storage:mechanical_storage_cogwheel_connector"
+			"item": "mechanical_storage:connector"
 		}
 	],
 	"result": {
-		"id": "mechanical_storage:mechanical_storage_connector",
+		"id": "mechanical_storage:cogwheel_connector",
 		"count": 1
 	}
 }

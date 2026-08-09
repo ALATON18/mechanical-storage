@@ -6,7 +6,7 @@
 			"entries": [
 				{
 					"type": "minecraft:item",
-					"name": "mechanical_storage:mechanical_storage_terminal"
+					"name": "mechanical_storage:crafting_terminal"
 				}
 			],
 			"conditions": [

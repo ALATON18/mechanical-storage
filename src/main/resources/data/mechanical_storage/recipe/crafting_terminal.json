@@ -3,7 +3,7 @@
 	"category": "redstone",
 	"ingredients": [
 		{
-			"item": "mechanical_storage:mechanical_storage_terminal"
+			"item": "mechanical_storage:terminal"
 		},
 		{
 			"item": "minecraft:crafting_table"
@@ -13,7 +13,7 @@
 		}
 	],
 	"result": {
-		"id": "mechanical_storage:mechanical_storage_crafting_terminal",
+		"id": "mechanical_storage:crafting_terminal",
 		"count": 1
 	}
 }

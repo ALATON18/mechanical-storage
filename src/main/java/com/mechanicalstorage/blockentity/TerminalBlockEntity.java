@@ -76,7 +76,7 @@ public class TerminalBlockEntity extends FixedStressKineticBlockEntity implement
 	}
 
 	public TerminalBlockEntity(BlockPos pos, BlockState blockState) {
-		this(MechanicalStorage.MECHANICAL_STORAGE_TERMINAL_BLOCK_ENTITY.get(), pos, blockState);
+		this(MechanicalStorage.TERMINAL_BLOCK_ENTITY.get(), pos, blockState);
 	}
 
 	public ItemStackHandler getTerminalFilters() {
@@ -149,7 +149,7 @@ public class TerminalBlockEntity extends FixedStressKineticBlockEntity implement
 	}
 
 	public boolean isCraftingTerminal() {
-		return getBlockState().is(MechanicalStorage.MECHANICAL_STORAGE_CRAFTING_TERMINAL.get());
+		return getBlockState().is(MechanicalStorage.CRAFTING_TERMINAL.get());
 	}
 
 	@Nullable

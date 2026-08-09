@@ -1,0 +1,19 @@
+{
+	"variants": {
+		"facing=north": {
+			"model": "mechanical_storage:block/crafting_terminal_base",
+			"y": 180
+		},
+		"facing=east": {
+			"model": "mechanical_storage:block/crafting_terminal_base",
+			"y": 270
+		},
+		"facing=south": {
+			"model": "mechanical_storage:block/crafting_terminal_base"
+		},
+		"facing=west": {
+			"model": "mechanical_storage:block/crafting_terminal_base",
+			"y": 90
+		}
+	}
+}

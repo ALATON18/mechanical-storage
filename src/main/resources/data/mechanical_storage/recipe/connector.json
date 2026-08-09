@@ -21,7 +21,7 @@
 		}
 	},
 	"result": {
-		"id": "mechanical_storage:mechanical_storage_connector",
+		"id": "mechanical_storage:connector",
 		"count": 1
 	}
 }

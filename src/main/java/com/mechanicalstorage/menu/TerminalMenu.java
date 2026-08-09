@@ -175,8 +175,8 @@ public class TerminalMenu extends AbstractContainerMenu {
 	public boolean stillValid(Player player) {
 		return AbstractContainerMenu.stillValid(ContainerLevelAccess.create(player.level(), terminalPos), player,
 				craftingTerminal
-						? MechanicalStorage.MECHANICAL_STORAGE_CRAFTING_TERMINAL.get()
-						: MechanicalStorage.MECHANICAL_STORAGE_TERMINAL.get());
+						? MechanicalStorage.CRAFTING_TERMINAL.get()
+						: MechanicalStorage.TERMINAL.get());
 	}
 
 	@Override
@@ -276,7 +276,7 @@ public class TerminalMenu extends AbstractContainerMenu {
 		}
 
 		if (id == CRAFTING_TO_INVENTORY_BUTTON && craftingTerminal) {
-			moveCraftingItemsToInventory(player);
+			moveCraftingItemsToInventory();
 			refreshAfterInteraction();
 			return true;
 		}
@@ -794,15 +794,19 @@ public class TerminalMenu extends AbstractContainerMenu {
 		}
 	}
 
-	private void moveCraftingItemsToInventory(Player player) {
+	private void moveCraftingItemsToInventory() {
 		if (!craftingTerminal) {
 			return;
 		}
 
 		for (int slot = 0; slot < craftingItems.getContainerSize(); slot++) {
-			ItemStack stack = craftingItems.removeItemNoUpdate(slot);
-			if (!stack.isEmpty()) {
-				ItemHandlerHelper.giveItemToPlayer(player, stack);
+			ItemStack stack = craftingItems.getItem(slot);
+			if (stack.isEmpty()) {
+				continue;
+			}
+
+			if (moveItemStackTo(stack, playerInventoryStart, hotbarStart + HOTBAR_SLOTS, true)) {
+				craftingItems.setItem(slot, stack.isEmpty() ? ItemStack.EMPTY : stack);
 			}
 		}
 		slotsChanged(craftingItems);

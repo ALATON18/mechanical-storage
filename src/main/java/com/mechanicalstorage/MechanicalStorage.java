@@ -12,9 +12,11 @@ import com.simibubi.create.foundation.data.CreateRegistrate;
 import com.tterrag.registrate.util.entry.BlockEntityEntry;
 import com.tterrag.registrate.util.entry.BlockEntry;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.level.block.SoundType;
@@ -28,6 +30,7 @@ import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.common.extensions.IMenuTypeExtension;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
+import net.neoforged.neoforge.registries.RegisterEvent;
 import org.slf4j.Logger;
 
 @Mod(MechanicalStorage.MODID)
@@ -39,59 +42,83 @@ public class MechanicalStorage {
 	public static final DeferredRegister<MenuType<?>> MENU_TYPES = DeferredRegister.create(Registries.MENU, MODID);
 	public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
 
-	public static final BlockEntry<MechanicalStorageConnectorBlock> MECHANICAL_STORAGE_CONNECTOR = REGISTRATE
-			.block("mechanical_storage_connector", properties -> new MechanicalStorageConnectorBlock(machineProperties(MapColor.COLOR_GRAY)))
+	public static final BlockEntry<MechanicalStorageConnectorBlock> CONNECTOR = REGISTRATE
+			.block("connector", properties -> new MechanicalStorageConnectorBlock(machineProperties(MapColor.COLOR_GRAY)))
 			.item()
 			.build()
 			.register();
 
-	public static final BlockEntry<MechanicalStorageCogwheelConnectorBlock> MECHANICAL_STORAGE_COGWHEEL_CONNECTOR = REGISTRATE
-			.block("mechanical_storage_cogwheel_connector", properties -> new MechanicalStorageCogwheelConnectorBlock(machineProperties(MapColor.COLOR_GRAY).noOcclusion()))
+	public static final BlockEntry<MechanicalStorageCogwheelConnectorBlock> COGWHEEL_CONNECTOR = REGISTRATE
+			.block("cogwheel_connector", properties -> new MechanicalStorageCogwheelConnectorBlock(machineProperties(MapColor.COLOR_GRAY).noOcclusion()))
 			.addLayer(() -> RenderType::cutoutMipped)
 			.item()
 			.build()
 			.register();
 
-	public static final BlockEntry<MechanicalStorageTerminalBlock> MECHANICAL_STORAGE_TERMINAL = REGISTRATE
-			.block("mechanical_storage_terminal", properties -> new MechanicalStorageTerminalBlock(machineProperties(MapColor.TERRACOTTA_ORANGE)))
+	public static final BlockEntry<MechanicalStorageTerminalBlock> TERMINAL = REGISTRATE
+			.block("terminal", properties -> new MechanicalStorageTerminalBlock(machineProperties(MapColor.TERRACOTTA_ORANGE)))
 			.item()
 			.build()
 			.register();
 
-	public static final BlockEntry<MechanicalStorageTerminalBlock> MECHANICAL_STORAGE_CRAFTING_TERMINAL = REGISTRATE
-			.block("mechanical_storage_crafting_terminal", properties -> new MechanicalStorageTerminalBlock(machineProperties(MapColor.TERRACOTTA_ORANGE)))
+	public static final BlockEntry<MechanicalStorageTerminalBlock> CRAFTING_TERMINAL = REGISTRATE
+			.block("crafting_terminal", properties -> new MechanicalStorageTerminalBlock(machineProperties(MapColor.TERRACOTTA_ORANGE)))
 			.item()
 			.build()
 			.register();
 
-	public static final BlockEntityEntry<MechanicalStorageConnectorBlockEntity> MECHANICAL_STORAGE_CONNECTOR_BLOCK_ENTITY = REGISTRATE
-			.<MechanicalStorageConnectorBlockEntity>blockEntity("mechanical_storage_connector", MechanicalStorageConnectorBlockEntity::new)
-			.validBlocks(MECHANICAL_STORAGE_CONNECTOR, MECHANICAL_STORAGE_COGWHEEL_CONNECTOR)
+	public static final BlockEntityEntry<MechanicalStorageConnectorBlockEntity> CONNECTOR_BLOCK_ENTITY = REGISTRATE
+			.<MechanicalStorageConnectorBlockEntity>blockEntity("connector", MechanicalStorageConnectorBlockEntity::new)
+			.validBlocks(CONNECTOR, COGWHEEL_CONNECTOR)
 			.register();
 
-	public static final BlockEntityEntry<TerminalBlockEntity> MECHANICAL_STORAGE_TERMINAL_BLOCK_ENTITY = REGISTRATE
-			.<TerminalBlockEntity>blockEntity("mechanical_storage_terminal", TerminalBlockEntity::new)
-			.validBlocks(MECHANICAL_STORAGE_TERMINAL, MECHANICAL_STORAGE_CRAFTING_TERMINAL)
+	public static final BlockEntityEntry<TerminalBlockEntity> TERMINAL_BLOCK_ENTITY = REGISTRATE
+			.<TerminalBlockEntity>blockEntity("terminal", TerminalBlockEntity::new)
+			.validBlocks(TERMINAL, CRAFTING_TERMINAL)
 			.register();
 
 	public static final DeferredHolder<MenuType<?>, MenuType<TerminalMenu>> TERMINAL_MENU = MENU_TYPES.register("terminal", () ->
 			IMenuTypeExtension.create((int containerId, net.minecraft.world.entity.player.Inventory inventory, RegistryFriendlyByteBuf buffer) -> new TerminalMenu(containerId, inventory, buffer)));
 
-	public static final DeferredHolder<CreativeModeTab, CreativeModeTab> MECHANICAL_STORAGE_TAB = CREATIVE_MODE_TABS.register("mechanical_storage", () -> CreativeModeTab.builder()
+	public static final DeferredHolder<CreativeModeTab, CreativeModeTab> MAIN_TAB = CREATIVE_MODE_TABS.register("main", () -> CreativeModeTab.builder()
 			.title(Component.translatable("itemGroup.mechanical_storage"))
-			.icon(() -> MECHANICAL_STORAGE_TERMINAL.get().asItem().getDefaultInstance())
+			.icon(() -> TERMINAL.get().asItem().getDefaultInstance())
 			.build());
 
 	public MechanicalStorage(IEventBus modEventBus, ModContainer modContainer) {
 		REGISTRATE.registerEventListeners(modEventBus);
 		MENU_TYPES.register(modEventBus);
 		CREATIVE_MODE_TABS.register(modEventBus);
+		modEventBus.addListener(MechanicalStorage::addLegacyRegistryAliases);
 
 		if (FMLEnvironment.dist == Dist.CLIENT) {
 			MechanicalStorageClient.register(modEventBus);
 		}
 
 		LOGGER.info("Mechanical Storage loaded");
+	}
+
+	private static void addLegacyRegistryAliases(RegisterEvent event) {
+		Registry<?> registry = event.getRegistry();
+		if (registry == Registries.BLOCK || registry == Registries.ITEM) {
+			addAlias(registry, "mechanical_storage_connector", "connector");
+			addAlias(registry, "mechanical_storage_cogwheel_connector", "cogwheel_connector");
+			addAlias(registry, "mechanical_storage_terminal", "terminal");
+			addAlias(registry, "mechanical_storage_crafting_terminal", "crafting_terminal");
+		} else if (registry == Registries.BLOCK_ENTITY_TYPE) {
+			addAlias(registry, "mechanical_storage_connector", "connector");
+			addAlias(registry, "mechanical_storage_terminal", "terminal");
+		} else if (registry == Registries.CREATIVE_MODE_TAB) {
+			addAlias(registry, "mechanical_storage", "main");
+		}
+	}
+
+	private static void addAlias(Registry<?> registry, String legacyPath, String currentPath) {
+		registry.addAlias(id(legacyPath), id(currentPath));
+	}
+
+	private static ResourceLocation id(String path) {
+		return ResourceLocation.fromNamespaceAndPath(MODID, path);
 	}
 
 	private static BlockBehaviour.Properties machineProperties(MapColor mapColor) {

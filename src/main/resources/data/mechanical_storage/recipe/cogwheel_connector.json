@@ -2,13 +2,13 @@
 	"type": "minecraft:crafting_shaped",
 	"category": "redstone",
 	"pattern": [
-		" S ",
+		" G ",
 		"ACA",
 		" H "
 	],
 	"key": {
-		"S": {
-			"item": "create:shaft"
+		"G": {
+			"item": "create:cogwheel"
 		},
 		"A": {
 			"item": "create:andesite_alloy"
@@ -21,7 +21,7 @@
 		}
 	},
 	"result": {
-		"id": "mechanical_storage:mechanical_storage_connector",
+		"id": "mechanical_storage:cogwheel_connector",
 		"count": 1
 	}
 }

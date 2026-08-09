@@ -1,5 +1,5 @@
 {
-	"parent": "mechanical_storage:block/mechanical_storage_terminal_base",
+	"parent": "mechanical_storage:block/connector_base",
 	"display": {
 		"gui": {
 			"rotation": [ 30, 45, 0 ],

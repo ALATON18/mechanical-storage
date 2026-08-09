@@ -1,0 +1,27 @@
+{
+	"variants": {
+		"facing=down": {
+			"model": "mechanical_storage:block/connector_base",
+			"x": 270
+		},
+		"facing=north": {
+			"model": "mechanical_storage:block/connector_base",
+			"y": 180
+		},
+		"facing=east": {
+			"model": "mechanical_storage:block/connector_base",
+			"y": 270
+		},
+		"facing=south": {
+			"model": "mechanical_storage:block/connector_base"
+		},
+		"facing=up": {
+			"model": "mechanical_storage:block/connector_base",
+			"x": 90
+		},
+		"facing=west": {
+			"model": "mechanical_storage:block/connector_base",
+			"y": 90
+		}
+	}
+}
