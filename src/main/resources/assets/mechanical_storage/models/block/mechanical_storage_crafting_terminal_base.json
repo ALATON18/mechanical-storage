@@ -5,6 +5,7 @@
 		"particle": "create:block/brass_casing",
 		"brass": "create:block/brass_casing",
 		"panel": "create:block/encased_chain_drive",
+		"rear": "mechanical_storage:block/terminal_copper_gearbox",
 		"screen": "create:block/flap_display_front"
 	},
 	"elements": [
@@ -13,12 +14,34 @@
 			"from": [ 0, 0, 0 ],
 			"to": [ 16, 2, 16 ],
 			"faces": {
-				"north": { "texture": "#brass" },
-				"east": { "texture": "#brass" },
-				"south": { "texture": "#brass" },
-				"west": { "texture": "#brass" },
-				"up": { "texture": "#brass" },
-				"down": { "texture": "#brass", "cullface": "down" }
+				"south": {
+					"uv": [ 0, 14, 16, 16 ],
+					"texture": "#brass"
+				},
+				"west": {
+					"uv": [ 14, 0, 16, 16 ],
+					"rotation": 90,
+					"texture": "#brass"
+				},
+				"north": {
+					"uv": [ 0, 14, 16, 16 ],
+					"texture": "#brass"
+				},
+				"east": {
+					"uv": [ 0, 0, 2, 16 ],
+					"rotation": 270,
+					"texture": "#brass"
+				},
+				"up": {
+					"uv": [ 0, 0, 16, 16 ],
+					"texture": "#brass"
+				},
+				"down": {
+					"uv": [ 0, 0, 16, 16 ],
+					"rotation": 180,
+					"texture": "#brass",
+					"cullface": "down"
+				}
 			}
 		},
 		{
@@ -26,12 +49,33 @@
 			"from": [ 0, 14, 0 ],
 			"to": [ 16, 16, 16 ],
 			"faces": {
-				"north": { "texture": "#brass" },
-				"east": { "texture": "#brass" },
-				"south": { "texture": "#brass" },
-				"west": { "texture": "#brass" },
-				"up": { "texture": "#brass", "cullface": "up" },
-				"down": { "texture": "#brass" }
+				"south": {
+					"uv": [ 0, 0, 16, 2 ],
+					"texture": "#brass"
+				},
+				"west": {
+					"uv": [ 0, 0, 2, 16 ],
+					"rotation": 90,
+					"texture": "#brass"
+				},
+				"north": {
+					"uv": [ 0, 0, 16, 2 ],
+					"texture": "#brass"
+				},
+				"east": {
+					"uv": [ 14, 0, 16, 16 ],
+					"rotation": 270,
+					"texture": "#brass"
+				},
+				"up": {
+					"uv": [ 0, 0, 16, 16 ],
+					"texture": "#brass",
+					"cullface": "up"
+				},
+				"down": {
+					"uv": [ 0, 0, 16, 16 ],
+					"texture": "#brass"
+				}
 			}
 		},
 		{
@@ -39,10 +83,24 @@
 			"from": [ 0, 2, 0 ],
 			"to": [ 2, 14, 16 ],
 			"faces": {
-				"north": { "texture": "#brass" },
-				"east": { "texture": "#brass" },
-				"south": { "texture": "#brass" },
-				"west": { "texture": "#brass" }
+				"south": {
+					"uv": [ 14, 2, 16, 14 ],
+					"texture": "#brass"
+				},
+				"west": {
+					"uv": [ 2, 0, 14, 16 ],
+					"rotation": 270,
+					"texture": "#brass"
+				},
+				"north": {
+					"uv": [ 0, 2, 2, 14 ],
+					"texture": "#brass"
+				},
+				"east": {
+					"uv": [ 2, 0, 14, 16 ],
+					"rotation": 270,
+					"texture": "#brass"
+				}
 			}
 		},
 		{
@@ -50,20 +108,34 @@
 			"from": [ 14, 2, 0 ],
 			"to": [ 16, 14, 16 ],
 			"faces": {
-				"north": { "texture": "#brass" },
-				"east": { "texture": "#brass" },
-				"south": { "texture": "#brass" },
-				"west": { "texture": "#brass" }
+				"south": {
+					"uv": [ 0, 2, 2, 14 ],
+					"texture": "#brass"
+				},
+				"west": {
+					"uv": [ 2, 0, 14, 16 ],
+					"rotation": 90,
+					"texture": "#brass"
+				},
+				"north": {
+					"uv": [ 14, 2, 16, 14 ],
+					"texture": "#brass"
+				},
+				"east": {
+					"uv": [ 2, 0, 14, 16 ],
+					"rotation": 270,
+					"texture": "#brass"
+				}
 			}
 		},
 		{
-			"name": "Wooden front and rear",
+			"name": "Front and rear core",
 			"from": [ 2, 2, 0.95 ],
 			"to": [ 14, 14, 15.05 ],
 			"faces": {
 				"north": {
 					"uv": [ 2, 2, 14, 14 ],
-					"texture": "#panel"
+					"texture": "#rear"
 				},
 				"south": {
 					"uv": [ 2, 2, 14, 14 ],
@@ -78,6 +150,7 @@
 			"faces": {
 				"west": {
 					"uv": [ 2, 2, 14, 14 ],
+					"rotation": 270,
 					"texture": "#panel"
 				}
 			}
@@ -89,6 +162,7 @@
 			"faces": {
 				"east": {
 					"uv": [ 2, 2, 14, 14 ],
+					"rotation": 270,
 					"texture": "#panel"
 				}
 			}
