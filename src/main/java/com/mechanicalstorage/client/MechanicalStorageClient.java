@@ -2,7 +2,9 @@ package com.mechanicalstorage.client;
 
 import com.mechanicalstorage.MechanicalStorage;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.common.NeoForge;
@@ -37,22 +39,48 @@ public final class MechanicalStorageClient {
 	}
 
 	private static void addMachineItemTooltip(ItemTooltipEvent event) {
-		if (!event.getItemStack().is(MechanicalStorage.MECHANICAL_STORAGE_CONNECTOR.get().asItem())
-				&& !event.getItemStack().is(MechanicalStorage.MECHANICAL_STORAGE_COGWHEEL_CONNECTOR.get().asItem())
-				&& !event.getItemStack().is(MechanicalStorage.MECHANICAL_STORAGE_TERMINAL.get().asItem())
-				&& !event.getItemStack().is(MechanicalStorage.MECHANICAL_STORAGE_CRAFTING_TERMINAL.get().asItem())) {
-			return;
-		}
 		if (isJeiBuildingIngredientTooltip()) {
 			return;
 		}
 
-		String modName = ModList.get().getModContainerById(MechanicalStorage.MODID)
+		ItemStack stack = event.getItemStack();
+		boolean inTerminal = Minecraft.getInstance().screen instanceof TerminalScreen;
+		boolean mechanicalStorageItem = stack.is(MechanicalStorage.MECHANICAL_STORAGE_CONNECTOR.get().asItem())
+				|| stack.is(MechanicalStorage.MECHANICAL_STORAGE_COGWHEEL_CONNECTOR.get().asItem())
+				|| stack.is(MechanicalStorage.MECHANICAL_STORAGE_TERMINAL.get().asItem())
+				|| stack.is(MechanicalStorage.MECHANICAL_STORAGE_CRAFTING_TERMINAL.get().asItem());
+
+		if (!inTerminal && !mechanicalStorageItem) {
+			return;
+		}
+
+		String modId = stack.getItem().getCreatorModId(stack);
+		if (modId == null || modId.isBlank()) {
+			return;
+		}
+
+		String modName = ModList.get().getModContainerById(modId)
 				.map(container -> container.getModInfo().getDisplayName())
-				.orElse("Mechanical Storage");
+				.orElseGet(() -> humanizeModId(modId));
 		if (event.getToolTip().stream().noneMatch(line -> line.getString().equals(modName))) {
 			event.getToolTip().add(Component.literal(modName).withStyle(ChatFormatting.BLUE, ChatFormatting.ITALIC));
 		}
+	}
+
+	private static String humanizeModId(String modId) {
+		StringBuilder name = new StringBuilder(modId.length());
+		boolean capitalizeNext = true;
+		for (int index = 0; index < modId.length(); index++) {
+			char character = modId.charAt(index);
+			if (character == '_' || character == '-') {
+				name.append(' ');
+				capitalizeNext = true;
+			} else {
+				name.append(capitalizeNext ? Character.toUpperCase(character) : character);
+				capitalizeNext = false;
+			}
+		}
+		return name.toString();
 	}
 
 	private static boolean isJeiBuildingIngredientTooltip() {
