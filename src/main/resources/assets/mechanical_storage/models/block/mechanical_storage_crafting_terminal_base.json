@@ -2,7 +2,7 @@
 	"credit": "Crafting Terminal with brass two-pixel trim",
 	"parent": "minecraft:block/block",
 	"textures": {
-		"particle": "create:block/brass_casing",
+		"particle": "create:block/encased_chain_drive",
 		"brass": "create:block/brass_casing",
 		"panel": "create:block/encased_chain_drive",
 		"rear": "mechanical_storage:block/terminal_copper_gearbox",
@@ -10,7 +10,7 @@
 	},
 	"elements": [
 		{
-			"name": "Bottom brass band",
+			"name": "Bottom trim band",
 			"from": [ 0, 0, 0 ],
 			"to": [ 16, 2, 16 ],
 			"faces": {
@@ -21,7 +21,7 @@
 				"west": {
 					"uv": [ 14, 0, 16, 16 ],
 					"rotation": 90,
-					"texture": "#brass"
+					"texture": "#panel"
 				},
 				"north": {
 					"uv": [ 0, 14, 16, 16 ],
@@ -30,22 +30,22 @@
 				"east": {
 					"uv": [ 0, 0, 2, 16 ],
 					"rotation": 270,
-					"texture": "#brass"
+					"texture": "#panel"
 				},
 				"up": {
 					"uv": [ 0, 0, 16, 16 ],
-					"texture": "#brass"
+					"texture": "#panel"
 				},
 				"down": {
 					"uv": [ 0, 0, 16, 16 ],
 					"rotation": 180,
-					"texture": "#brass",
+					"texture": "#panel",
 					"cullface": "down"
 				}
 			}
 		},
 		{
-			"name": "Top brass band",
+			"name": "Top trim band",
 			"from": [ 0, 14, 0 ],
 			"to": [ 16, 16, 16 ],
 			"faces": {
@@ -56,7 +56,7 @@
 				"west": {
 					"uv": [ 0, 0, 2, 16 ],
 					"rotation": 90,
-					"texture": "#brass"
+					"texture": "#panel"
 				},
 				"north": {
 					"uv": [ 0, 0, 16, 2 ],
@@ -65,21 +65,21 @@
 				"east": {
 					"uv": [ 14, 0, 16, 16 ],
 					"rotation": 270,
-					"texture": "#brass"
+					"texture": "#panel"
 				},
 				"up": {
 					"uv": [ 0, 0, 16, 16 ],
-					"texture": "#brass",
+					"texture": "#panel",
 					"cullface": "up"
 				},
 				"down": {
 					"uv": [ 0, 0, 16, 16 ],
-					"texture": "#brass"
+					"texture": "#panel"
 				}
 			}
 		},
 		{
-			"name": "Left brass band",
+			"name": "Left trim band",
 			"from": [ 0, 2, 0 ],
 			"to": [ 2, 14, 16 ],
 			"faces": {
@@ -90,7 +90,7 @@
 				"west": {
 					"uv": [ 2, 0, 14, 16 ],
 					"rotation": 270,
-					"texture": "#brass"
+					"texture": "#panel"
 				},
 				"north": {
 					"uv": [ 0, 2, 2, 14 ],
@@ -99,12 +99,12 @@
 				"east": {
 					"uv": [ 2, 0, 14, 16 ],
 					"rotation": 270,
-					"texture": "#brass"
+					"texture": "#panel"
 				}
 			}
 		},
 		{
-			"name": "Right brass band",
+			"name": "Right trim band",
 			"from": [ 14, 2, 0 ],
 			"to": [ 16, 14, 16 ],
 			"faces": {
@@ -115,7 +115,7 @@
 				"west": {
 					"uv": [ 2, 0, 14, 16 ],
 					"rotation": 90,
-					"texture": "#brass"
+					"texture": "#panel"
 				},
 				"north": {
 					"uv": [ 14, 2, 16, 14 ],
@@ -124,7 +124,7 @@
 				"east": {
 					"uv": [ 2, 0, 14, 16 ],
 					"rotation": 270,
-					"texture": "#brass"
+					"texture": "#panel"
 				}
 			}
 		},
