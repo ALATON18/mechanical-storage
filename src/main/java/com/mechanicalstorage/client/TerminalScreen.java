@@ -98,7 +98,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 
 		int searchY = menu.isCraftingTerminal() ? 24 : 14;
 		this.titleLabelY = menu.isCraftingTerminal()
-				? PANEL_TOP + Math.max(0, (searchY - PANEL_TOP - this.font.lineHeight) / 2) + 2
+				? PANEL_TOP + Math.max(0, (searchY - PANEL_TOP - this.font.lineHeight) / 2) + 3
 				: 17;
 		searchBox = new EditBox(this.font, this.leftPos + 84, this.topPos + searchY, 108, 14, Component.translatable("container.mechanical_storage.search"));
 		searchBox.setMaxLength(TerminalMenu.SEARCH_MAX_LENGTH);
