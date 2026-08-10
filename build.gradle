@@ -20,6 +20,7 @@ sourceSets.main.resources {
 
 repositories {
 	maven { url = 'https://maven.createmod.net' }
+	maven { url = 'https://maven.ithundxr.dev/snapshots' }
 	maven { url = 'https://maven.blamejared.com/' }
 }
 
