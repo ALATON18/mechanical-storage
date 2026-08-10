@@ -6,6 +6,7 @@ import com.mechanicalstorage.network.StorageNetworkRegistry;
 import com.simibubi.create.content.logistics.filter.AttributeFilterItem;
 import com.simibubi.create.content.logistics.filter.FilterItemStack;
 import com.simibubi.create.content.logistics.filter.ListFilterItem;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -20,6 +21,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.ItemStackLinkedSet;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.items.IItemHandler;
@@ -29,13 +32,20 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 public class TerminalBlockEntity extends FixedStressKineticBlockEntity implements MenuProvider {
 	public static final int MAX_CONNECTORS = 64;
 	public static final float FIXED_STRESS_UNITS = 256.0F;
 	private static final int MAX_SUMMARY_ITEMS = 8;
+	// Menus refresh every 10 ticks. Sharing the same immutable snapshot prevents each
+	// open terminal on a kinetic network from repeating the inventory scan.
+	private static final int NETWORK_SUMMARY_CACHE_TICKS = 10;
+	private static final Map<Level, LevelNetworkSummaryCache> NETWORK_SUMMARY_CACHE = new WeakHashMap<>();
 	public static final int LIST_FILTER_SLOT = 0;
 	public static final int ATTRIBUTE_FILTER_SLOT = 1;
 	public static final int FILTER_SLOTS = 4;
@@ -169,7 +179,7 @@ public class TerminalBlockEntity extends FixedStressKineticBlockEntity implement
 
 		NetworkSummary networkSummary = collectNetworkSummary();
 		String message = "Terminal: online at " + Math.abs(getSpeed()) + " RPM, found " + networkSummary.connectorsFound + " connector(s), " + networkSummary.inventoriesFound + " inventory/inventories, " + networkSummary.occupiedSlots + "/" + networkSummary.totalSlots + " slots used, " + networkSummary.totalItems + " items total.";
-		String summary = formatItemSummary(networkSummary.itemSummary);
+		String summary = formatItemSummary(networkSummary.orderedItems("COUNT", true));
 		if (!summary.isEmpty()) {
 			message += " Items: " + summary;
 		}
@@ -179,29 +189,35 @@ public class TerminalBlockEntity extends FixedStressKineticBlockEntity implement
 
 	public DisplayPage getNetworkDisplayPage(int limit, int offset, String searchText, String sortMode, boolean descending) {
 		NetworkSummary networkSummary = collectNetworkSummary();
-		List<ItemSummary> entries = new ArrayList<>();
+		List<ItemSummary> entries = networkSummary.orderedItems(sortMode, descending);
 		String normalizedSearch = normalizeSearch(searchText);
+		int safeOffset = Math.max(0, offset);
+		int safeLimit = Math.max(0, limit);
+		if (normalizedSearch.isEmpty() && !hasActiveTerminalFilters()) {
+			return createDisplayPage(entries, safeOffset, safeLimit);
+		}
 
-		for (ItemSummary summary : networkSummary.itemSummary) {
-			if (matchesTerminalFilters(summary.representative) && matchesSearch(summary, normalizedSearch)) {
-				entries.add(summary);
+		List<ItemStack> stacks = new ArrayList<>(Math.min(safeLimit, entries.size()));
+		int matchingItems = 0;
+		for (ItemSummary summary : entries) {
+			if (!matchesTerminalFilters(summary.representative) || !matchesSearch(summary, normalizedSearch)) {
+				continue;
 			}
+
+			if (matchingItems >= safeOffset && stacks.size() < safeLimit) {
+				ItemStack displayStack = summary.representative.copy();
+				displayStack.setCount(summary.count);
+				stacks.add(displayStack);
+			}
+			matchingItems++;
 		}
 
-		Comparator<ItemSummary> comparator;
-		if ("NAME".equals(sortMode)) {
-			comparator = Comparator.comparing(summary -> summary.displayName.toLowerCase(Locale.ROOT));
-		} else {
-			comparator = Comparator.comparingInt(summary -> summary.count);
-		}
+		return new DisplayPage(stacks, matchingItems);
+	}
 
-		if (descending) {
-			comparator = comparator.reversed();
-		}
-		entries.sort(comparator.thenComparing(summary -> summary.itemId.toString()));
-
-		int safeOffset = Math.max(0, Math.min(offset, entries.size()));
-		int end = Math.min(entries.size(), safeOffset + Math.max(0, limit));
+	private static DisplayPage createDisplayPage(List<ItemSummary> entries, int offset, int limit) {
+		int safeOffset = Math.min(offset, entries.size());
+		int end = safeOffset + Math.min(limit, entries.size() - safeOffset);
 		List<ItemStack> stacks = new ArrayList<>(end - safeOffset);
 		for (int index = safeOffset; index < end; index++) {
 			ItemSummary summary = entries.get(index);
@@ -209,8 +225,16 @@ public class TerminalBlockEntity extends FixedStressKineticBlockEntity implement
 			displayStack.setCount(summary.count);
 			stacks.add(displayStack);
 		}
-
 		return new DisplayPage(stacks, entries.size());
+	}
+
+	private boolean hasActiveTerminalFilters() {
+		for (int slot = 0; slot < FILTER_SLOTS; slot++) {
+			if (filterActive[slot] && !terminalFilters.getStackInSlot(slot).isEmpty()) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	private boolean matchesTerminalFilters(ItemStack stack) {
@@ -299,12 +323,12 @@ public class TerminalBlockEntity extends FixedStressKineticBlockEntity implement
 
 				remainingAmount -= extracted.getCount();
 				if (remainingAmount <= 0) {
-					return collected;
+					return finishExtraction(collected);
 				}
 			}
 		}
 
-		return collected;
+		return finishExtraction(collected);
 	}
 
 	public Component insertHeldStack(Player player, InteractionHand hand) {
@@ -343,6 +367,7 @@ public class TerminalBlockEntity extends FixedStressKineticBlockEntity implement
 			return stack;
 		}
 
+		int startingCount = stack.getCount();
 		ItemStack remaining = stack.copy();
 		List<IItemHandler> handlers = new ArrayList<>();
 		for (MechanicalStorageConnectorBlockEntity connector : findNetworkConnectors()) {
@@ -354,10 +379,15 @@ public class TerminalBlockEntity extends FixedStressKineticBlockEntity implement
 
 		remaining = insertIntoMatchingStacks(handlers, remaining);
 		if (remaining.isEmpty()) {
+			invalidateNetworkSummary();
 			return ItemStack.EMPTY;
 		}
 
-		return insertIntoEmptySlots(handlers, remaining);
+		remaining = insertIntoEmptySlots(handlers, remaining);
+		if (remaining.isEmpty() || remaining.getCount() < startingCount) {
+			invalidateNetworkSummary();
+		}
+		return remaining;
 	}
 
 	private static ItemStack insertIntoMatchingStacks(List<IItemHandler> handlers, ItemStack stack) {
@@ -394,30 +424,48 @@ public class TerminalBlockEntity extends FixedStressKineticBlockEntity implement
 	}
 
 	private NetworkSummary collectNetworkSummary() {
-		NetworkSummary networkSummary = new NetworkSummary();
-		if (!isOnline()) {
-			return networkSummary;
+		if (level == null || level.isClientSide || network == null || !isOnline()) {
+			return NetworkSummary.EMPTY;
 		}
 
+		long cacheEpoch = Math.floorDiv(level.getGameTime(), NETWORK_SUMMARY_CACHE_TICKS);
+		NetworkSummary cached = getCachedNetworkSummary(level, network, cacheEpoch);
+		if (cached != null) {
+			return cached;
+		}
+
+		int connectorsFound = 0;
+		int inventoriesFound = 0;
+		int totalSlots = 0;
+		int occupiedSlots = 0;
+		int totalItems = 0;
+		List<ItemSummary> itemSummaries = new ArrayList<>();
+		// Minecraft's strategy hashes the item and complete data-component patch while
+		// ignoring count, matching ItemStack.isSameItemSameComponents exactly.
+		Map<ItemStack, ItemSummary> summariesByStack =
+				new Object2ObjectOpenCustomHashMap<>(ItemStackLinkedSet.TYPE_AND_TAG);
 		for (MechanicalStorageConnectorBlockEntity connector : findNetworkConnectors()) {
-			networkSummary.connectorsFound++;
+			connectorsFound++;
 			IItemHandler handler = connector.getTargetItemHandler();
 			if (handler == null) {
 				continue;
 			}
 
-			networkSummary.inventoriesFound++;
-			networkSummary.totalSlots += handler.getSlots();
+			inventoriesFound++;
+			totalSlots += handler.getSlots();
 			for (int slot = 0; slot < handler.getSlots(); slot++) {
 				ItemStack stack = handler.getStackInSlot(slot);
 				if (!stack.isEmpty()) {
-					networkSummary.occupiedSlots++;
-					networkSummary.totalItems += stack.getCount();
-					addToSummary(networkSummary.itemSummary, stack);
+					occupiedSlots++;
+					totalItems = saturatedAdd(totalItems, stack.getCount());
+					addToSummary(summariesByStack, itemSummaries, stack);
 				}
 			}
 		}
 
+		NetworkSummary networkSummary = new NetworkSummary(connectorsFound, inventoriesFound, totalSlots,
+				occupiedSlots, totalItems, itemSummaries);
+		cacheNetworkSummary(level, network, cacheEpoch, networkSummary);
 		return networkSummary;
 	}
 
@@ -425,15 +473,57 @@ public class TerminalBlockEntity extends FixedStressKineticBlockEntity implement
 		return StorageNetworkRegistry.findConnectors(this, MAX_CONNECTORS);
 	}
 
-	private static void addToSummary(List<ItemSummary> itemSummary, ItemStack stack) {
-		for (ItemSummary summary : itemSummary) {
-			if (sameDisplayGroup(summary.representative, stack)) {
-				summary.count = saturatedAdd(summary.count, stack.getCount());
-				return;
-			}
+	private static void addToSummary(Map<ItemStack, ItemSummary> summariesByStack,
+			List<ItemSummary> itemSummaries, ItemStack stack) {
+		ItemSummary summary = summariesByStack.get(stack);
+		if (summary != null) {
+			summary.count = saturatedAdd(summary.count, stack.getCount());
+			return;
 		}
 
-		itemSummary.add(new ItemSummary(stack));
+		summary = new ItemSummary(stack);
+		summariesByStack.put(summary.representative, summary);
+		itemSummaries.add(summary);
+	}
+
+	@Nullable
+	private static NetworkSummary getCachedNetworkSummary(Level level, Long networkId, long cacheEpoch) {
+		synchronized (NETWORK_SUMMARY_CACHE) {
+			LevelNetworkSummaryCache levelCache = NETWORK_SUMMARY_CACHE.computeIfAbsent(level,
+					ignored -> new LevelNetworkSummaryCache());
+			levelCache.advanceTo(cacheEpoch);
+			return levelCache.summaries.get(networkId);
+		}
+	}
+
+	private static void cacheNetworkSummary(Level level, Long networkId, long cacheEpoch,
+			NetworkSummary networkSummary) {
+		synchronized (NETWORK_SUMMARY_CACHE) {
+			LevelNetworkSummaryCache levelCache = NETWORK_SUMMARY_CACHE.computeIfAbsent(level,
+					ignored -> new LevelNetworkSummaryCache());
+			levelCache.advanceTo(cacheEpoch);
+			levelCache.summaries.put(networkId, networkSummary);
+		}
+	}
+
+	private void invalidateNetworkSummary() {
+		if (level == null || network == null) {
+			return;
+		}
+
+		synchronized (NETWORK_SUMMARY_CACHE) {
+			LevelNetworkSummaryCache levelCache = NETWORK_SUMMARY_CACHE.get(level);
+			if (levelCache != null) {
+				levelCache.summaries.remove(network);
+			}
+		}
+	}
+
+	private ItemStack finishExtraction(ItemStack extracted) {
+		if (!extracted.isEmpty()) {
+			invalidateNetworkSummary();
+		}
+		return extracted;
 	}
 
 	private static int saturatedAdd(int first, int second) {
@@ -454,17 +544,16 @@ public class TerminalBlockEntity extends FixedStressKineticBlockEntity implement
 			return true;
 		}
 
-		String displayName = itemSummary.displayName.toLowerCase(Locale.ROOT);
-		String path = itemSummary.itemId.getPath().toLowerCase(Locale.ROOT);
 		if (searchText.startsWith("@")) {
-			return itemSummary.itemId.getNamespace().toLowerCase(Locale.ROOT).contains(searchText.substring(1));
+			return itemSummary.itemId.getNamespace().contains(searchText.substring(1));
 		}
 
 		if (searchText.startsWith("#")) {
 			return matchesTagSearch(itemSummary.representative, searchText.substring(1));
 		}
 
-		return displayName.contains(searchText) || path.contains(searchText);
+		return itemSummary.normalizedDisplayName.contains(searchText)
+				|| itemSummary.itemId.getPath().contains(searchText);
 	}
 
 	private static boolean matchesTagSearch(ItemStack stack, String searchText) {
@@ -482,16 +571,14 @@ public class TerminalBlockEntity extends FixedStressKineticBlockEntity implement
 		return false;
 	}
 
-	private static String formatItemSummary(List<ItemSummary> itemSummary) {
-		if (itemSummary.isEmpty()) {
+	private static String formatItemSummary(List<ItemSummary> orderedItems) {
+		if (orderedItems.isEmpty()) {
 			return "";
 		}
 
-		List<ItemSummary> entries = new ArrayList<>(itemSummary);
-		entries.sort(Comparator.comparingInt((ItemSummary summary) -> summary.count).reversed());
 		StringBuilder builder = new StringBuilder();
 		int shown = 0;
-		for (ItemSummary summary : entries) {
+		for (ItemSummary summary : orderedItems) {
 			if (shown >= MAX_SUMMARY_ITEMS) {
 				break;
 			}
@@ -503,7 +590,7 @@ public class TerminalBlockEntity extends FixedStressKineticBlockEntity implement
 			shown++;
 		}
 
-		int hidden = entries.size() - shown;
+		int hidden = orderedItems.size() - shown;
 		if (hidden > 0) {
 			builder.append(", +").append(hidden).append(" more");
 		}
@@ -530,19 +617,87 @@ public class TerminalBlockEntity extends FixedStressKineticBlockEntity implement
 		}
 	}
 
+	private static class LevelNetworkSummaryCache {
+		private long epoch = Long.MIN_VALUE;
+		private final Map<Long, NetworkSummary> summaries = new HashMap<>();
+
+		private void advanceTo(long nextEpoch) {
+			if (epoch == nextEpoch) {
+				return;
+			}
+			epoch = nextEpoch;
+			summaries.clear();
+		}
+	}
+
 	private static class NetworkSummary {
-		private int connectorsFound;
-		private int inventoriesFound;
-		private int totalSlots;
-		private int occupiedSlots;
-		private int totalItems;
-		private final List<ItemSummary> itemSummary = new ArrayList<>();
+		private static final NetworkSummary EMPTY = new NetworkSummary(0, 0, 0, 0, 0, List.of());
+
+		private final int connectorsFound;
+		private final int inventoriesFound;
+		private final int totalSlots;
+		private final int occupiedSlots;
+		private final int totalItems;
+		private final List<ItemSummary> itemSummary;
+		private List<ItemSummary> nameAscending;
+		private List<ItemSummary> nameDescending;
+		private List<ItemSummary> countAscending;
+		private List<ItemSummary> countDescending;
+
+		private NetworkSummary(int connectorsFound, int inventoriesFound, int totalSlots, int occupiedSlots,
+				int totalItems, List<ItemSummary> itemSummary) {
+			this.connectorsFound = connectorsFound;
+			this.inventoriesFound = inventoriesFound;
+			this.totalSlots = totalSlots;
+			this.occupiedSlots = occupiedSlots;
+			this.totalItems = totalItems;
+			this.itemSummary = List.copyOf(itemSummary);
+		}
+
+		private synchronized List<ItemSummary> orderedItems(String sortMode, boolean descending) {
+			if ("NAME".equals(sortMode)) {
+				if (descending) {
+					if (nameDescending == null) {
+						nameDescending = sortedItems(true, true);
+					}
+					return nameDescending;
+				}
+				if (nameAscending == null) {
+					nameAscending = sortedItems(true, false);
+				}
+				return nameAscending;
+			}
+
+			if (descending) {
+				if (countDescending == null) {
+					countDescending = sortedItems(false, true);
+				}
+				return countDescending;
+			}
+			if (countAscending == null) {
+				countAscending = sortedItems(false, false);
+			}
+			return countAscending;
+		}
+
+		private List<ItemSummary> sortedItems(boolean byName, boolean descending) {
+			List<ItemSummary> sorted = new ArrayList<>(itemSummary);
+			Comparator<ItemSummary> comparator = byName
+					? Comparator.comparing(summary -> summary.normalizedDisplayName)
+					: Comparator.comparingInt(summary -> summary.count);
+			if (descending) {
+				comparator = comparator.reversed();
+			}
+			sorted.sort(comparator.thenComparing(summary -> summary.itemId));
+			return List.copyOf(sorted);
+		}
 	}
 
 	private static class ItemSummary {
 		private final ItemStack representative;
 		private final ResourceLocation itemId;
 		private final String displayName;
+		private final String normalizedDisplayName;
 		private int count;
 
 		private ItemSummary(ItemStack stack) {
@@ -550,6 +705,7 @@ public class TerminalBlockEntity extends FixedStressKineticBlockEntity implement
 			this.representative.setCount(1);
 			this.itemId = BuiltInRegistries.ITEM.getKey(stack.getItem());
 			this.displayName = stack.getHoverName().getString();
+			this.normalizedDisplayName = displayName.toLowerCase(Locale.ROOT);
 			this.count = stack.getCount();
 		}
 	}
