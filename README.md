@@ -24,7 +24,7 @@ The goal is a Create-style mechanical storage network where Create shafts/cogs a
 - Live disconnected and overstressed terminal states
 - JEI recipe transfer support for the Crafting Terminal
 
-## Planned behaviour
+## Network rules
 
 - Connector front face points at one adjacent inventory, pump-style.
 - Terminal and connectors must be on the same rotating Create kinetic network.
