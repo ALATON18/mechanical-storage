@@ -218,19 +218,21 @@ public class TerminalBlockEntity extends FixedStressKineticBlockEntity implement
 			return false;
 		}
 
+		boolean hasActiveFilter = false;
 		for (int slot = 0; slot < FILTER_SLOTS; slot++) {
 			ItemStack filter = terminalFilters.getStackInSlot(slot);
 			if (!filterActive[slot] || filter.isEmpty()) {
 				continue;
 			}
+			hasActiveFilter = true;
 			boolean matches = filter.getItem() instanceof ListFilterItem
 					? matchesModListFilter(filter, stack)
 					: FilterItemStack.of(filter.copy()).test(level, stack);
-			if (!matches) {
-				return false;
+			if (matches) {
+				return true;
 			}
 		}
-		return true;
+		return !hasActiveFilter;
 	}
 
 	private boolean matchesModListFilter(ItemStack filterStack, ItemStack candidate) {

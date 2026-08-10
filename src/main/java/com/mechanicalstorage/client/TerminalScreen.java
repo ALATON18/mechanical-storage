@@ -97,6 +97,9 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 		sendMenuButton(TerminalMenu.GRID_ROWS_BUTTON_BASE + rows);
 
 		int searchY = menu.isCraftingTerminal() ? 24 : 14;
+		this.titleLabelY = menu.isCraftingTerminal()
+				? Math.max(0, (searchY - this.font.lineHeight) / 2)
+				: 17;
 		searchBox = new EditBox(this.font, this.leftPos + 84, this.topPos + searchY, 108, 14, Component.translatable("container.mechanical_storage.search"));
 		searchBox.setMaxLength(TerminalMenu.SEARCH_MAX_LENGTH);
 		searchBox.setHint(Component.translatable("container.mechanical_storage.search"));
@@ -878,10 +881,15 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 	}
 
 	private void drawCraftingArrow(GuiGraphics guiGraphics, int x, int y) {
-		guiGraphics.fill(x, y + 4, x + 22, y + 8, BG_BORDER);
-		guiGraphics.fill(x + 18, y, x + 22, y + 12, BG_BORDER);
-		guiGraphics.fill(x + 22, y + 3, x + 26, y + 9, BG_BORDER);
-		guiGraphics.fill(x, y + 3, x + 18, y + 4, BG_LIGHT);
+		guiGraphics.fill(x, y + 5, x + 18, y + 9, BG_BORDER);
+		guiGraphics.fill(x + 17, y, x + 19, y + 14, BG_BORDER);
+		guiGraphics.fill(x + 19, y + 1, x + 21, y + 13, BG_BORDER);
+		guiGraphics.fill(x + 21, y + 2, x + 23, y + 12, BG_BORDER);
+		guiGraphics.fill(x + 23, y + 3, x + 25, y + 11, BG_BORDER);
+		guiGraphics.fill(x + 25, y + 4, x + 27, y + 10, BG_BORDER);
+		guiGraphics.fill(x + 27, y + 5, x + 28, y + 9, BG_BORDER);
+		guiGraphics.fill(x + 28, y + 6, x + 29, y + 8, BG_BORDER);
+		guiGraphics.fill(x, y + 4, x + 17, y + 5, BG_LIGHT);
 	}
 
 	private int layoutDelta() {
