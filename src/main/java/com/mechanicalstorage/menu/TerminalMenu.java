@@ -2,6 +2,7 @@ package com.mechanicalstorage.menu;
 
 import com.mechanicalstorage.MechanicalStorage;
 import com.mechanicalstorage.blockentity.TerminalBlockEntity;
+import com.mechanicalstorage.compat.SableTerminalCompat;
 import com.simibubi.create.content.contraptions.AbstractContraptionEntity;
 import com.simibubi.create.content.logistics.filter.AttributeFilterItem;
 import com.simibubi.create.content.logistics.filter.ListFilterItem;
@@ -33,6 +34,7 @@ import net.neoforged.neoforge.items.ItemHandlerHelper;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import net.neoforged.neoforge.items.SlotItemHandler;
 import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.fml.ModList;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -214,6 +216,12 @@ public class TerminalMenu extends AbstractContainerMenu {
 	public boolean stillValid(Player player) {
 		if (movingContraptionId >= 0) {
 			return isMovingMenuValid(player);
+		}
+		if (ModList.get().isLoaded("sable") && SableTerminalCompat.isTerminalStillValid(
+				player, terminalPos, craftingTerminal
+						? MechanicalStorage.CRAFTING_TERMINAL.get()
+						: MechanicalStorage.TERMINAL.get())) {
+			return true;
 		}
 		return AbstractContainerMenu.stillValid(ContainerLevelAccess.create(player.level(), terminalPos), player,
 				craftingTerminal
