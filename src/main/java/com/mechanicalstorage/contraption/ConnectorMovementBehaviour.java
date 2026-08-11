@@ -7,6 +7,8 @@ import com.mechanicalstorage.network.StorageNetworkRegistry;
 import com.simibubi.create.api.behaviour.movement.MovementBehaviour;
 import com.simibubi.create.api.contraption.storage.fluid.MountedFluidStorage;
 import com.simibubi.create.api.contraption.storage.item.MountedItemStorage;
+import com.simibubi.create.content.contraptions.IControlContraption;
+import com.simibubi.create.content.contraptions.bearing.BearingContraption;
 import com.simibubi.create.content.contraptions.behaviour.MovementContext;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import net.minecraft.core.BlockPos;
@@ -23,7 +25,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Keeps a connector useful while Create has it mounted as a contraption actor.
  * The connector's storage relationship remains in contraption-local space and
- * the moving assembly itself supplies actor power.
+ * the moving assembly itself supplies actor power. Bearing contraptions also
+ * expose the connector through the controller's live kinetic network.
  */
 public class ConnectorMovementBehaviour implements MovementBehaviour {
 	private static final int ENDPOINT_GRACE_TICKS = 2;
@@ -85,10 +88,13 @@ public class ConnectorMovementBehaviour implements MovementBehaviour {
 		private final MovementContext context;
 		private final BlockPos localTargetPos;
 		private final StorageNetworkKey networkKey;
+		private final MovingStorageIdentity storageIdentity;
 		@Nullable
 		private final MountedItemStorage mountedItems;
 		@Nullable
 		private final MountedFluidStorage mountedFluids;
+		@Nullable
+		private StorageNetworkKey controllerNetworkKey;
 		private long lastSeenTick = Long.MIN_VALUE;
 		private BlockPos targetPos = BlockPos.ZERO;
 		private Direction targetFacing = Direction.NORTH;
@@ -98,6 +104,7 @@ public class ConnectorMovementBehaviour implements MovementBehaviour {
 			this.networkKey = StorageNetworkKey.moving(context.contraption.entity.getUUID());
 			Direction localFacing = context.state.getValue(OrientedConnectorBlock.FACING);
 			this.localTargetPos = context.localPos.relative(localFacing);
+			this.storageIdentity = new MovingStorageIdentity(networkKey, localTargetPos);
 			this.mountedItems = context.contraption.getStorage().getAllItemStorages().get(localTargetPos);
 			this.mountedFluids = context.contraption.getStorage().getFluids().storages.get(localTargetPos);
 			update();
@@ -105,6 +112,7 @@ public class ConnectorMovementBehaviour implements MovementBehaviour {
 
 		private void update() {
 			lastSeenTick = context.world.getGameTime();
+			controllerNetworkKey = findControllerNetworkKey();
 			Vec3 targetCenter = context.contraption.entity.toGlobalVector(Vec3.atCenterOf(localTargetPos), 0);
 			targetPos = BlockPos.containing(targetCenter);
 
@@ -124,6 +132,12 @@ public class ConnectorMovementBehaviour implements MovementBehaviour {
 		}
 
 		@Override
+		public boolean isOnStorageNetwork(StorageNetworkKey candidate) {
+			return networkKey.equals(candidate)
+					|| controllerNetworkKey != null && controllerNetworkKey.equals(candidate);
+		}
+
+		@Override
 		public boolean isEndpointAvailable(long gameTime) {
 			return gameTime - lastSeenTick <= ENDPOINT_GRACE_TICKS
 					&& context.contraption.entity != null
@@ -137,7 +151,7 @@ public class ConnectorMovementBehaviour implements MovementBehaviour {
 
 		@Override
 		public Object getStorageIdentity() {
-			return localTargetPos;
+			return storageIdentity;
 		}
 
 		@Override
@@ -175,5 +189,28 @@ public class ConnectorMovementBehaviour implements MovementBehaviour {
 			return level.getCapability(Capabilities.FluidHandler.BLOCK, targetPos, state, blockEntity,
 					targetFacing.getOpposite());
 		}
+
+		@Nullable
+		private StorageNetworkKey findControllerNetworkKey() {
+			if (!(context.contraption instanceof BearingContraption bearing)
+					|| context.contraption.entity == null) {
+				return null;
+			}
+
+			BlockPos controllerPos = context.contraption.entity.blockPosition()
+					.relative(bearing.getFacing().getOpposite());
+			BlockEntity controllerBlockEntity = context.world.getBlockEntity(controllerPos);
+			if (!(controllerBlockEntity instanceof KineticBlockEntity kinetic)
+					|| !(controllerBlockEntity instanceof IControlContraption controller)
+					|| kinetic.network == null
+					|| !controller.isAttachedTo(context.contraption.entity)) {
+				return null;
+			}
+
+			return StorageNetworkKey.kinetic(kinetic.network);
+		}
+	}
+
+	private record MovingStorageIdentity(StorageNetworkKey movingNetworkKey, BlockPos localTargetPos) {
 	}
 }
