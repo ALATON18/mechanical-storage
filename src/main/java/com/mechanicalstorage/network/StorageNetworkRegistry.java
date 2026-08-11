@@ -11,7 +11,6 @@ import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.WeakHashMap;
 
@@ -75,7 +74,7 @@ public final class StorageNetworkRegistry {
 				break;
 			}
 
-			if (Objects.equals(connector.getStorageNetworkKey(), networkKey)
+			if (connector.isOnStorageNetwork(networkKey)
 					&& seenTargets.add(connector.getStorageIdentity())) {
 				result.add(connector);
 			}
