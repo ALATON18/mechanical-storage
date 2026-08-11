@@ -2,6 +2,7 @@ package com.mechanicalstorage.blockentity;
 
 import com.mechanicalstorage.MechanicalStorage;
 import com.mechanicalstorage.block.OrientedConnectorBlock;
+import com.mechanicalstorage.network.StorageConnectorEndpoint;
 import com.mechanicalstorage.network.StorageNetworkRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -16,7 +17,7 @@ import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.items.IItemHandler;
 import org.jetbrains.annotations.Nullable;
 
-public class MechanicalStorageConnectorBlockEntity extends FixedStressKineticBlockEntity {
+public class MechanicalStorageConnectorBlockEntity extends FixedStressKineticBlockEntity implements StorageConnectorEndpoint {
 	public static final float FIXED_STRESS_UNITS = 128.0F;
 
 	public MechanicalStorageConnectorBlockEntity(BlockEntityType<? extends MechanicalStorageConnectorBlockEntity> type, BlockPos pos, BlockState blockState) {
@@ -51,6 +52,22 @@ public class MechanicalStorageConnectorBlockEntity extends FixedStressKineticBlo
 
 	public boolean isOnSameNetwork(TerminalBlockEntity terminal) {
 		return isOnline() && terminal.isOnline() && network != null && network.equals(terminal.network);
+	}
+
+	@Override
+	public Level getStorageLevel() {
+		return level;
+	}
+
+	@Override
+	@Nullable
+	public Long getKineticNetworkId() {
+		return network;
+	}
+
+	@Override
+	public boolean isEndpointAvailable(long gameTime) {
+		return !isRemoved() && isOnline();
 	}
 
 	public Component describeTargetInventory() {

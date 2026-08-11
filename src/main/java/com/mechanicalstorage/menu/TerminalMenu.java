@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Optional;
 
 public class TerminalMenu extends AbstractContainerMenu {
+	private static final String DISPLAY_MODE_PERSISTENT_KEY = MechanicalStorage.MODID + ":display_mode";
 	public static final int GRID_COLUMNS = 9;
 	public static final int DEFAULT_GRID_ROWS = 6;
 	public static final int MAX_GRID_ROWS = 18;
@@ -136,7 +137,7 @@ public class TerminalMenu extends AbstractContainerMenu {
 		this.hotbarStart = playerInventoryStart + PLAYER_INVENTORY_SLOTS;
 		this.visibleRows.set(DEFAULT_GRID_ROWS);
 		setSortState(SortMode.COUNT, true);
-		setDisplayMode(DisplayMode.ITEMS);
+		setDisplayMode(loadDisplayMode(playerInventory.player));
 		Arrays.fill(displayFluids, FluidStack.EMPTY);
 
 		addNetworkSlots();
@@ -251,7 +252,11 @@ public class TerminalMenu extends AbstractContainerMenu {
 		}
 
 		if (id == DISPLAY_MODE_BUTTON) {
-			setDisplayMode(getDisplayMode().next());
+			DisplayMode nextMode = getDisplayMode().next();
+			setDisplayMode(nextMode);
+			if (!player.level().isClientSide) {
+				player.getPersistentData().putInt(DISPLAY_MODE_PERSISTENT_KEY, nextMode.ordinal());
+			}
 			scrollRow.set(0);
 			refreshAfterSearchChange();
 			return true;
@@ -575,6 +580,22 @@ public class TerminalMenu extends AbstractContainerMenu {
 		return isNetworkSlot(slot) && networkSlotFluid[slot].get() != 0;
 	}
 
+	public FluidStack getNetworkSlotFluid(int slot) {
+		if (!isNetworkSlotFluid(slot)) {
+			return FluidStack.EMPTY;
+		}
+		if (terminal != null && !displayFluids[slot].isEmpty()) {
+			return displayFluids[slot].copy();
+		}
+
+		int rawFluidId = networkSlotFluid[slot].get() - 1;
+		net.minecraft.world.level.material.Fluid fluid = BuiltInRegistries.FLUID.byId(rawFluidId);
+		if (fluid == null || fluid == net.minecraft.world.level.material.Fluids.EMPTY) {
+			return FluidStack.EMPTY;
+		}
+		return new FluidStack(fluid, Math.max(1, getNetworkSlotCount(slot)));
+	}
+
 	public void setVisibleRowsClient(int rows) {
 		visibleRows.set(clampVisibleRows(rows));
 		scrollRow.set(Math.min(scrollRow.get(), getMaximumScrollRow()));
@@ -702,7 +723,9 @@ public class TerminalMenu extends AbstractContainerMenu {
 		for (int slot = 0; slot < Math.min(NETWORK_SLOTS, entries.size()); slot++) {
 			TerminalBlockEntity.DisplayEntry entry = entries.get(slot);
 			setNetworkSlotCount(slot, entry.amount());
-			networkSlotFluid[slot].set(entry.isFluid() ? 1 : 0);
+			networkSlotFluid[slot].set(entry.isFluid()
+					? BuiltInRegistries.FLUID.getId(entry.fluid().getFluid()) + 1
+					: 0);
 			displayFluids[slot] = entry.fluid().copy();
 			displayItems.setStackInSlot(slot, entry.icon().copyWithCount(1));
 		}
@@ -1148,6 +1171,12 @@ public class TerminalMenu extends AbstractContainerMenu {
 
 	private void setDisplayMode(DisplayMode mode) {
 		displayModeState.set(mode.ordinal());
+	}
+
+	private static DisplayMode loadDisplayMode(Player player) {
+		int state = player.getPersistentData().getInt(DISPLAY_MODE_PERSISTENT_KEY);
+		DisplayMode[] modes = DisplayMode.values();
+		return state >= 0 && state < modes.length ? modes[state] : DisplayMode.ITEMS;
 	}
 
 	private record OpeningData(BlockPos terminalPos, boolean craftingTerminal) {

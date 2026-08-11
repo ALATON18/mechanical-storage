@@ -7,16 +7,23 @@ import com.mechanicalstorage.menu.TerminalMenu;
 import com.simibubi.create.content.logistics.filter.FilterItemStack;
 import com.simibubi.create.content.logistics.filter.ListFilterItem;
 import com.simibubi.create.content.logistics.item.filter.attribute.attributes.AddedByAttribute;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.neoforge.client.extensions.common.IClientFluidTypeExtensions;
+import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.ModList;
 import net.neoforged.neoforgespi.language.IModInfo;
@@ -204,13 +211,16 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 			ItemStack stack = slot.getItem();
 			if (!stack.isEmpty()) {
 				int count = this.menu.getNetworkSlotCount(menuSlotIndex);
-				ItemStack renderStack = stack.copyWithCount(1);
-				guiGraphics.renderItem(renderStack, slot.x, slot.y);
-				guiGraphics.renderItemDecorations(this.font, renderStack, slot.x, slot.y, null);
 				if (this.menu.isNetworkSlotFluid(menuSlotIndex)) {
+					renderFluidIcon(guiGraphics, this.menu.getNetworkSlotFluid(menuSlotIndex), slot.x, slot.y);
 					drawSmallCount(guiGraphics, formatFluidAmount(count), slot.x, slot.y);
-				} else if (count > 1) {
-					drawSmallCount(guiGraphics, formatCount(count), slot.x, slot.y);
+				} else {
+					ItemStack renderStack = stack.copyWithCount(1);
+					guiGraphics.renderItem(renderStack, slot.x, slot.y);
+					guiGraphics.renderItemDecorations(this.font, renderStack, slot.x, slot.y, null);
+					if (count > 1) {
+						drawSmallCount(guiGraphics, formatCount(count), slot.x, slot.y);
+					}
 				}
 			}
 			return;
@@ -260,16 +270,44 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 			int slot = this.menu.slots.indexOf(this.hoveredSlot);
 			if (slot >= 0 && slot < TerminalMenu.NETWORK_SLOTS && this.menu.isNetworkSlotFluid(slot)) {
 				int amount = this.menu.getNetworkSlotCount(slot);
+				FluidStack fluid = this.menu.getNetworkSlotFluid(slot);
+				ResourceLocation fluidId = BuiltInRegistries.FLUID.getKey(fluid.getFluid());
 				List<Component> tooltip = List.of(
-						this.hoveredSlot.getItem().getHoverName(),
+						fluid.getHoverName(),
 						Component.literal(String.format(Locale.ROOT, "%,d mB (%s)", amount,
-								formatFluidAmount(amount))));
+								formatFluidAmount(amount))),
+						Component.literal(fluidId.toString()).withStyle(ChatFormatting.DARK_GRAY));
 				guiGraphics.renderComponentTooltip(this.font, tooltip, mouseX, mouseY);
 				return;
 			}
 		}
 
 		super.renderTooltip(guiGraphics, mouseX, mouseY);
+	}
+
+	private static void renderFluidIcon(GuiGraphics guiGraphics, FluidStack fluid, int x, int y) {
+		if (fluid.isEmpty()) {
+			return;
+		}
+
+		IClientFluidTypeExtensions fluidProperties = IClientFluidTypeExtensions.of(fluid.getFluid());
+		ResourceLocation stillTexture = fluidProperties.getStillTexture(fluid);
+		if (stillTexture == null) {
+			return;
+		}
+
+		TextureAtlasSprite sprite = Minecraft.getInstance().getTextureAtlas(InventoryMenu.BLOCK_ATLAS)
+				.apply(stillTexture);
+		int tint = fluidProperties.getTintColor(fluid);
+		float alpha = ((tint >>> 24) & 0xFF) / 255.0F;
+		if (alpha == 0) {
+			alpha = 1.0F;
+		}
+		guiGraphics.setColor(((tint >>> 16) & 0xFF) / 255.0F,
+				((tint >>> 8) & 0xFF) / 255.0F,
+				(tint & 0xFF) / 255.0F, alpha);
+		guiGraphics.blit(x, y, 0, 16, 16, sprite);
+		guiGraphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
 	}
 
 	@Override

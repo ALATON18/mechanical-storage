@@ -1,6 +1,5 @@
 package com.mechanicalstorage.network;
 
-import com.mechanicalstorage.blockentity.MechanicalStorageConnectorBlockEntity;
 import com.mechanicalstorage.blockentity.TerminalBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
@@ -11,17 +10,18 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.WeakHashMap;
 
 public final class StorageNetworkRegistry {
-	private static final Map<Level, Set<MechanicalStorageConnectorBlockEntity>> CONNECTORS_BY_LEVEL = new WeakHashMap<>();
+	private static final Map<Level, Set<StorageConnectorEndpoint>> CONNECTORS_BY_LEVEL = new WeakHashMap<>();
 
 	private StorageNetworkRegistry() {
 	}
 
-	public static synchronized void register(MechanicalStorageConnectorBlockEntity connector) {
-		Level level = connector.getLevel();
+	public static synchronized void register(StorageConnectorEndpoint connector) {
+		Level level = connector.getStorageLevel();
 		if (level == null || level.isClientSide) {
 			return;
 		}
@@ -29,13 +29,13 @@ public final class StorageNetworkRegistry {
 		CONNECTORS_BY_LEVEL.computeIfAbsent(level, ignored -> new LinkedHashSet<>()).add(connector);
 	}
 
-	public static synchronized void unregister(MechanicalStorageConnectorBlockEntity connector) {
-		Level level = connector.getLevel();
+	public static synchronized void unregister(StorageConnectorEndpoint connector) {
+		Level level = connector.getStorageLevel();
 		if (level == null) {
 			return;
 		}
 
-		Set<MechanicalStorageConnectorBlockEntity> connectors = CONNECTORS_BY_LEVEL.get(level);
+		Set<StorageConnectorEndpoint> connectors = CONNECTORS_BY_LEVEL.get(level);
 		if (connectors == null) {
 			return;
 		}
@@ -46,30 +46,33 @@ public final class StorageNetworkRegistry {
 		}
 	}
 
-	public static synchronized List<MechanicalStorageConnectorBlockEntity> findConnectors(TerminalBlockEntity terminal, int limit) {
+	public static synchronized List<StorageConnectorEndpoint> findConnectors(TerminalBlockEntity terminal, int limit) {
 		Level level = terminal.getLevel();
 		if (level == null || level.isClientSide || !terminal.isOnline()) {
 			return List.of();
 		}
 
-		Set<MechanicalStorageConnectorBlockEntity> registered = CONNECTORS_BY_LEVEL.get(level);
+		Set<StorageConnectorEndpoint> registered = CONNECTORS_BY_LEVEL.get(level);
 		if (registered == null || registered.isEmpty()) {
 			return List.of();
 		}
 
-		registered.removeIf(connector -> connector.isRemoved() || connector.getLevel() != level);
+		long gameTime = level.getGameTime();
+		registered.removeIf(connector -> connector.getStorageLevel() != level
+				|| !connector.isEndpointAvailable(gameTime));
 
-		List<MechanicalStorageConnectorBlockEntity> candidates = new ArrayList<>(registered);
-		candidates.sort(Comparator.comparing(MechanicalStorageConnectorBlockEntity::getBlockPos));
+		List<StorageConnectorEndpoint> candidates = new ArrayList<>(registered);
+		candidates.sort(Comparator.comparing(StorageConnectorEndpoint::getTargetPos));
 
-		List<MechanicalStorageConnectorBlockEntity> result = new ArrayList<>();
+		List<StorageConnectorEndpoint> result = new ArrayList<>();
 		Set<BlockPos> seenTargets = new HashSet<>();
-		for (MechanicalStorageConnectorBlockEntity connector : candidates) {
+		for (StorageConnectorEndpoint connector : candidates) {
 			if (result.size() >= limit) {
 				break;
 			}
 
-			if (connector.isOnSameNetwork(terminal) && seenTargets.add(connector.getTargetPos())) {
+			if (Objects.equals(connector.getKineticNetworkId(), terminal.getKineticNetworkId())
+					&& seenTargets.add(connector.getTargetPos())) {
 				result.add(connector);
 			}
 		}

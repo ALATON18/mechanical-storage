@@ -2,6 +2,7 @@ package com.mechanicalstorage.blockentity;
 
 import com.mechanicalstorage.MechanicalStorage;
 import com.mechanicalstorage.menu.TerminalMenu;
+import com.mechanicalstorage.network.StorageConnectorEndpoint;
 import com.mechanicalstorage.network.StorageNetworkRegistry;
 import com.simibubi.create.content.logistics.filter.AttributeFilterItem;
 import com.simibubi.create.content.logistics.filter.FilterItemStack;
@@ -143,6 +144,11 @@ public class TerminalBlockEntity extends FixedStressKineticBlockEntity implement
 
 	public boolean isOnline() {
 		return isSpeedRequirementFulfilled() && hasNetwork();
+	}
+
+	@Nullable
+	public Long getKineticNetworkId() {
+		return network;
 	}
 
 	public NetworkStatus getNetworkStatus() {
@@ -316,7 +322,7 @@ public class TerminalBlockEntity extends FixedStressKineticBlockEntity implement
 
 		ItemStack collected = ItemStack.EMPTY;
 		int remainingAmount = amount;
-		for (MechanicalStorageConnectorBlockEntity connector : findNetworkConnectors()) {
+		for (StorageConnectorEndpoint connector : findNetworkConnectors()) {
 			IItemHandler handler = connector.getTargetItemHandler();
 			if (handler == null) {
 				continue;
@@ -361,7 +367,7 @@ public class TerminalBlockEntity extends FixedStressKineticBlockEntity implement
 
 		List<IFluidHandler> handlers = new ArrayList<>();
 		int available = 0;
-		for (MechanicalStorageConnectorBlockEntity connector : findNetworkConnectors()) {
+		for (StorageConnectorEndpoint connector : findNetworkConnectors()) {
 			IFluidHandler handler = connector.getTargetFluidHandler();
 			if (handler == null) {
 				continue;
@@ -444,7 +450,7 @@ public class TerminalBlockEntity extends FixedStressKineticBlockEntity implement
 
 		int startingCount = stack.getCount();
 		List<IItemHandler> matchingHandlers = new ArrayList<>();
-		for (MechanicalStorageConnectorBlockEntity connector : findNetworkConnectors()) {
+		for (StorageConnectorEndpoint connector : findNetworkConnectors()) {
 			IItemHandler handler = connector.getTargetItemHandler();
 			if (handler != null && containsMatchingStack(handler, stack)) {
 				matchingHandlers.add(handler);
@@ -531,7 +537,7 @@ public class TerminalBlockEntity extends FixedStressKineticBlockEntity implement
 		Map<ItemStack, ItemSummary> summariesByStack =
 				new Object2ObjectOpenCustomHashMap<>(ItemStackLinkedSet.TYPE_AND_TAG);
 		Map<FluidKey, FluidSummary> summariesByFluid = new HashMap<>();
-		for (MechanicalStorageConnectorBlockEntity connector : findNetworkConnectors()) {
+		for (StorageConnectorEndpoint connector : findNetworkConnectors()) {
 			connectorsFound++;
 			IItemHandler handler = connector.getTargetItemHandler();
 			if (handler != null) {
@@ -569,7 +575,7 @@ public class TerminalBlockEntity extends FixedStressKineticBlockEntity implement
 		return networkSummary;
 	}
 
-	private List<MechanicalStorageConnectorBlockEntity> findNetworkConnectors() {
+	private List<StorageConnectorEndpoint> findNetworkConnectors() {
 		return StorageNetworkRegistry.findConnectors(this, MAX_CONNECTORS);
 	}
 
@@ -936,11 +942,11 @@ public class TerminalBlockEntity extends FixedStressKineticBlockEntity implement
 
 		@Override
 		public DisplayEntry toDisplayEntry() {
-			ItemStack icon = FluidUtil.getFilledBucket(representative.copyWithAmount(BUCKET_VOLUME));
-			if (icon.isEmpty()) {
-				icon = new ItemStack(Items.BUCKET);
-				icon.set(DataComponents.CUSTOM_NAME, representative.getHoverName());
-			}
+			// Menus synchronise their visible entries through item slots. The bucket is
+			// only a hidden transport marker; TerminalScreen renders the actual fluid
+			// atlas sprite and supplies a fluid-specific tooltip.
+			ItemStack icon = new ItemStack(Items.BUCKET);
+			icon.set(DataComponents.CUSTOM_NAME, representative.getHoverName());
 			return new DisplayEntry(icon, representative, count);
 		}
 	}

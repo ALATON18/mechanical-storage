@@ -6,6 +6,7 @@ import com.mechanicalstorage.block.MechanicalStorageTerminalBlock;
 import com.mechanicalstorage.blockentity.MechanicalStorageConnectorBlockEntity;
 import com.mechanicalstorage.blockentity.TerminalBlockEntity;
 import com.mechanicalstorage.client.MechanicalStorageClient;
+import com.mechanicalstorage.contraption.ConnectorMovementBehaviour;
 import com.mechanicalstorage.menu.TerminalMenu;
 import com.mojang.logging.LogUtils;
 import com.simibubi.create.foundation.data.CreateRegistrate;
@@ -44,12 +45,16 @@ public class MechanicalStorage {
 
 	public static final BlockEntry<MechanicalStorageConnectorBlock> CONNECTOR = REGISTRATE
 			.block("connector", properties -> new MechanicalStorageConnectorBlock(machineProperties(MapColor.COLOR_GRAY)))
+			.onRegister(com.simibubi.create.api.behaviour.movement.MovementBehaviour.movementBehaviour(
+					new ConnectorMovementBehaviour()))
 			.item()
 			.build()
 			.register();
 
 	public static final BlockEntry<MechanicalStorageCogwheelConnectorBlock> COGWHEEL_CONNECTOR = REGISTRATE
 			.block("cogwheel_connector", properties -> new MechanicalStorageCogwheelConnectorBlock(machineProperties(MapColor.COLOR_GRAY).noOcclusion()))
+			.onRegister(com.simibubi.create.api.behaviour.movement.MovementBehaviour.movementBehaviour(
+					new ConnectorMovementBehaviour()))
 			.addLayer(() -> RenderType::cutoutMipped)
 			.item()
 			.build()
