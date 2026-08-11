@@ -21,6 +21,7 @@ sourceSets.main.resources {
 repositories {
 	maven { url = 'https://maven.createmod.net' }
 	maven { url = 'https://maven.ithundxr.dev/snapshots' }
+	maven { url = 'https://maven.ryanhcode.dev/releases' }
 	maven { url = 'https://maven.blamejared.com/' }
 	maven {
 		url = 'https://cursemaven.com'
@@ -91,6 +92,10 @@ dependencies {
 	implementation "com.tterrag.registrate:Registrate:${registrate_version}"
 	compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
 	compileOnly "mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}"
+	compileOnly("dev.ryanhcode.sable:sable-neoforge-${minecraft_version}:2.0.0") {
+		exclude group: "foundry.veil"
+		exclude group: "com.tterrag.registrate"
+	}
 
 	// Development-runtime compatibility fixtures. These are not bundled in the built mod.
 	localRuntime "com.hrznstudio:titanium:1.21-4.0.34"
@@ -99,6 +104,8 @@ dependencies {
 	localRuntime "curse.maven:sophisticated-storage-619320:8398824"
 	localRuntime "curse.maven:sophisticated-backpacks-422301:8398799"
 	localRuntime "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
+	localRuntime "curse.maven:sable-1312371:8263584"
+	localRuntime "curse.maven:create-aeronautics-676721:8240058"
 }
 
 var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
