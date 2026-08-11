@@ -16,6 +16,15 @@ public interface StorageConnectorEndpoint {
 	@Nullable
 	StorageNetworkKey getStorageNetworkKey();
 
+	/**
+	 * Returns whether this endpoint is visible from the requested network.
+	 * Stationary connectors belong to one kinetic network; moving connectors may
+	 * additionally expose their mounted storage through a controlling bearing.
+	 */
+	default boolean isOnStorageNetwork(StorageNetworkKey networkKey) {
+		return networkKey != null && networkKey.equals(getStorageNetworkKey());
+	}
+
 	boolean isEndpointAvailable(long gameTime);
 
 	BlockPos getTargetPos();
