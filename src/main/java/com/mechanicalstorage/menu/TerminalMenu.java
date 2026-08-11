@@ -411,6 +411,14 @@ public class TerminalMenu extends AbstractContainerMenu {
 			return;
 		}
 
+		if (isCraftingResultSlot(slotId)) {
+			ItemStack[] craftingTemplates = snapshotCraftingTemplates();
+			super.clicked(slotId, button, clickType, player);
+			refillConsumedCraftingSlots(craftingTemplates);
+			refreshAfterInteraction();
+			return;
+		}
+
 		if (isNetworkSlot(slotId)) {
 			ItemStack carried = getCarried();
 			if (!carried.isEmpty()) {
@@ -910,72 +918,92 @@ public class TerminalMenu extends AbstractContainerMenu {
 		ItemStack resultType = firstResult.copyWithCount(1);
 		int maximumCrafted = firstResult.getMaxStackSize();
 		int crafted = 0;
-		int attempts = 0;
-		while (attempts++ < 64) {
+		ItemStack overflow = ItemStack.EMPTY;
+		while (crafted < maximumCrafted) {
 			ItemStack nextResult = craftingResult.getItem(0);
 			if (nextResult.isEmpty()
 					|| !ItemStack.isSameItemSameComponents(resultType, nextResult)
-					|| crafted + nextResult.getCount() > maximumCrafted
-					|| !canFullyFitInPlayerInventory(nextResult)) {
+					|| crafted + nextResult.getCount() > maximumCrafted) {
 				break;
 			}
 
-			ItemStack moved = quickMoveCraftingResult(player);
-			if (moved.isEmpty()) {
+			CraftingTransfer transfer = transferCraftingResult(player);
+			if (transfer.crafted().isEmpty()) {
 				break;
 			}
-			crafted += moved.getCount();
+			crafted += transfer.crafted().getCount();
+			if (!transfer.overflow().isEmpty()) {
+				if (overflow.isEmpty()) {
+					overflow = transfer.overflow().copy();
+				} else {
+					overflow.grow(transfer.overflow().getCount());
+				}
+			}
+		}
+
+		if (!overflow.isEmpty()) {
+			player.drop(overflow, false);
 		}
 	}
 
 	private ItemStack quickMoveCraftingResult(Player player) {
+		CraftingTransfer transfer = transferCraftingResult(player);
+		if (!transfer.overflow().isEmpty()) {
+			player.drop(transfer.overflow(), false);
+		}
+		return transfer.crafted();
+	}
+
+	private CraftingTransfer transferCraftingResult(Player player) {
 		if (!craftingTerminal || CRAFTING_RESULT_SLOT >= slots.size()) {
-			return ItemStack.EMPTY;
+			return CraftingTransfer.EMPTY;
 		}
 
 		Slot slot = slots.get(CRAFTING_RESULT_SLOT);
 		if (!slot.hasItem()) {
-			return ItemStack.EMPTY;
+			return CraftingTransfer.EMPTY;
 		}
 
-		ItemStack result = slot.getItem();
-		ItemStack original = result.copy();
-		if (!moveItemStackTo(result, playerInventoryStart, hotbarStart + HOTBAR_SLOTS, true)) {
-			return ItemStack.EMPTY;
-		}
+		ItemStack crafted = slot.getItem().copy();
+		ItemStack[] craftingTemplates = snapshotCraftingTemplates();
+		slot.onQuickCraft(ItemStack.EMPTY, crafted);
+		slot.set(ItemStack.EMPTY);
+		slot.onTake(player, ItemStack.EMPTY);
+		refillConsumedCraftingSlots(craftingTemplates);
 
-		slot.onQuickCraft(result, original);
-		if (result.isEmpty()) {
-			slot.set(ItemStack.EMPTY);
-		} else {
-			slot.setChanged();
+		ItemStack overflow = crafted.copy();
+		moveItemStackTo(overflow, playerInventoryStart, hotbarStart + HOTBAR_SLOTS, true);
+		if (!overflow.isEmpty()) {
+			overflow = insertIntoMatchingNetworkInventories(overflow);
 		}
-
-		if (result.getCount() == original.getCount()) {
-			return ItemStack.EMPTY;
-		}
-
-		slot.onTake(player, result);
-		if (!result.isEmpty()) {
-			player.drop(result, false);
-		}
-		return original;
+		return new CraftingTransfer(crafted, overflow);
 	}
 
-	private boolean canFullyFitInPlayerInventory(ItemStack stack) {
-		int remaining = stack.getCount();
-		for (int slotIndex = playerInventoryStart;
-				slotIndex < hotbarStart + HOTBAR_SLOTS && remaining > 0; slotIndex++) {
-			Slot slot = slots.get(slotIndex);
-			ItemStack existing = slot.getItem();
-			if (existing.isEmpty()) {
-				remaining -= Math.min(stack.getMaxStackSize(), slot.getMaxStackSize(stack));
-			} else if (ItemStack.isSameItemSameComponents(existing, stack)) {
-				remaining -= Math.max(0, Math.min(existing.getMaxStackSize(), slot.getMaxStackSize(stack))
-						- existing.getCount());
+	private ItemStack[] snapshotCraftingTemplates() {
+		ItemStack[] templates = new ItemStack[CRAFTING_INPUT_SLOTS];
+		for (int slot = 0; slot < CRAFTING_INPUT_SLOTS; slot++) {
+			ItemStack stack = craftingItems.getItem(slot);
+			templates[slot] = stack.isEmpty() ? ItemStack.EMPTY : stack.copyWithCount(1);
+		}
+		return templates;
+	}
+
+	private void refillConsumedCraftingSlots(ItemStack[] templates) {
+		if (terminal == null || templates.length != CRAFTING_INPUT_SLOTS) {
+			return;
+		}
+
+		for (int slot = 0; slot < CRAFTING_INPUT_SLOTS; slot++) {
+			ItemStack template = templates[slot];
+			if (template.isEmpty() || !craftingItems.getItem(slot).isEmpty()) {
+				continue;
+			}
+
+			ItemStack refill = terminal.extractMatchingStack(template, template.getMaxStackSize());
+			if (!refill.isEmpty()) {
+				craftingItems.setItem(slot, refill);
 			}
 		}
-		return remaining <= 0;
 	}
 
 	private ItemStack insertIntoNetwork(ItemStack stack) {
@@ -984,6 +1012,14 @@ public class TerminalMenu extends AbstractContainerMenu {
 		}
 
 		return terminal.insertStackIntoNetwork(stack);
+	}
+
+	private ItemStack insertIntoMatchingNetworkInventories(ItemStack stack) {
+		if (terminal == null || stack.isEmpty()) {
+			return stack;
+		}
+
+		return terminal.insertStackIntoMatchingInventories(stack);
 	}
 
 	private static boolean isAllowedSearchCharacter(char character) {
@@ -1006,6 +1042,10 @@ public class TerminalMenu extends AbstractContainerMenu {
 	}
 
 	private record OpeningData(BlockPos terminalPos, boolean craftingTerminal) {
+	}
+
+	private record CraftingTransfer(ItemStack crafted, ItemStack overflow) {
+		private static final CraftingTransfer EMPTY = new CraftingTransfer(ItemStack.EMPTY, ItemStack.EMPTY);
 	}
 
 	private enum SortMode {

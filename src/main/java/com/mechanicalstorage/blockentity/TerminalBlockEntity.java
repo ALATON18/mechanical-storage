@@ -390,6 +390,46 @@ public class TerminalBlockEntity extends FixedStressKineticBlockEntity implement
 		return remaining;
 	}
 
+	/**
+	 * Inserts only into inventories which already contain the exact item and
+	 * component variant. Once an inventory qualifies, its handler remains in
+	 * charge of deciding which matching or empty slots accept the item and how
+	 * many each slot can hold.
+	 */
+	public ItemStack insertStackIntoMatchingInventories(ItemStack stack) {
+		if (level == null || stack.isEmpty() || !isOnline()) {
+			return stack;
+		}
+
+		int startingCount = stack.getCount();
+		List<IItemHandler> matchingHandlers = new ArrayList<>();
+		for (MechanicalStorageConnectorBlockEntity connector : findNetworkConnectors()) {
+			IItemHandler handler = connector.getTargetItemHandler();
+			if (handler != null && containsMatchingStack(handler, stack)) {
+				matchingHandlers.add(handler);
+			}
+		}
+
+		ItemStack remaining = insertIntoMatchingStacks(matchingHandlers, stack.copy());
+		if (!remaining.isEmpty()) {
+			remaining = insertIntoEmptySlots(matchingHandlers, remaining);
+		}
+		if (remaining.isEmpty() || remaining.getCount() < startingCount) {
+			invalidateNetworkSummary();
+		}
+		return remaining;
+	}
+
+	private static boolean containsMatchingStack(IItemHandler handler, ItemStack stack) {
+		for (int slot = 0; slot < handler.getSlots(); slot++) {
+			ItemStack existing = handler.getStackInSlot(slot);
+			if (!existing.isEmpty() && sameDisplayGroup(existing, stack)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	private static ItemStack insertIntoMatchingStacks(List<IItemHandler> handlers, ItemStack stack) {
 		ItemStack remaining = stack;
 		for (IItemHandler handler : handlers) {
