@@ -1,6 +1,7 @@
 package com.mechanicalstorage.block;
 
 import com.mechanicalstorage.blockentity.TerminalBlockEntity;
+import com.mechanicalstorage.menu.TerminalMenu;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntityTicker;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
@@ -37,12 +38,9 @@ public class MechanicalStorageTerminalBlock extends DirectionalMachineBlock impl
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
         if (!level.isClientSide && level.getBlockEntity(pos) instanceof TerminalBlockEntity terminal) {
-            if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
-                serverPlayer.openMenu(terminal, buffer -> {
-                    buffer.writeBlockPos(pos);
-                    buffer.writeBoolean(terminal.isCraftingTerminal());
-                });
-            }
+			if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
+				serverPlayer.openMenu(terminal, buffer -> TerminalMenu.writeOpeningData(buffer, terminal));
+			}
         }
 
         return InteractionResult.SUCCESS;

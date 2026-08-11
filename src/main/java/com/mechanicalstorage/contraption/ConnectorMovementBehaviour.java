@@ -1,8 +1,8 @@
 package com.mechanicalstorage.contraption;
 
 import com.mechanicalstorage.block.OrientedConnectorBlock;
-import com.mechanicalstorage.blockentity.FixedStressKineticBlockEntity;
 import com.mechanicalstorage.network.StorageConnectorEndpoint;
+import com.mechanicalstorage.network.StorageNetworkKey;
 import com.mechanicalstorage.network.StorageNetworkRegistry;
 import com.simibubi.create.api.behaviour.movement.MovementBehaviour;
 import com.simibubi.create.api.contraption.storage.fluid.MountedFluidStorage;
@@ -11,8 +11,6 @@ import com.simibubi.create.content.contraptions.behaviour.MovementContext;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -24,8 +22,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Keeps a connector useful while Create has it mounted as a contraption actor.
- * Create deliberately zeroes moving kinetic block entities on the client, so the
- * captured speed is also restored for the connector's shaft animation.
+ * The connector's storage relationship remains in contraption-local space and
+ * the moving assembly itself supplies actor power.
  */
 public class ConnectorMovementBehaviour implements MovementBehaviour {
 	private static final int ENDPOINT_GRACE_TICKS = 2;
@@ -44,11 +42,11 @@ public class ConnectorMovementBehaviour implements MovementBehaviour {
 	@Override
 	public void tick(MovementContext context) {
 		if (context.world.isClientSide) {
-			restoreCapturedVisualSpeed(context);
+			restoreActorVisualSpeed(context);
 			return;
 		}
 
-		if (context.disabled || context.position == null) {
+		if (context.disabled || context.position == null || context.contraption.entity == null) {
 			unregister(context);
 			return;
 		}
@@ -69,10 +67,10 @@ public class ConnectorMovementBehaviour implements MovementBehaviour {
 		unregister(context);
 	}
 
-	private static void restoreCapturedVisualSpeed(MovementContext context) {
+	private static void restoreActorVisualSpeed(MovementContext context) {
 		BlockEntity blockEntity = context.contraption.getBlockEntityClientSide(context.localPos);
 		if (blockEntity instanceof KineticBlockEntity kinetic) {
-			kinetic.setSpeed(readCapturedSpeed(context));
+			kinetic.setSpeed(context.getAnimationSpeed());
 		}
 	}
 
@@ -83,36 +81,21 @@ public class ConnectorMovementBehaviour implements MovementBehaviour {
 		}
 	}
 
-	private static float readCapturedSpeed(MovementContext context) {
-		CompoundTag blockEntityData = context.blockEntityData;
-		return blockEntityData == null ? 0 : blockEntityData.getFloat("Speed");
-	}
-
-	@Nullable
-	private static Long readCapturedNetwork(MovementContext context) {
-		CompoundTag blockEntityData = context.blockEntityData;
-		if (blockEntityData == null || !blockEntityData.contains("Network", Tag.TAG_COMPOUND)) {
-			return null;
-		}
-		return blockEntityData.getCompound("Network").getLong("Id");
-	}
-
 	private static final class MovingConnectorEndpoint implements StorageConnectorEndpoint {
 		private final MovementContext context;
 		private final BlockPos localTargetPos;
+		private final StorageNetworkKey networkKey;
 		@Nullable
 		private final MountedItemStorage mountedItems;
 		@Nullable
 		private final MountedFluidStorage mountedFluids;
-		@Nullable
-		private Long networkId;
-		private float capturedSpeed;
 		private long lastSeenTick = Long.MIN_VALUE;
 		private BlockPos targetPos = BlockPos.ZERO;
 		private Direction targetFacing = Direction.NORTH;
 
 		private MovingConnectorEndpoint(MovementContext context) {
 			this.context = context;
+			this.networkKey = StorageNetworkKey.moving(context.contraption.entity.getUUID());
 			Direction localFacing = context.state.getValue(OrientedConnectorBlock.FACING);
 			this.localTargetPos = context.localPos.relative(localFacing);
 			this.mountedItems = context.contraption.getStorage().getAllItemStorages().get(localTargetPos);
@@ -121,10 +104,9 @@ public class ConnectorMovementBehaviour implements MovementBehaviour {
 		}
 
 		private void update() {
-			networkId = readCapturedNetwork(context);
-			capturedSpeed = readCapturedSpeed(context);
 			lastSeenTick = context.world.getGameTime();
-			targetPos = BlockPos.containing(context.position);
+			Vec3 targetCenter = context.contraption.entity.toGlobalVector(Vec3.atCenterOf(localTargetPos), 0);
+			targetPos = BlockPos.containing(targetCenter);
 
 			Direction localFacing = context.state.getValue(OrientedConnectorBlock.FACING);
 			Vec3 rotatedFacing = context.rotation.apply(Vec3.atLowerCornerOf(localFacing.getNormal()));
@@ -137,16 +119,13 @@ public class ConnectorMovementBehaviour implements MovementBehaviour {
 		}
 
 		@Override
-		@Nullable
-		public Long getKineticNetworkId() {
-			return networkId;
+		public StorageNetworkKey getStorageNetworkKey() {
+			return networkKey;
 		}
 
 		@Override
 		public boolean isEndpointAvailable(long gameTime) {
-			return networkId != null
-					&& Math.abs(capturedSpeed) >= FixedStressKineticBlockEntity.MINIMUM_SPEED_RPM
-					&& gameTime - lastSeenTick <= ENDPOINT_GRACE_TICKS
+			return gameTime - lastSeenTick <= ENDPOINT_GRACE_TICKS
 					&& context.contraption.entity != null
 					&& context.contraption.entity.isAlive();
 		}
@@ -154,6 +133,11 @@ public class ConnectorMovementBehaviour implements MovementBehaviour {
 		@Override
 		public BlockPos getTargetPos() {
 			return targetPos;
+		}
+
+		@Override
+		public Object getStorageIdentity() {
+			return localTargetPos;
 		}
 
 		@Override

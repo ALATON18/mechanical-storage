@@ -7,6 +7,8 @@ import com.mechanicalstorage.blockentity.MechanicalStorageConnectorBlockEntity;
 import com.mechanicalstorage.blockentity.TerminalBlockEntity;
 import com.mechanicalstorage.client.MechanicalStorageClient;
 import com.mechanicalstorage.contraption.ConnectorMovementBehaviour;
+import com.mechanicalstorage.contraption.TerminalMovementBehaviour;
+import com.mechanicalstorage.contraption.TerminalMovingInteraction;
 import com.mechanicalstorage.menu.TerminalMenu;
 import com.mojang.logging.LogUtils;
 import com.simibubi.create.foundation.data.CreateRegistrate;
@@ -62,12 +64,20 @@ public class MechanicalStorage {
 
 	public static final BlockEntry<MechanicalStorageTerminalBlock> TERMINAL = REGISTRATE
 			.block("terminal", properties -> new MechanicalStorageTerminalBlock(machineProperties(MapColor.TERRACOTTA_ORANGE)))
+			.onRegister(com.simibubi.create.api.behaviour.movement.MovementBehaviour.movementBehaviour(
+					new TerminalMovementBehaviour()))
+			.onRegister(com.simibubi.create.api.behaviour.interaction.MovingInteractionBehaviour.interactionBehaviour(
+					new TerminalMovingInteraction()))
 			.item()
 			.build()
 			.register();
 
 	public static final BlockEntry<MechanicalStorageTerminalBlock> CRAFTING_TERMINAL = REGISTRATE
 			.block("crafting_terminal", properties -> new MechanicalStorageTerminalBlock(machineProperties(MapColor.TERRACOTTA_ORANGE)))
+			.onRegister(com.simibubi.create.api.behaviour.movement.MovementBehaviour.movementBehaviour(
+					new TerminalMovementBehaviour()))
+			.onRegister(com.simibubi.create.api.behaviour.interaction.MovingInteractionBehaviour.interactionBehaviour(
+					new TerminalMovingInteraction()))
 			.item()
 			.build()
 			.register();

@@ -2,6 +2,7 @@ package com.mechanicalstorage.menu;
 
 import com.mechanicalstorage.MechanicalStorage;
 import com.mechanicalstorage.blockentity.TerminalBlockEntity;
+import com.simibubi.create.content.contraptions.AbstractContraptionEntity;
 import com.simibubi.create.content.logistics.filter.AttributeFilterItem;
 import com.simibubi.create.content.logistics.filter.ListFilterItem;
 import net.minecraft.core.BlockPos;
@@ -27,6 +28,7 @@ import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeType;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import net.neoforged.neoforge.items.SlotItemHandler;
@@ -93,6 +95,8 @@ public class TerminalMenu extends AbstractContainerMenu {
 	private final Inventory playerInventory;
 	private final BlockPos terminalPos;
 	private final boolean craftingTerminal;
+	private final int movingContraptionId;
+	private final BlockPos movingTerminalLocalPos;
 	private final TransientCraftingContainer craftingItems = new TransientCraftingContainer(this, 3, 3);
 	private final ResultContainer craftingResult = new ResultContainer();
 	private final int playerInventoryStart;
@@ -121,7 +125,10 @@ public class TerminalMenu extends AbstractContainerMenu {
 
 	public TerminalMenu(int containerId, Inventory playerInventory, TerminalBlockEntity terminal) {
 		this(containerId, playerInventory,
-				new OpeningData(terminal.getBlockPos(), terminal.isCraftingTerminal()), terminal);
+				new OpeningData(terminal.getMenuPosition(), terminal.isCraftingTerminal(),
+						terminal.isMovingTerminal(), terminal.getMovingEntityId(),
+						terminal.getMovingLocalPos() == null ? BlockPos.ZERO : terminal.getMovingLocalPos()),
+				terminal);
 	}
 
 	private TerminalMenu(int containerId, Inventory playerInventory, OpeningData openingData,
@@ -130,6 +137,8 @@ public class TerminalMenu extends AbstractContainerMenu {
 		this.playerInventory = playerInventory;
 		this.terminalPos = openingData.terminalPos();
 		this.craftingTerminal = openingData.craftingTerminal();
+		this.movingContraptionId = openingData.moving() ? openingData.movingContraptionId() : -1;
+		this.movingTerminalLocalPos = openingData.movingTerminalLocalPos();
 		this.terminal = terminal;
 		this.filterItems = terminal == null ? new ItemStackHandler(FILTER_SLOTS) : terminal.getTerminalFilters();
 		this.playerInventoryStart = CRAFTING_INPUT_SLOT_START
@@ -169,7 +178,24 @@ public class TerminalMenu extends AbstractContainerMenu {
 	}
 
 	private static OpeningData readOpeningData(RegistryFriendlyByteBuf buffer) {
-		return new OpeningData(buffer.readBlockPos(), buffer.readBoolean());
+		BlockPos terminalPos = buffer.readBlockPos();
+		boolean craftingTerminal = buffer.readBoolean();
+		boolean moving = buffer.readBoolean();
+		int contraptionId = moving ? buffer.readVarInt() : -1;
+		BlockPos localPos = moving ? buffer.readBlockPos() : BlockPos.ZERO;
+		return new OpeningData(terminalPos, craftingTerminal, moving, contraptionId, localPos);
+	}
+
+	public static void writeOpeningData(RegistryFriendlyByteBuf buffer, TerminalBlockEntity terminal) {
+		boolean moving = terminal.isMovingTerminal();
+		buffer.writeBlockPos(terminal.getMenuPosition());
+		buffer.writeBoolean(terminal.isCraftingTerminal());
+		buffer.writeBoolean(moving);
+		if (moving) {
+			buffer.writeVarInt(terminal.getMovingEntityId());
+			BlockPos localPos = terminal.getMovingLocalPos();
+			buffer.writeBlockPos(localPos == null ? BlockPos.ZERO : localPos);
+		}
 	}
 
 	public static int encodeJeiTransferItemButton(int craftingSlot, int rawItemId, int count) {
@@ -186,10 +212,30 @@ public class TerminalMenu extends AbstractContainerMenu {
 
 	@Override
 	public boolean stillValid(Player player) {
+		if (movingContraptionId >= 0) {
+			return isMovingMenuValid(player);
+		}
 		return AbstractContainerMenu.stillValid(ContainerLevelAccess.create(player.level(), terminalPos), player,
 				craftingTerminal
 						? MechanicalStorage.CRAFTING_TERMINAL.get()
 						: MechanicalStorage.TERMINAL.get());
+	}
+
+	private boolean isMovingMenuValid(Player player) {
+		if (!(player.level().getEntity(movingContraptionId) instanceof AbstractContraptionEntity contraptionEntity)
+				|| !contraptionEntity.isAlive()) {
+			return false;
+		}
+
+		var blockInfo = contraptionEntity.getContraption().getBlocks().get(movingTerminalLocalPos);
+		if (blockInfo == null || !blockInfo.state().is(craftingTerminal
+				? MechanicalStorage.CRAFTING_TERMINAL.get()
+				: MechanicalStorage.TERMINAL.get())) {
+			return false;
+		}
+
+		Vec3 terminalCenter = contraptionEntity.toGlobalVector(Vec3.atCenterOf(movingTerminalLocalPos), 0);
+		return player.distanceToSqr(terminalCenter.x, terminalCenter.y, terminalCenter.z) <= 64.0;
 	}
 
 	@Override
@@ -1179,7 +1225,8 @@ public class TerminalMenu extends AbstractContainerMenu {
 		return state >= 0 && state < modes.length ? modes[state] : DisplayMode.ITEMS;
 	}
 
-	private record OpeningData(BlockPos terminalPos, boolean craftingTerminal) {
+	private record OpeningData(BlockPos terminalPos, boolean craftingTerminal, boolean moving,
+			int movingContraptionId, BlockPos movingTerminalLocalPos) {
 	}
 
 	private record CraftingTransfer(ItemStack crafted, ItemStack overflow) {

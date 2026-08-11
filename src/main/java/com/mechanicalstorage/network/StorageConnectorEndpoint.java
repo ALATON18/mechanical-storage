@@ -14,11 +14,19 @@ public interface StorageConnectorEndpoint {
 	Level getStorageLevel();
 
 	@Nullable
-	Long getKineticNetworkId();
+	StorageNetworkKey getStorageNetworkKey();
 
 	boolean isEndpointAvailable(long gameTime);
 
 	BlockPos getTargetPos();
+
+	/**
+	 * Stable identity used to avoid scanning the same storage twice. Moving
+	 * connectors override this with the target's contraption-local position.
+	 */
+	default Object getStorageIdentity() {
+		return getTargetPos();
+	}
 
 	@Nullable
 	IItemHandler getTargetItemHandler();

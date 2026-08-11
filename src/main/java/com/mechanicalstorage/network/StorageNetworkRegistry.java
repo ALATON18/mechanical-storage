@@ -7,6 +7,7 @@ import net.minecraft.world.level.Level;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +17,8 @@ import java.util.WeakHashMap;
 
 public final class StorageNetworkRegistry {
 	private static final Map<Level, Set<StorageConnectorEndpoint>> CONNECTORS_BY_LEVEL = new WeakHashMap<>();
+	private static final Map<Level, Map<MovingTerminalId, TerminalBlockEntity>> MOVING_TERMINALS_BY_LEVEL =
+			new WeakHashMap<>();
 
 	private StorageNetworkRegistry() {
 	}
@@ -48,7 +51,8 @@ public final class StorageNetworkRegistry {
 
 	public static synchronized List<StorageConnectorEndpoint> findConnectors(TerminalBlockEntity terminal, int limit) {
 		Level level = terminal.getLevel();
-		if (level == null || level.isClientSide || !terminal.isOnline()) {
+		StorageNetworkKey networkKey = terminal.getStorageNetworkKey();
+		if (level == null || level.isClientSide || !terminal.isOnline() || networkKey == null) {
 			return List.of();
 		}
 
@@ -65,18 +69,72 @@ public final class StorageNetworkRegistry {
 		candidates.sort(Comparator.comparing(StorageConnectorEndpoint::getTargetPos));
 
 		List<StorageConnectorEndpoint> result = new ArrayList<>();
-		Set<BlockPos> seenTargets = new HashSet<>();
+		Set<Object> seenTargets = new HashSet<>();
 		for (StorageConnectorEndpoint connector : candidates) {
 			if (result.size() >= limit) {
 				break;
 			}
 
-			if (Objects.equals(connector.getKineticNetworkId(), terminal.getKineticNetworkId())
-					&& seenTargets.add(connector.getTargetPos())) {
+			if (Objects.equals(connector.getStorageNetworkKey(), networkKey)
+					&& seenTargets.add(connector.getStorageIdentity())) {
 				result.add(connector);
 			}
 		}
 
 		return result;
+	}
+
+	public static synchronized void registerMovingTerminal(TerminalBlockEntity terminal) {
+		Level level = terminal.getLevel();
+		StorageNetworkKey networkKey = terminal.getStorageNetworkKey();
+		BlockPos localPos = terminal.getMovingLocalPos();
+		if (level == null || level.isClientSide || networkKey == null || localPos == null
+				|| networkKey.kind() != StorageNetworkKey.Kind.MOVING) {
+			return;
+		}
+
+		MOVING_TERMINALS_BY_LEVEL.computeIfAbsent(level, ignored -> new HashMap<>())
+				.put(new MovingTerminalId(networkKey, localPos), terminal);
+	}
+
+	public static synchronized void unregisterMovingTerminal(TerminalBlockEntity terminal) {
+		Level level = terminal.getLevel();
+		StorageNetworkKey networkKey = terminal.getStorageNetworkKey();
+		BlockPos localPos = terminal.getMovingLocalPos();
+		if (level == null || networkKey == null || localPos == null) {
+			return;
+		}
+
+		Map<MovingTerminalId, TerminalBlockEntity> terminals = MOVING_TERMINALS_BY_LEVEL.get(level);
+		if (terminals == null) {
+			return;
+		}
+
+		terminals.remove(new MovingTerminalId(networkKey, localPos), terminal);
+		if (terminals.isEmpty()) {
+			MOVING_TERMINALS_BY_LEVEL.remove(level);
+		}
+	}
+
+	public static synchronized TerminalBlockEntity findMovingTerminal(Level level, StorageNetworkKey networkKey,
+			BlockPos localPos) {
+		Map<MovingTerminalId, TerminalBlockEntity> terminals = MOVING_TERMINALS_BY_LEVEL.get(level);
+		if (terminals == null) {
+			return null;
+		}
+
+		MovingTerminalId id = new MovingTerminalId(networkKey, localPos);
+		TerminalBlockEntity terminal = terminals.get(id);
+		if (terminal != null && !terminal.isMovingEndpointAvailable(level.getGameTime())) {
+			terminals.remove(id);
+			terminal = null;
+		}
+		if (terminals.isEmpty()) {
+			MOVING_TERMINALS_BY_LEVEL.remove(level);
+		}
+		return terminal;
+	}
+
+	private record MovingTerminalId(StorageNetworkKey networkKey, BlockPos localPos) {
 	}
 }

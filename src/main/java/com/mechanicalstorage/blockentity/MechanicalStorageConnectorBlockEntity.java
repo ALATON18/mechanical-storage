@@ -3,6 +3,7 @@ package com.mechanicalstorage.blockentity;
 import com.mechanicalstorage.MechanicalStorage;
 import com.mechanicalstorage.block.OrientedConnectorBlock;
 import com.mechanicalstorage.network.StorageConnectorEndpoint;
+import com.mechanicalstorage.network.StorageNetworkKey;
 import com.mechanicalstorage.network.StorageNetworkRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -51,10 +52,6 @@ public class MechanicalStorageConnectorBlockEntity extends FixedStressKineticBlo
 		super.onChunkUnloaded();
 	}
 
-	public boolean isOnSameNetwork(TerminalBlockEntity terminal) {
-		return isOnline() && terminal.isOnline() && network != null && network.equals(terminal.network);
-	}
-
 	@Override
 	public Level getStorageLevel() {
 		return level;
@@ -62,8 +59,8 @@ public class MechanicalStorageConnectorBlockEntity extends FixedStressKineticBlo
 
 	@Override
 	@Nullable
-	public Long getKineticNetworkId() {
-		return network;
+	public StorageNetworkKey getStorageNetworkKey() {
+		return network == null ? null : StorageNetworkKey.kinetic(network);
 	}
 
 	@Override

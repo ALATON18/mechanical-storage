@@ -3,6 +3,7 @@ package com.mechanicalstorage.blockentity;
 import com.mechanicalstorage.MechanicalStorage;
 import com.mechanicalstorage.menu.TerminalMenu;
 import com.mechanicalstorage.network.StorageConnectorEndpoint;
+import com.mechanicalstorage.network.StorageNetworkKey;
 import com.mechanicalstorage.network.StorageNetworkRegistry;
 import com.simibubi.create.content.logistics.filter.AttributeFilterItem;
 import com.simibubi.create.content.logistics.filter.FilterItemStack;
@@ -54,11 +55,21 @@ public class TerminalBlockEntity extends FixedStressKineticBlockEntity implement
 	// Menus refresh every 10 ticks. Sharing the same immutable snapshot prevents each
 	// open terminal on a kinetic network from repeating the inventory scan.
 	private static final int NETWORK_SUMMARY_CACHE_TICKS = 10;
+	private static final int MOVING_ENDPOINT_GRACE_TICKS = 2;
 	private static final Map<Level, LevelNetworkSummaryCache> NETWORK_SUMMARY_CACHE = new WeakHashMap<>();
 	public static final int LIST_FILTER_SLOT = 0;
 	public static final int ATTRIBUTE_FILTER_SLOT = 1;
 	public static final int FILTER_SLOTS = 4;
 	private final boolean[] filterActive = new boolean[FILTER_SLOTS];
+	@Nullable
+	private StorageNetworkKey movingNetworkKey;
+	@Nullable
+	private BlockPos movingLocalPos;
+	@Nullable
+	private Runnable movingDataSaver;
+	private int movingEntityId = -1;
+	private long movingLastSeenTick = Long.MIN_VALUE;
+	private BlockPos movingWorldPos = BlockPos.ZERO;
 	private final ItemStackHandler terminalFilters = new ItemStackHandler(FILTER_SLOTS) {
 		@Override
 		public void deserializeNBT(HolderLookup.Provider registries, CompoundTag compound) {
@@ -83,10 +94,7 @@ public class TerminalBlockEntity extends FixedStressKineticBlockEntity implement
 			if (getStackInSlot(slot).isEmpty()) {
 				setFilterActive(slot, false);
 			}
-			setChanged();
-			if (level != null && !level.isClientSide) {
-				sendData();
-			}
+			terminalDataChanged();
 		}
 	};
 
@@ -111,10 +119,66 @@ public class TerminalBlockEntity extends FixedStressKineticBlockEntity implement
 			return;
 		}
 		filterActive[slot] = active && !terminalFilters.getStackInSlot(slot).isEmpty();
+		terminalDataChanged();
+	}
+
+	private void terminalDataChanged() {
+		if (movingDataSaver != null) {
+			movingDataSaver.run();
+			return;
+		}
 		setChanged();
 		if (level != null && !level.isClientSide) {
 			sendData();
 		}
+	}
+
+	public void configureMovingNetwork(StorageNetworkKey networkKey, int entityId, BlockPos localPos,
+			Runnable dataSaver) {
+		this.movingNetworkKey = networkKey;
+		this.movingEntityId = entityId;
+		this.movingLocalPos = localPos.immutable();
+		this.movingDataSaver = dataSaver;
+	}
+
+	public void updateMovingState(int entityId, BlockPos worldPos, long gameTime) {
+		this.movingEntityId = entityId;
+		this.movingWorldPos = worldPos.immutable();
+		this.movingLastSeenTick = gameTime;
+	}
+
+	public void clearMovingNetwork() {
+		movingNetworkKey = null;
+		movingLocalPos = null;
+		movingDataSaver = null;
+		movingEntityId = -1;
+		movingLastSeenTick = Long.MIN_VALUE;
+	}
+
+	public boolean isMovingTerminal() {
+		return movingNetworkKey != null;
+	}
+
+	public int getMovingEntityId() {
+		return movingEntityId;
+	}
+
+	@Nullable
+	public BlockPos getMovingLocalPos() {
+		return movingLocalPos;
+	}
+
+	public BlockPos getMenuPosition() {
+		return isMovingTerminal() ? movingWorldPos : getBlockPos();
+	}
+
+	public boolean isMovingEndpointAvailable(long gameTime) {
+		if (movingNetworkKey == null || level == null || movingEntityId < 0
+				|| gameTime - movingLastSeenTick > MOVING_ENDPOINT_GRACE_TICKS) {
+			return false;
+		}
+		var entity = level.getEntity(movingEntityId);
+		return entity != null && entity.isAlive();
 	}
 
 	@Override
@@ -143,6 +207,9 @@ public class TerminalBlockEntity extends FixedStressKineticBlockEntity implement
 	}
 
 	public boolean isOnline() {
+		if (movingNetworkKey != null) {
+			return level != null && isMovingEndpointAvailable(level.getGameTime());
+		}
 		return isSpeedRequirementFulfilled() && hasNetwork();
 	}
 
@@ -151,9 +218,20 @@ public class TerminalBlockEntity extends FixedStressKineticBlockEntity implement
 		return network;
 	}
 
+	@Nullable
+	public StorageNetworkKey getStorageNetworkKey() {
+		if (movingNetworkKey != null) {
+			return movingNetworkKey;
+		}
+		return network == null ? null : StorageNetworkKey.kinetic(network);
+	}
+
 	public NetworkStatus getNetworkStatus() {
 		if (isOnline()) {
 			return NetworkStatus.ONLINE;
+		}
+		if (movingNetworkKey != null) {
+			return NetworkStatus.DISCONNECTED;
 		}
 
 		if (isOverStressed()) {
@@ -511,12 +589,13 @@ public class TerminalBlockEntity extends FixedStressKineticBlockEntity implement
 	}
 
 	private NetworkSummary collectNetworkSummary() {
-		if (level == null || level.isClientSide || network == null || !isOnline()) {
+		StorageNetworkKey networkKey = getStorageNetworkKey();
+		if (level == null || level.isClientSide || networkKey == null || !isOnline()) {
 			return NetworkSummary.EMPTY;
 		}
 
 		long cacheEpoch = Math.floorDiv(level.getGameTime(), NETWORK_SUMMARY_CACHE_TICKS);
-		NetworkSummary cached = getCachedNetworkSummary(level, network, cacheEpoch);
+		NetworkSummary cached = getCachedNetworkSummary(level, networkKey, cacheEpoch);
 		if (cached != null) {
 			return cached;
 		}
@@ -571,7 +650,7 @@ public class TerminalBlockEntity extends FixedStressKineticBlockEntity implement
 		NetworkSummary networkSummary = new NetworkSummary(connectorsFound, inventoriesFound, totalSlots,
 				occupiedSlots, totalItems, fluidHandlersFound, totalTanks, occupiedTanks, totalFluid,
 				itemSummaries, fluidSummaries);
-		cacheNetworkSummary(level, network, cacheEpoch, networkSummary);
+		cacheNetworkSummary(level, networkKey, cacheEpoch, networkSummary);
 		return networkSummary;
 	}
 
@@ -607,34 +686,36 @@ public class TerminalBlockEntity extends FixedStressKineticBlockEntity implement
 	}
 
 	@Nullable
-	private static NetworkSummary getCachedNetworkSummary(Level level, Long networkId, long cacheEpoch) {
+	private static NetworkSummary getCachedNetworkSummary(Level level, StorageNetworkKey networkKey,
+			long cacheEpoch) {
 		synchronized (NETWORK_SUMMARY_CACHE) {
 			LevelNetworkSummaryCache levelCache = NETWORK_SUMMARY_CACHE.computeIfAbsent(level,
 					ignored -> new LevelNetworkSummaryCache());
 			levelCache.advanceTo(cacheEpoch);
-			return levelCache.summaries.get(networkId);
+			return levelCache.summaries.get(networkKey);
 		}
 	}
 
-	private static void cacheNetworkSummary(Level level, Long networkId, long cacheEpoch,
+	private static void cacheNetworkSummary(Level level, StorageNetworkKey networkKey, long cacheEpoch,
 			NetworkSummary networkSummary) {
 		synchronized (NETWORK_SUMMARY_CACHE) {
 			LevelNetworkSummaryCache levelCache = NETWORK_SUMMARY_CACHE.computeIfAbsent(level,
 					ignored -> new LevelNetworkSummaryCache());
 			levelCache.advanceTo(cacheEpoch);
-			levelCache.summaries.put(networkId, networkSummary);
+			levelCache.summaries.put(networkKey, networkSummary);
 		}
 	}
 
 	private void invalidateNetworkSummary() {
-		if (level == null || network == null) {
+		StorageNetworkKey networkKey = getStorageNetworkKey();
+		if (level == null || networkKey == null) {
 			return;
 		}
 
 		synchronized (NETWORK_SUMMARY_CACHE) {
 			LevelNetworkSummaryCache levelCache = NETWORK_SUMMARY_CACHE.get(level);
 			if (levelCache != null) {
-				levelCache.summaries.remove(network);
+				levelCache.summaries.remove(networkKey);
 			}
 		}
 	}
@@ -769,7 +850,7 @@ public class TerminalBlockEntity extends FixedStressKineticBlockEntity implement
 
 	private static class LevelNetworkSummaryCache {
 		private long epoch = Long.MIN_VALUE;
-		private final Map<Long, NetworkSummary> summaries = new HashMap<>();
+		private final Map<StorageNetworkKey, NetworkSummary> summaries = new HashMap<>();
 
 		private void advanceTo(long nextEpoch) {
 			if (epoch == nextEpoch) {
