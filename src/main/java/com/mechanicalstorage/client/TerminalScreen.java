@@ -64,11 +64,12 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 	private EditBox searchBox;
 	private Button themeButton;
 	private Button jeiSyncButton;
-	private Button nameSortButton;
-	private Button countSortButton;
+	private Button sortButton;
+	private Button displayModeButton;
 	private Button sizeButton;
 	private Boolean displayedCreateTheme;
 	private int displayedSortState = -1;
+	private int displayedDisplayMode = -1;
 	private SizeMode displayedSize;
 	private String searchQuery = "";
 	private boolean draggingScrollbar;
@@ -118,8 +119,8 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 				.build();
 		updateJeiSyncButton();
 		addRenderableWidget(jeiSyncButton);
-		nameSortButton = addSideButton(0, "AZ", TerminalMenu.SORT_NAME_BUTTON);
-		countSortButton = addSideButton(1, "Qt", TerminalMenu.SORT_COUNT_BUTTON);
+		sortButton = addSideButton(0, "Qt+", TerminalMenu.SORT_CYCLE_BUTTON);
+		displayModeButton = addSideButton(1, "I", TerminalMenu.DISPLAY_MODE_BUTTON);
 		sizeButton = Button.builder(Component.literal(size.label), button -> cycleSize())
 				.bounds(this.leftPos + 1, this.topPos + 116, 22, 18)
 				.build();
@@ -144,6 +145,7 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 		}
 		displayedCreateTheme = null;
 		displayedSortState = -1;
+		displayedDisplayMode = -1;
 		displayedSize = null;
 		updateControlButtons();
 	}
@@ -205,7 +207,9 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 				ItemStack renderStack = stack.copyWithCount(1);
 				guiGraphics.renderItem(renderStack, slot.x, slot.y);
 				guiGraphics.renderItemDecorations(this.font, renderStack, slot.x, slot.y, null);
-				if (count > 1) {
+				if (this.menu.isNetworkSlotFluid(menuSlotIndex)) {
+					drawSmallCount(guiGraphics, formatFluidAmount(count), slot.x, slot.y);
+				} else if (count > 1) {
 					drawSmallCount(guiGraphics, formatCount(count), slot.x, slot.y);
 				}
 			}
@@ -248,6 +252,24 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 				guiGraphics.renderTooltip(this.font, Component.literal("Create filter slot"), mouseX, mouseY);
 			}
 		}
+	}
+
+	@Override
+	protected void renderTooltip(GuiGraphics guiGraphics, int mouseX, int mouseY) {
+		if (this.hoveredSlot != null && this.hoveredSlot.hasItem()) {
+			int slot = this.menu.slots.indexOf(this.hoveredSlot);
+			if (slot >= 0 && slot < TerminalMenu.NETWORK_SLOTS && this.menu.isNetworkSlotFluid(slot)) {
+				int amount = this.menu.getNetworkSlotCount(slot);
+				List<Component> tooltip = List.of(
+						this.hoveredSlot.getItem().getHoverName(),
+						Component.literal(String.format(Locale.ROOT, "%,d mB (%s)", amount,
+								formatFluidAmount(amount))));
+				guiGraphics.renderComponentTooltip(this.font, tooltip, mouseX, mouseY);
+				return;
+			}
+		}
+
+		super.renderTooltip(guiGraphics, mouseX, mouseY);
 	}
 
 	@Override
@@ -442,27 +464,43 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 			displayedCreateTheme = createTheme;
 		}
 
-		if (nameSortButton != null && countSortButton != null) {
-			boolean sortingByName = menu.isSortingByName();
-			boolean descending = menu.isSortDescending();
-			int sortState = (sortingByName ? 2 : 0) | (descending ? 1 : 0);
+		if (sortButton != null) {
+			int sortState = menu.getSortState();
 			if (displayedSortState != sortState) {
-				nameSortButton.setMessage(Component.literal(sortingByName && descending ? "ZA" : "AZ"));
-
-				String nameTooltip = !sortingByName
-						? "container.mechanical_storage.sort_name_inactive"
-						: descending
-								? "container.mechanical_storage.sort_name_descending"
-								: "container.mechanical_storage.sort_name_ascending";
-				nameSortButton.setTooltip(Tooltip.create(Component.translatable(nameTooltip)));
-
-				String countTooltip = sortingByName
-						? "container.mechanical_storage.sort_count_inactive"
-						: descending
-								? "container.mechanical_storage.sort_count_descending"
-								: "container.mechanical_storage.sort_count_ascending";
-				countSortButton.setTooltip(Tooltip.create(Component.translatable(countTooltip)));
+				String label = switch (sortState) {
+					case 0 -> "AZ";
+					case 1 -> "ZA";
+					case 3 -> "Qt-";
+					default -> "Qt+";
+				};
+				String tooltip = switch (sortState) {
+					case 0 -> "container.mechanical_storage.sort_name_ascending";
+					case 1 -> "container.mechanical_storage.sort_name_descending";
+					case 3 -> "container.mechanical_storage.sort_count_ascending";
+					default -> "container.mechanical_storage.sort_count_descending";
+				};
+				sortButton.setMessage(Component.literal(label));
+				sortButton.setTooltip(Tooltip.create(Component.translatable(tooltip)));
 				displayedSortState = sortState;
+			}
+		}
+
+		if (displayModeButton != null) {
+			int displayMode = menu.getDisplayModeState();
+			if (displayedDisplayMode != displayMode) {
+				String label = switch (displayMode) {
+					case 1 -> "F";
+					case 2 -> "I+F";
+					default -> "I";
+				};
+				String tooltip = switch (displayMode) {
+					case 1 -> "container.mechanical_storage.display_fluids";
+					case 2 -> "container.mechanical_storage.display_both";
+					default -> "container.mechanical_storage.display_items";
+				};
+				displayModeButton.setMessage(Component.literal(label));
+				displayModeButton.setTooltip(Tooltip.create(Component.translatable(tooltip)));
+				displayedDisplayMode = displayMode;
 			}
 		}
 
@@ -609,6 +647,24 @@ public class TerminalScreen extends AbstractContainerScreen<TerminalMenu> {
 			return formatScaledCount(count, 1_000, "K");
 		}
 		return Integer.toString(count);
+	}
+
+	private static String formatFluidAmount(int milliBuckets) {
+		if (milliBuckets < TerminalBlockEntity.BUCKET_VOLUME) {
+			return milliBuckets + "mB";
+		}
+
+		double buckets = milliBuckets / (double) TerminalBlockEntity.BUCKET_VOLUME;
+		if (buckets >= 1_000_000) {
+			return String.format(Locale.ROOT, "%.1fMB", buckets / 1_000_000.0);
+		}
+		if (buckets >= 1_000) {
+			return String.format(Locale.ROOT, "%.1fKB", buckets / 1_000.0);
+		}
+		if (milliBuckets % TerminalBlockEntity.BUCKET_VOLUME == 0) {
+			return ((int) buckets) + "B";
+		}
+		return String.format(Locale.ROOT, "%.1fB", buckets);
 	}
 
 	private static String formatScaledCount(int count, int divisor, String suffix) {

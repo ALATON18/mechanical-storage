@@ -11,6 +11,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.fluids.FluidStack;
+import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.items.IItemHandler;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,13 +65,14 @@ public class MechanicalStorageConnectorBlockEntity extends FixedStressKineticBlo
 		}
 
 		IItemHandler handler = getTargetItemHandler();
+		IFluidHandler fluidHandler = getTargetFluidHandler();
 		BlockPos targetPos = getTargetPos();
 
-		if (handler == null) {
-			return Component.literal("Connector: no item inventory found at " + formatPos(targetPos) + ".");
+		if (handler == null && fluidHandler == null) {
+			return Component.literal("Connector: no item or fluid storage found at " + formatPos(targetPos) + ".");
 		}
 
-		int slots = handler.getSlots();
+		int slots = handler == null ? 0 : handler.getSlots();
 		int occupiedSlots = 0;
 		int totalItems = 0;
 
@@ -81,7 +84,20 @@ public class MechanicalStorageConnectorBlockEntity extends FixedStressKineticBlo
 			}
 		}
 
-		return Component.literal("Connector: online at " + Math.abs(getSpeed()) + " RPM, inventory at " + formatPos(targetPos) + " (" + occupiedSlots + "/" + slots + " slots used, " + totalItems + " items).");
+		int tanks = fluidHandler == null ? 0 : fluidHandler.getTanks();
+		int occupiedTanks = 0;
+		long totalFluid = 0;
+		for (int tank = 0; tank < tanks; tank++) {
+			FluidStack fluid = fluidHandler.getFluidInTank(tank);
+			if (!fluid.isEmpty()) {
+				occupiedTanks++;
+				totalFluid += fluid.getAmount();
+			}
+		}
+
+		return Component.literal("Connector: online at " + Math.abs(getSpeed()) + " RPM, storage at "
+				+ formatPos(targetPos) + " (" + occupiedSlots + "/" + slots + " item slots, " + totalItems
+				+ " items; " + occupiedTanks + "/" + tanks + " fluid tanks, " + totalFluid + " mB).");
 	}
 
 	public BlockPos getTargetPos() {
@@ -101,6 +117,21 @@ public class MechanicalStorageConnectorBlockEntity extends FixedStressKineticBlo
 		BlockEntity targetBlockEntity = level.getBlockEntity(targetPos);
 
 		return level.getCapability(Capabilities.ItemHandler.BLOCK, targetPos, targetState, targetBlockEntity, facing.getOpposite());
+	}
+
+	@Nullable
+	public IFluidHandler getTargetFluidHandler() {
+		if (level == null || !isOnline()) {
+			return null;
+		}
+
+		Direction facing = getBlockState().getValue(OrientedConnectorBlock.FACING);
+		BlockPos targetPos = getTargetPos();
+		BlockState targetState = level.getBlockState(targetPos);
+		BlockEntity targetBlockEntity = level.getBlockEntity(targetPos);
+
+		return level.getCapability(Capabilities.FluidHandler.BLOCK, targetPos, targetState, targetBlockEntity,
+				facing.getOpposite());
 	}
 
 	private static String formatPos(BlockPos pos) {

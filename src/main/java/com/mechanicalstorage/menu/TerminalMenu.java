@@ -9,6 +9,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Container;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -21,6 +22,7 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.inventory.TransientCraftingContainer;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
@@ -28,9 +30,11 @@ import net.minecraft.world.item.crafting.RecipeType;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import net.neoforged.neoforge.items.SlotItemHandler;
+import net.neoforged.neoforge.fluids.FluidStack;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -57,8 +61,8 @@ public class TerminalMenu extends AbstractContainerMenu {
 	public static final int SEARCH_CLEAR_BUTTON = 100000;
 	public static final int SEARCH_BACKSPACE_BUTTON = 100001;
 	public static final int SEARCH_APPLY_BUTTON = 100002;
-	public static final int SORT_NAME_BUTTON = 100003;
-	public static final int SORT_COUNT_BUTTON = 100004;
+	public static final int SORT_CYCLE_BUTTON = 100003;
+	public static final int DISPLAY_MODE_BUTTON = 100004;
 	public static final int SCROLL_UP_BUTTON = 100005;
 	public static final int SCROLL_DOWN_BUTTON = 100006;
 	public static final int SINGLE_DEPOSIT_BUTTON = 100007;
@@ -98,9 +102,12 @@ public class TerminalMenu extends AbstractContainerMenu {
 	private final DataSlot visibleRows = DataSlot.standalone();
 	private final DataSlot sortModeState = DataSlot.standalone();
 	private final DataSlot sortDescendingState = DataSlot.standalone();
+	private final DataSlot displayModeState = DataSlot.standalone();
 	private final DataSlot[] filterActive = new DataSlot[FILTER_SLOTS];
 	private final DataSlot[] networkSlotCountLow = new DataSlot[NETWORK_SLOTS];
 	private final DataSlot[] networkSlotCountHigh = new DataSlot[NETWORK_SLOTS];
+	private final DataSlot[] networkSlotFluid = new DataSlot[NETWORK_SLOTS];
+	private final FluidStack[] displayFluids = new FluidStack[NETWORK_SLOTS];
 	@Nullable
 	private final TerminalBlockEntity terminal;
 	private String searchText = "";
@@ -129,6 +136,8 @@ public class TerminalMenu extends AbstractContainerMenu {
 		this.hotbarStart = playerInventoryStart + PLAYER_INVENTORY_SLOTS;
 		this.visibleRows.set(DEFAULT_GRID_ROWS);
 		setSortState(SortMode.COUNT, true);
+		setDisplayMode(DisplayMode.ITEMS);
+		Arrays.fill(displayFluids, FluidStack.EMPTY);
 
 		addNetworkSlots();
 		addTerminalFilterSlots();
@@ -142,6 +151,7 @@ public class TerminalMenu extends AbstractContainerMenu {
 		addDataSlot(visibleRows);
 		addDataSlot(sortModeState);
 		addDataSlot(sortDescendingState);
+		addDataSlot(displayModeState);
 		for (int slot = 0; slot < FILTER_SLOTS; slot++) {
 			filterActive[slot] = DataSlot.standalone();
 			addDataSlot(filterActive[slot]);
@@ -149,8 +159,10 @@ public class TerminalMenu extends AbstractContainerMenu {
 		for (int slot = 0; slot < NETWORK_SLOTS; slot++) {
 			networkSlotCountLow[slot] = DataSlot.standalone();
 			networkSlotCountHigh[slot] = DataSlot.standalone();
+			networkSlotFluid[slot] = DataSlot.standalone();
 			addDataSlot(networkSlotCountLow[slot]);
 			addDataSlot(networkSlotCountHigh[slot]);
+			addDataSlot(networkSlotFluid[slot]);
 		}
 		refreshDisplay();
 	}
@@ -231,23 +243,15 @@ public class TerminalMenu extends AbstractContainerMenu {
 			return true;
 		}
 
-		if (id == SORT_NAME_BUTTON) {
-			if (getSortMode() == SortMode.NAME) {
-				setSortState(SortMode.NAME, !isSortDescending());
-			} else {
-				setSortState(SortMode.NAME, false);
-			}
+		if (id == SORT_CYCLE_BUTTON) {
+			cycleSortState();
 			scrollRow.set(0);
 			refreshAfterSearchChange();
 			return true;
 		}
 
-		if (id == SORT_COUNT_BUTTON) {
-			if (getSortMode() == SortMode.COUNT) {
-				setSortState(SortMode.COUNT, !isSortDescending());
-			} else {
-				setSortState(SortMode.COUNT, true);
-			}
+		if (id == DISPLAY_MODE_BUTTON) {
+			setDisplayMode(getDisplayMode().next());
 			scrollRow.set(0);
 			refreshAfterSearchChange();
 			return true;
@@ -334,6 +338,9 @@ public class TerminalMenu extends AbstractContainerMenu {
 		ItemStack originalStack = clickedStack.copy();
 
 		if (isNetworkSlot(index)) {
+			if (isNetworkSlotFluid(index)) {
+				return ItemStack.EMPTY;
+			}
 			int amount = getOneStackExtractAmount(index, clickedStack);
 			ItemStack extracted = extractDisplayedStackToInventory(clickedStack, amount, player);
 			refreshDisplay();
@@ -420,9 +427,17 @@ public class TerminalMenu extends AbstractContainerMenu {
 		}
 
 		if (isNetworkSlot(slotId)) {
+			if (isNetworkSlotFluid(slotId)) {
+				if (button == 1 && clickType == ClickType.PICKUP) {
+					tryFillBucketFromDisplayedFluid(slotId, player);
+					refreshAfterInteraction();
+				}
+				return;
+			}
+
 			ItemStack carried = getCarried();
 			if (!carried.isEmpty()) {
-				int amount = button == 1 ? Math.max(1, (carried.getCount() + 1) / 2) : carried.getCount();
+				int amount = button == 1 ? 1 : carried.getCount();
 				depositCarriedStack(amount);
 				refreshAfterInteraction();
 				return;
@@ -545,6 +560,21 @@ public class TerminalMenu extends AbstractContainerMenu {
 		return sortDescendingState.get() != 0;
 	}
 
+	public int getSortState() {
+		if (getSortMode() == SortMode.NAME) {
+			return isSortDescending() ? 1 : 0;
+		}
+		return isSortDescending() ? 2 : 3;
+	}
+
+	public int getDisplayModeState() {
+		return getDisplayMode().ordinal();
+	}
+
+	public boolean isNetworkSlotFluid(int slot) {
+		return isNetworkSlot(slot) && networkSlotFluid[slot].get() != 0;
+	}
+
 	public void setVisibleRowsClient(int rows) {
 		visibleRows.set(clampVisibleRows(rows));
 		scrollRow.set(Math.min(scrollRow.get(), getMaximumScrollRow()));
@@ -647,7 +677,9 @@ public class TerminalMenu extends AbstractContainerMenu {
 
 		for (int slot = 0; slot < NETWORK_SLOTS; slot++) {
 			displayItems.setStackInSlot(slot, ItemStack.EMPTY);
+			displayFluids[slot] = FluidStack.EMPTY;
 			setNetworkSlotCount(slot, 0);
+			networkSlotFluid[slot].set(0);
 		}
 
 		for (int slot = 0; slot < FILTER_SLOTS; slot++) {
@@ -655,19 +687,24 @@ public class TerminalMenu extends AbstractContainerMenu {
 		}
 
 		networkStatus.set(terminal.getNetworkStatus().ordinal());
-		TerminalBlockEntity.DisplayPage page = terminal.getNetworkDisplayPage(NETWORK_SLOTS, scrollRow.get() * GRID_COLUMNS, searchText, getSortMode().name(), isSortDescending());
+		TerminalBlockEntity.DisplayPage page = terminal.getNetworkDisplayPage(NETWORK_SLOTS,
+				scrollRow.get() * GRID_COLUMNS, searchText, getSortMode().name(), isSortDescending(),
+				getDisplayMode().name());
 		totalMatchingItems.set(page.totalItems());
 		int maximumScrollRow = getMaximumScrollRow();
 		if (scrollRow.get() > maximumScrollRow) {
 			scrollRow.set(maximumScrollRow);
-			page = terminal.getNetworkDisplayPage(NETWORK_SLOTS, scrollRow.get() * GRID_COLUMNS, searchText, getSortMode().name(), isSortDescending());
+			page = terminal.getNetworkDisplayPage(NETWORK_SLOTS, scrollRow.get() * GRID_COLUMNS, searchText,
+					getSortMode().name(), isSortDescending(), getDisplayMode().name());
 		}
 
-		List<ItemStack> stacks = page.stacks();
-		for (int slot = 0; slot < Math.min(NETWORK_SLOTS, stacks.size()); slot++) {
-			ItemStack stack = stacks.get(slot);
-			setNetworkSlotCount(slot, stack.getCount());
-			displayItems.setStackInSlot(slot, stack.copyWithCount(1));
+		List<TerminalBlockEntity.DisplayEntry> entries = page.entries();
+		for (int slot = 0; slot < Math.min(NETWORK_SLOTS, entries.size()); slot++) {
+			TerminalBlockEntity.DisplayEntry entry = entries.get(slot);
+			setNetworkSlotCount(slot, entry.amount());
+			networkSlotFluid[slot].set(entry.isFluid() ? 1 : 0);
+			displayFluids[slot] = entry.fluid().copy();
+			displayItems.setStackInSlot(slot, entry.icon().copyWithCount(1));
 		}
 	}
 
@@ -766,6 +803,59 @@ public class TerminalMenu extends AbstractContainerMenu {
 			carried.grow(extracted.getCount());
 			setCarried(carried);
 		}
+	}
+
+	private boolean tryFillBucketFromDisplayedFluid(int slot, Player player) {
+		if (terminal == null || !isNetworkSlotFluid(slot)) {
+			return false;
+		}
+
+		FluidStack fluid = displayFluids[slot];
+		if (fluid.isEmpty() || getNetworkSlotCount(slot) < TerminalBlockEntity.BUCKET_VOLUME) {
+			return false;
+		}
+
+		ItemStack carried = getCarried();
+		if (carried.is(Items.BUCKET)) {
+			ItemStack filledBucket = terminal.extractFluidBucket(fluid);
+			if (filledBucket.isEmpty()) {
+				return false;
+			}
+			if (carried.getCount() == 1) {
+				setCarried(filledBucket);
+			} else {
+				carried.shrink(1);
+				setCarried(carried);
+				ItemHandlerHelper.giveItemToPlayer(player, filledBucket);
+			}
+			return true;
+		}
+
+		if (!carried.isEmpty()) {
+			return false;
+		}
+
+		for (InteractionHand hand : InteractionHand.values()) {
+			ItemStack held = player.getItemInHand(hand);
+			if (!held.is(Items.BUCKET)) {
+				continue;
+			}
+
+			ItemStack filledBucket = terminal.extractFluidBucket(fluid);
+			if (filledBucket.isEmpty()) {
+				return false;
+			}
+			if (held.getCount() == 1) {
+				player.setItemInHand(hand, filledBucket);
+			} else {
+				held.shrink(1);
+				player.setItemInHand(hand, held);
+				ItemHandlerHelper.giveItemToPlayer(player, filledBucket);
+			}
+			return true;
+		}
+
+		return false;
 	}
 
 	private void depositCarriedStack(int amount) {
@@ -999,7 +1089,7 @@ public class TerminalMenu extends AbstractContainerMenu {
 				continue;
 			}
 
-			ItemStack refill = terminal.extractMatchingStack(template, template.getMaxStackSize());
+			ItemStack refill = terminal.extractMatchingStack(template, 1);
 			if (!refill.isEmpty()) {
 				craftingItems.setItem(slot, refill);
 			}
@@ -1041,6 +1131,25 @@ public class TerminalMenu extends AbstractContainerMenu {
 		sortDescendingState.set(descending ? 1 : 0);
 	}
 
+	private void cycleSortState() {
+		switch (getSortState()) {
+			case 0 -> setSortState(SortMode.NAME, true);
+			case 1 -> setSortState(SortMode.COUNT, true);
+			case 2 -> setSortState(SortMode.COUNT, false);
+			default -> setSortState(SortMode.NAME, false);
+		}
+	}
+
+	private DisplayMode getDisplayMode() {
+		int state = displayModeState.get();
+		DisplayMode[] modes = DisplayMode.values();
+		return state >= 0 && state < modes.length ? modes[state] : DisplayMode.ITEMS;
+	}
+
+	private void setDisplayMode(DisplayMode mode) {
+		displayModeState.set(mode.ordinal());
+	}
+
 	private record OpeningData(BlockPos terminalPos, boolean craftingTerminal) {
 	}
 
@@ -1051,6 +1160,17 @@ public class TerminalMenu extends AbstractContainerMenu {
 	private enum SortMode {
 		NAME,
 		COUNT
+	}
+
+	private enum DisplayMode {
+		ITEMS,
+		FLUIDS,
+		BOTH;
+
+		private DisplayMode next() {
+			DisplayMode[] modes = values();
+			return modes[(ordinal() + 1) % modes.length];
+		}
 	}
 
 	private static class NetworkDisplaySlot extends SlotItemHandler {
