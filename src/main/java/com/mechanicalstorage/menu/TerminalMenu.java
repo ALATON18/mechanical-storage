@@ -30,11 +30,10 @@ import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import net.neoforged.neoforge.items.SlotItemHandler;
-import net.neoforged.neoforge.fluids.FluidStack;
-import net.neoforged.fml.ModList;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -217,7 +216,7 @@ public class TerminalMenu extends AbstractContainerMenu {
 		if (movingContraptionId >= 0) {
 			return isMovingMenuValid(player);
 		}
-		if (ModList.get().isLoaded("sable") && SableTerminalCompat.isTerminalStillValid(
+		if (SableTerminalCompat.isTerminalStillValid(
 				player, terminalPos, craftingTerminal
 						? MechanicalStorage.CRAFTING_TERMINAL.get()
 						: MechanicalStorage.TERMINAL.get())) {
