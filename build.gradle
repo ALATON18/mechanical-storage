@@ -23,10 +23,6 @@ repositories {
 	maven { url = 'https://maven.ithundxr.dev/snapshots' }
 	maven { url = 'https://maven.ryanhcode.dev/releases' }
 	maven { url = 'https://maven.blamejared.com/' }
-	maven {
-		url = 'https://cursemaven.com'
-		content { includeGroup 'curse.maven' }
-	}
 }
 
 base {
@@ -78,10 +74,6 @@ neoForge {
 	}
 }
 
-configurations {
-	runtimeClasspath.extendsFrom localRuntime
-}
-
 dependencies {
 	implementation("com.simibubi.create:create-${minecraft_version}:${create_version}:slim") {
 		transitive = false
@@ -97,16 +89,6 @@ dependencies {
 			prefer("1.6.0")
 		}
 	}
-
-	// Development-runtime compatibility fixtures. These are not bundled in the built mod.
-	localRuntime "com.hrznstudio:titanium:1.21-4.0.34"
-	localRuntime "curse.maven:functional-storage-556861:8179577"
-	localRuntime "curse.maven:sophisticated-core-618298:8398762"
-	localRuntime "curse.maven:sophisticated-storage-619320:8398824"
-	localRuntime "curse.maven:sophisticated-backpacks-422301:8398799"
-	localRuntime "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
-	localRuntime "curse.maven:sable-1312371:8263584"
-	localRuntime "curse.maven:create-aeronautics-676721:8240058"
 }
 
 var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
