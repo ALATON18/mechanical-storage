@@ -1,12 +1,15 @@
 package com.mechanicalstorage.client;
 
 import com.mechanicalstorage.MechanicalStorage;
+import com.mechanicalstorage.client.ponder.MechanicalStoragePonderPlugin;
+import net.createmod.ponder.foundation.PonderIndex;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModList;
+import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
@@ -20,9 +23,14 @@ public final class MechanicalStorageClient {
 
 	public static void register(IEventBus modEventBus) {
 		MechanicalStoragePartialModels.init();
+		modEventBus.addListener(MechanicalStorageClient::clientSetup);
 		modEventBus.addListener(MechanicalStorageClient::registerMenuScreens);
 		modEventBus.addListener(MechanicalStorageClient::registerBlockEntityRenderers);
 		NeoForge.EVENT_BUS.addListener(MechanicalStorageClient::addMachineItemTooltip);
+	}
+
+	private static void clientSetup(FMLClientSetupEvent event) {
+		PonderIndex.addPlugin(new MechanicalStoragePonderPlugin());
 	}
 
 	private static void registerMenuScreens(RegisterMenuScreensEvent event) {

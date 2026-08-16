@@ -22,6 +22,7 @@ The goal is a Create-style mechanical storage network where Create shafts/cogs a
 - Ctrl-left-click and Ctrl-scroll single-item transfers
 - Matching-stack-first network insertion
 - Live disconnected and overstressed terminal states
+- In-game Create Ponder guide for all four Mechanical Storage blocks
 - JEI recipe transfer support for the Crafting Terminal
 
 ## Network rules
