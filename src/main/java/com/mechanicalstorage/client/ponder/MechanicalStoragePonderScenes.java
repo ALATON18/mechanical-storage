@@ -12,6 +12,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Blocks;
 
 public final class MechanicalStoragePonderScenes {
 	private MechanicalStoragePonderScenes() {
@@ -33,8 +34,9 @@ public final class MechanicalStoragePonderScenes {
 
 		Selection storage = util.select().position(chest)
 			.add(util.select().position(tank));
+		Selection cogwheelConnectorSelection = util.select().position(cogwheelConnector);
 		Selection connectors = util.select().position(connector)
-			.add(util.select().position(cogwheelConnector));
+			.add(cogwheelConnectorSelection);
 		Selection drive = util.select().fromTo(0, 1, 5, 4, 1, 5)
 			.add(util.select().position(1, 1, 4))
 			.add(util.select().position(4, 1, 4))
@@ -50,7 +52,7 @@ public final class MechanicalStoragePonderScenes {
 		scene.world().showSection(storage, Direction.DOWN);
 		scene.idle(10);
 		scene.overlay().showText(55)
-			.text("Mechanical Storage can expose both item inventories and fluid tanks")
+			.text("Connect item inventories and fluid tanks to access their contents from a Terminal.")
 			.attachKeyFrame()
 			.placeNearTarget()
 			.pointAt(util.vector().centerOf(chest));
@@ -69,7 +71,7 @@ public final class MechanicalStoragePonderScenes {
 		scene.overlay().showLine(PonderPalette.GREEN,
 				util.vector().centerOf(cogwheelConnector), util.vector().centerOf(tank), 75);
 		scene.overlay().showText(75)
-			.text("A Connector reads exactly one adjacent storage block on its front face")
+			.text("Point a Connector's front face directly at one adjacent inventory or fluid tank.")
 			.attachKeyFrame()
 			.placeNearTarget()
 			.pointAt(util.vector().blockSurface(connector, Direction.NORTH));
@@ -80,9 +82,10 @@ public final class MechanicalStoragePonderScenes {
 		scene.world().showSection(terminalSelection, Direction.SOUTH);
 		scene.idle(12);
 		scene.world().setKineticSpeed(kineticNetwork, 16);
+		scene.world().setKineticSpeed(cogwheelConnectorSelection, -16);
 		scene.effects().rotationSpeedIndicator(speedIndicator);
 		scene.overlay().showText(80)
-			.text("Shafts and cogwheels carry the storage network; the Terminal and all Connectors must share the same rotating kinetic network")
+			.text("Power every Terminal and Connector from the same rotating Create kinetic network.")
 			.attachKeyFrame()
 			.placeNearTarget()
 			.pointAt(util.vector().centerOf(speedIndicator));
@@ -91,14 +94,14 @@ public final class MechanicalStoragePonderScenes {
 		scene.overlay().showOutline(PonderPalette.BLUE, "cogwheel_input",
 				util.select().position(cogwheel).add(util.select().position(cogwheelConnector)), 70);
 		scene.overlay().showText(70)
-			.text("The Cogwheel Connector meshes with an adjacent cog instead of accepting a shaft at its rear")
+			.text("Mesh a Cogwheel Connector with an adjacent cog to connect storage without a rear shaft.")
 			.attachKeyFrame()
 			.placeNearTarget()
 			.pointAt(util.vector().centerOf(cogwheelConnector));
 		scene.idle(80);
 
 		scene.overlay().showText(70)
-			.text("The network needs at least 2 RPM and goes offline when stopped or overstressed")
+			.text("Networks require at least 2 RPM and stop working when overstressed.")
 			.attachKeyFrame()
 			.placeNearTarget()
 			.pointAt(util.vector().centerOf(terminal));
@@ -107,20 +110,25 @@ public final class MechanicalStoragePonderScenes {
 		scene.overlay().showControls(util.vector().blockSurface(terminal, Direction.NORTH), Pointing.RIGHT, 60)
 			.rightClick();
 		scene.overlay().showText(70)
-			.text("Right-click a Terminal to browse and transfer all connected items and fluids")
+			.text("Right-click a Terminal to browse and transfer connected items and fluids.")
 			.attachKeyFrame()
 			.placeNearTarget()
 			.pointAt(util.vector().blockSurface(terminal, Direction.NORTH));
 		scene.idle(80);
 
-		scene.world().setBlock(terminal, MechanicalStorage.CRAFTING_TERMINAL.getDefaultState()
-			.setValue(DirectionalMachineBlock.FACING, Direction.NORTH), true);
-		scene.effects().indicateSuccess(terminal);
-		scene.idle(12);
-		scene.overlay().showControls(util.vector().topOf(terminal), Pointing.DOWN, 60)
+		scene.world().hideSection(terminalSelection, Direction.DOWN);
+		scene.idle(15);
+		scene.world().setBlock(terminal, Blocks.AIR.defaultBlockState(), false);
+		scene.overlay().showControls(util.vector().topOf(terminal), Pointing.DOWN, 40)
 			.withItem(MechanicalStorage.CRAFTING_TERMINAL.asStack());
+		scene.idle(10);
+		scene.world().setBlock(terminal, MechanicalStorage.CRAFTING_TERMINAL.getDefaultState()
+			.setValue(DirectionalMachineBlock.FACING, Direction.NORTH), false);
+		scene.world().showSection(terminalSelection, Direction.UP);
+		scene.effects().indicateSuccess(terminal);
+		scene.idle(20);
 		scene.overlay().showText(70)
-			.text("A Crafting Terminal adds a private 3x3 crafting grid while keeping normal terminal access")
+			.text("Place a Crafting Terminal for storage access with a private 3x3 crafting grid.")
 			.attachKeyFrame()
 			.placeNearTarget()
 			.pointAt(util.vector().blockSurface(terminal, Direction.NORTH));
