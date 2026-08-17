@@ -116,6 +116,16 @@ public final class MechanicalStoragePonderScenes {
 			.pointAt(util.vector().blockSurface(terminal, Direction.NORTH));
 		scene.idle(80);
 
+		scene.overlay().showControls(util.vector().blockSurface(terminal, Direction.NORTH), Pointing.RIGHT, 60)
+			.rightClick()
+			.withItem(new ItemStack(Items.DIAMOND));
+		scene.overlay().showText(70)
+			.text("A Terminal only inserts item types already present in a connected inventory.")
+			.attachKeyFrame()
+			.placeNearTarget()
+			.pointAt(util.vector().blockSurface(terminal, Direction.NORTH));
+		scene.idle(80);
+
 		scene.world().hideSection(terminalSelection, Direction.DOWN);
 		scene.idle(15);
 		scene.world().setBlock(terminal, Blocks.AIR.defaultBlockState(), false);

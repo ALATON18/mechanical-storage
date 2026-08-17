@@ -42,5 +42,6 @@
 	"mechanical_storage.ponder.storage_network.text_4": "Mesh a Cogwheel Connector with an adjacent cog to connect storage without a rear shaft.",
 	"mechanical_storage.ponder.storage_network.text_5": "Networks require at least 2 RPM and stop working when overstressed.",
 	"mechanical_storage.ponder.storage_network.text_6": "Right-click a Terminal to browse and transfer connected items and fluids.",
-	"mechanical_storage.ponder.storage_network.text_7": "Place a Crafting Terminal for storage access with a private 3x3 crafting grid."
+	"mechanical_storage.ponder.storage_network.text_7": "A Terminal only inserts item types already present in a connected inventory.",
+	"mechanical_storage.ponder.storage_network.text_8": "Place a Crafting Terminal for storage access with a private 3x3 crafting grid."
 }
