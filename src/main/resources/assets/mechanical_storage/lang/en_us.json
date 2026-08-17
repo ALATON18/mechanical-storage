@@ -34,5 +34,13 @@
 	"status.mechanical_storage.online": "Network Online",
 	"status.mechanical_storage.overstressed": "Network Overstressed",
 	"status.mechanical_storage.disconnected": "Network Disconnected",
-	"status.mechanical_storage.too_slow": "Insufficient Speed (2 RPM required)"
+	"status.mechanical_storage.too_slow": "Insufficient Speed (2 RPM required)",
+	"mechanical_storage.ponder.storage_network.header": "Connecting a Mechanical Storage Network",
+	"mechanical_storage.ponder.storage_network.text_1": "Connect item inventories and fluid tanks to access their contents from a Terminal.",
+	"mechanical_storage.ponder.storage_network.text_2": "Point a Connector's front face directly at one adjacent inventory or fluid tank.",
+	"mechanical_storage.ponder.storage_network.text_3": "Power every Terminal and Connector from the same rotating Create kinetic network.",
+	"mechanical_storage.ponder.storage_network.text_4": "Mesh a Cogwheel Connector with an adjacent cog to connect storage without a rear shaft.",
+	"mechanical_storage.ponder.storage_network.text_5": "Networks require at least 2 RPM and stop working when overstressed.",
+	"mechanical_storage.ponder.storage_network.text_6": "Right-click a Terminal to browse and transfer connected items and fluids.",
+	"mechanical_storage.ponder.storage_network.text_7": "Place a Crafting Terminal for storage access with a private 3x3 crafting grid."
 }
