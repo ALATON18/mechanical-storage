@@ -1,0 +1,16 @@
+{
+	"type": "minecraft:crafting_shapeless",
+	"category": "redstone",
+	"ingredients": [
+		{
+			"item": "mechanical_storage:connector"
+		},
+		{
+			"item": "create:copper_casing"
+		}
+	],
+	"result": {
+		"id": "mechanical_storage:overflow_connector",
+		"count": 1
+	}
+}

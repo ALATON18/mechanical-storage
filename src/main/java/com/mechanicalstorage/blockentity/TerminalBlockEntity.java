@@ -516,10 +516,10 @@ public class TerminalBlockEntity extends FixedStressKineticBlockEntity implement
 	}
 
 	/**
-	 * Inserts only into inventories which already contain the exact item and
-	 * component variant. Once an inventory qualifies, its handler remains in
-	 * charge of deciding which matching or empty slots accept the item and how
-	 * many each slot can hold.
+	 * Inserts into inventories which already contain the exact item and component
+	 * variant first. Overflow connectors may receive anything left after matching
+	 * storage has been tried. Each handler remains responsible for deciding which
+	 * slots accept the item and how many each slot can hold.
 	 */
 	public ItemStack insertStackIntoMatchingInventories(ItemStack stack) {
 		if (level == null || stack.isEmpty() || !isOnline()) {
@@ -528,16 +528,30 @@ public class TerminalBlockEntity extends FixedStressKineticBlockEntity implement
 
 		int startingCount = stack.getCount();
 		List<IItemHandler> matchingHandlers = new ArrayList<>();
+		List<IItemHandler> overflowHandlers = new ArrayList<>();
 		for (StorageConnectorEndpoint connector : findNetworkConnectors()) {
 			IItemHandler handler = connector.getTargetItemHandler();
-			if (handler != null && containsMatchingStack(handler, stack)) {
+			if (handler == null) {
+				continue;
+			}
+
+			if (containsMatchingStack(handler, stack)) {
 				matchingHandlers.add(handler);
+			}
+			if (connector.acceptsUnmatchedItems()) {
+				overflowHandlers.add(handler);
 			}
 		}
 
 		ItemStack remaining = insertIntoMatchingStacks(matchingHandlers, stack.copy());
 		if (!remaining.isEmpty()) {
 			remaining = insertIntoEmptySlots(matchingHandlers, remaining);
+		}
+		if (!remaining.isEmpty()) {
+			remaining = insertIntoMatchingStacks(overflowHandlers, remaining);
+		}
+		if (!remaining.isEmpty()) {
+			remaining = insertIntoEmptySlots(overflowHandlers, remaining);
 		}
 		if (remaining.isEmpty() || remaining.getCount() < startingCount) {
 			invalidateNetworkSummary();

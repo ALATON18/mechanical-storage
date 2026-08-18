@@ -6,8 +6,8 @@ The goal is a Create-style mechanical storage network where Create shafts/cogs a
 
 ## Features
 
-- Mechanical Storage Connector
-- Encased Cogwheel Connector
+- Connector and Cogwheel Connector for storage already containing an item type
+- Copper-trimmed Overflow Connector and Cogwheel Overflow Connector for fallback storage
 - Mechanical Storage Terminal
 - Mechanical Crafting Terminal with a private per-player 3x3 crafting grid
 - Create kinetic-network membership with no artificial distance limit
@@ -20,9 +20,9 @@ The goal is a Create-style mechanical storage network where Create shafts/cogs a
 - Shift-click deposits and withdrawals
 - Full-stack left-click withdrawals
 - Ctrl-left-click and Ctrl-scroll single-item transfers
-- Matching-stack-first network insertion
+- Matching-storage-first network insertion with Overflow Connector fallback
 - Live disconnected and overstressed terminal states
-- In-game Create Ponder guide for all four Mechanical Storage blocks
+- In-game Create Ponder guide for all six Mechanical Storage blocks
 - JEI recipe transfer support for the Crafting Terminal
 
 ## Network rules
@@ -33,11 +33,13 @@ The goal is a Create-style mechanical storage network where Create shafts/cogs a
 - Overstressed means offline.
 - Loaded chunks only.
 - 64 connectors per network.
+- Standard Connectors accept only item types already present in their inventory.
+- Overflow Connectors accept new item types and leftovers after matching storage is tried.
 - No cross-dimensional storage.
 
 ## Roadmap
 
-- Connector priority and per-connector Create-filter support
+- Per-connector Create-filter support
 - Fluid grid and fluid-capable connectors
 - RPM-ranged wireless satellite
 - Backtank-powered handheld item and crafting grids

@@ -1,0 +1,16 @@
+{
+	"type": "minecraft:crafting_shapeless",
+	"category": "redstone",
+	"ingredients": [
+		{
+			"item": "mechanical_storage:cogwheel_connector"
+		},
+		{
+			"item": "create:copper_casing"
+		}
+	],
+	"result": {
+		"id": "mechanical_storage:cogwheel_overflow_connector",
+		"count": 1
+	}
+}

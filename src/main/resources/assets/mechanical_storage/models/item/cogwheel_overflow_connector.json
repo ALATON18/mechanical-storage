@@ -1,0 +1,28 @@
+{
+	"parent": "minecraft:block/block",
+	"loader": "neoforge:composite",
+	"render_type": "minecraft:cutout_mipped",
+	"children": {
+		"casing": {
+			"parent": "mechanical_storage:block/cogwheel_overflow_connector_base",
+			"transform": {
+				"rotation": { "x": 90 },
+				"origin": "center"
+			}
+		},
+		"cogwheel": {
+			"parent": "create:block/cogwheel_shaftless",
+			"transform": {
+				"rotation": { "x": 90 },
+				"origin": "center"
+			}
+		}
+	},
+	"display": {
+		"gui": {
+			"rotation": [ 30, 45, 0 ],
+			"translation": [ 0, 0, 0 ],
+			"scale": [ 0.625, 0.625, 0.625 ]
+		}
+	}
+}

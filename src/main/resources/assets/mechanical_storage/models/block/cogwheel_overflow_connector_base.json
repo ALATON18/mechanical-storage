@@ -1,0 +1,8 @@
+{
+	"parent": "mechanical_storage:block/cogwheel_connector_base",
+	"textures": {
+		"particle": "create:block/copper_casing",
+		"casing": "create:block/copper_casing",
+		"inner": "create:block/copper_casing"
+	}
+}

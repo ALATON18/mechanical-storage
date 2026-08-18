@@ -62,6 +62,25 @@ public class MechanicalStorage {
 			.build()
 			.register();
 
+	public static final BlockEntry<MechanicalStorageConnectorBlock> OVERFLOW_CONNECTOR = REGISTRATE
+			.block("overflow_connector", properties -> new MechanicalStorageConnectorBlock(
+					machineProperties(MapColor.TERRACOTTA_ORANGE), true))
+			.onRegister(com.simibubi.create.api.behaviour.movement.MovementBehaviour.movementBehaviour(
+					new ConnectorMovementBehaviour()))
+			.item()
+			.build()
+			.register();
+
+	public static final BlockEntry<MechanicalStorageCogwheelConnectorBlock> COGWHEEL_OVERFLOW_CONNECTOR = REGISTRATE
+			.block("cogwheel_overflow_connector", properties -> new MechanicalStorageCogwheelConnectorBlock(
+					machineProperties(MapColor.TERRACOTTA_ORANGE).noOcclusion(), true))
+			.onRegister(com.simibubi.create.api.behaviour.movement.MovementBehaviour.movementBehaviour(
+					new ConnectorMovementBehaviour()))
+			.addLayer(() -> RenderType::cutoutMipped)
+			.item()
+			.build()
+			.register();
+
 	public static final BlockEntry<MechanicalStorageTerminalBlock> TERMINAL = REGISTRATE
 			.block("terminal", properties -> new MechanicalStorageTerminalBlock(machineProperties(MapColor.TERRACOTTA_ORANGE)))
 			.onRegister(com.simibubi.create.api.behaviour.movement.MovementBehaviour.movementBehaviour(
@@ -84,7 +103,7 @@ public class MechanicalStorage {
 
 	public static final BlockEntityEntry<MechanicalStorageConnectorBlockEntity> CONNECTOR_BLOCK_ENTITY = REGISTRATE
 			.<MechanicalStorageConnectorBlockEntity>blockEntity("connector", MechanicalStorageConnectorBlockEntity::new)
-			.validBlocks(CONNECTOR, COGWHEEL_CONNECTOR)
+			.validBlocks(CONNECTOR, COGWHEEL_CONNECTOR, OVERFLOW_CONNECTOR, COGWHEEL_OVERFLOW_CONNECTOR)
 			.register();
 
 	public static final BlockEntityEntry<TerminalBlockEntity> TERMINAL_BLOCK_ENTITY = REGISTRATE

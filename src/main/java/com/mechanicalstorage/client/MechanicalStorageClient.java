@@ -55,6 +55,8 @@ public final class MechanicalStorageClient {
 		boolean inTerminal = Minecraft.getInstance().screen instanceof TerminalScreen;
 		boolean mechanicalStorageItem = stack.is(MechanicalStorage.CONNECTOR.get().asItem())
 				|| stack.is(MechanicalStorage.COGWHEEL_CONNECTOR.get().asItem())
+				|| stack.is(MechanicalStorage.OVERFLOW_CONNECTOR.get().asItem())
+				|| stack.is(MechanicalStorage.COGWHEEL_OVERFLOW_CONNECTOR.get().asItem())
 				|| stack.is(MechanicalStorage.TERMINAL.get().asItem())
 				|| stack.is(MechanicalStorage.CRAFTING_TERMINAL.get().asItem());
 

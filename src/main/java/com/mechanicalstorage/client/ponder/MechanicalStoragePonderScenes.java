@@ -2,6 +2,7 @@ package com.mechanicalstorage.client.ponder;
 
 import com.mechanicalstorage.MechanicalStorage;
 import com.mechanicalstorage.block.DirectionalMachineBlock;
+import com.mechanicalstorage.block.OrientedConnectorBlock;
 import com.simibubi.create.foundation.ponder.CreateSceneBuilder;
 import net.createmod.catnip.math.Pointing;
 import net.createmod.ponder.api.PonderPalette;
@@ -120,11 +121,35 @@ public final class MechanicalStoragePonderScenes {
 			.rightClick()
 			.withItem(new ItemStack(Items.DIAMOND));
 		scene.overlay().showText(70)
-			.text("A Terminal only inserts item types already present in a connected inventory.")
+			.text("Standard Connectors only accept item types already present in their connected inventory.")
 			.attachKeyFrame()
 			.placeNearTarget()
-			.pointAt(util.vector().blockSurface(terminal, Direction.NORTH));
+			.pointAt(util.vector().centerOf(connector));
 		scene.idle(80);
+
+		scene.world().hideSection(connectors, Direction.DOWN);
+		scene.idle(15);
+		scene.world().setBlock(connector, Blocks.AIR.defaultBlockState(), false);
+		scene.world().setBlock(cogwheelConnector, Blocks.AIR.defaultBlockState(), false);
+		scene.overlay().showControls(util.vector().topOf(connector), Pointing.DOWN, 40)
+			.withItem(MechanicalStorage.OVERFLOW_CONNECTOR.asStack());
+		scene.idle(10);
+		scene.world().setBlock(connector, MechanicalStorage.OVERFLOW_CONNECTOR.getDefaultState()
+			.setValue(OrientedConnectorBlock.FACING, Direction.NORTH), false);
+		scene.world().setBlock(cogwheelConnector, MechanicalStorage.COGWHEEL_OVERFLOW_CONNECTOR.getDefaultState()
+			.setValue(OrientedConnectorBlock.FACING, Direction.NORTH), false);
+		scene.world().showSection(connectors, Direction.UP);
+		scene.world().setKineticSpeed(connectors, 16);
+		scene.world().setKineticSpeed(cogwheelConnectorSelection, -16);
+		scene.effects().indicateSuccess(connector);
+		scene.effects().indicateSuccess(cogwheelConnector);
+		scene.idle(20);
+		scene.overlay().showText(75)
+			.text("Overflow Connectors accept new item types and leftovers after matching storage has been tried.")
+			.attachKeyFrame()
+			.placeNearTarget()
+			.pointAt(util.vector().centerOf(connector));
+		scene.idle(85);
 
 		scene.world().hideSection(terminalSelection, Direction.DOWN);
 		scene.idle(15);

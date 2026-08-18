@@ -1,6 +1,7 @@
 package com.mechanicalstorage.blockentity;
 
 import com.mechanicalstorage.MechanicalStorage;
+import com.mechanicalstorage.block.MechanicalStorageConnectorBlock;
 import com.mechanicalstorage.block.OrientedConnectorBlock;
 import com.mechanicalstorage.network.StorageConnectorEndpoint;
 import com.mechanicalstorage.network.StorageNetworkKey;
@@ -68,6 +69,12 @@ public class MechanicalStorageConnectorBlockEntity extends FixedStressKineticBlo
 		return !isRemoved() && isOnline();
 	}
 
+	@Override
+	public boolean acceptsUnmatchedItems() {
+		return getBlockState().getBlock() instanceof MechanicalStorageConnectorBlock connectorBlock
+				&& connectorBlock.acceptsUnmatchedItems();
+	}
+
 	public Component describeTargetInventory() {
 		if (!isOnline()) {
 			if (isOverStressed()) {
@@ -82,9 +89,10 @@ public class MechanicalStorageConnectorBlockEntity extends FixedStressKineticBlo
 		IItemHandler handler = getTargetItemHandler();
 		IFluidHandler fluidHandler = getTargetFluidHandler();
 		BlockPos targetPos = getTargetPos();
+		String connectorName = acceptsUnmatchedItems() ? "Overflow Connector" : "Connector";
 
 		if (handler == null && fluidHandler == null) {
-			return Component.literal("Connector: no item or fluid storage found at " + formatPos(targetPos) + ".");
+			return Component.literal(connectorName + ": no item or fluid storage found at " + formatPos(targetPos) + ".");
 		}
 
 		int slots = handler == null ? 0 : handler.getSlots();
@@ -110,7 +118,7 @@ public class MechanicalStorageConnectorBlockEntity extends FixedStressKineticBlo
 			}
 		}
 
-		return Component.literal("Connector: online at " + Math.abs(getSpeed()) + " RPM, storage at "
+		return Component.literal(connectorName + ": online at " + Math.abs(getSpeed()) + " RPM, storage at "
 				+ formatPos(targetPos) + " (" + occupiedSlots + "/" + slots + " item slots, " + totalItems
 				+ " items; " + occupiedTanks + "/" + tanks + " fluid tanks, " + totalFluid + " mB).");
 	}
