@@ -7,7 +7,9 @@
 		"casing": "create:block/andesite_casing",
 		"side": "create:block/andesite_encased_cogwheel_side",
 		"inner": "create:block/andesite_casing",
+		"outer_frame": "create:block/gearbox",
 		"copper": "create:block/copper_casing",
+		"brass": "create:block/brass_casing",
 		"dark": "minecraft:block/deepslate_tiles"
 	},
 	"elements": [
@@ -55,7 +57,7 @@
 				"east": { "uv": [ 14, 0, 16, 6 ], "texture": "#side" },
 				"south": { "uv": [ 0, 10, 16, 16 ], "texture": "#casing" },
 				"west": { "uv": [ 0, 0, 2, 6 ], "texture": "#side" },
-				"up": { "uv": [ 0, 0, 16, 2 ], "texture": "#casing" },
+				"up": { "uv": [ 0, 0, 16, 2 ], "texture": "#outer_frame" },
 				"down": { "uv": [ 0, 0, 16, 2 ], "texture": "#inner" }
 			}
 		},
@@ -68,7 +70,7 @@
 				"east": { "uv": [ 0, 0, 2, 6 ], "texture": "#side" },
 				"south": { "uv": [ 0, 0, 16, 6 ], "texture": "#side" },
 				"west": { "uv": [ 14, 0, 16, 6 ], "texture": "#side" },
-				"up": { "uv": [ 0, 14, 16, 16 ], "texture": "#casing" },
+				"up": { "uv": [ 0, 14, 16, 16 ], "texture": "#outer_frame" },
 				"down": { "uv": [ 0, 14, 16, 16 ], "texture": "#inner" }
 			}
 		},
@@ -79,7 +81,7 @@
 			"faces": {
 				"east": { "uv": [ 2, 10, 14, 16 ], "texture": "#casing" },
 				"west": { "uv": [ 2, 0, 14, 6 ], "texture": "#side" },
-				"up": { "uv": [ 0, 2, 2, 14 ], "texture": "#casing" },
+				"up": { "uv": [ 0, 2, 2, 14 ], "texture": "#outer_frame" },
 				"down": { "uv": [ 0, 2, 2, 14 ], "texture": "#inner" }
 			}
 		},
@@ -90,7 +92,7 @@
 			"faces": {
 				"east": { "uv": [ 2, 0, 14, 6 ], "texture": "#side" },
 				"west": { "uv": [ 2, 10, 14, 16 ], "texture": "#casing" },
-				"up": { "uv": [ 14, 2, 16, 14 ], "texture": "#casing" },
+				"up": { "uv": [ 14, 2, 16, 14 ], "texture": "#outer_frame" },
 				"down": { "uv": [ 14, 2, 16, 14 ], "texture": "#inner" }
 			}
 		},
@@ -112,11 +114,11 @@
 			}
 		},
 		{
-			"name": "Front intake andesite border",
+			"name": "Front intake brass",
 			"from": [ 5, 15.14, 5 ],
 			"to": [ 11, 15.15, 11 ],
 			"faces": {
-				"up": { "uv": [ 5, 5, 11, 11 ], "texture": "#casing" }
+				"up": { "uv": [ 5, 5, 11, 11 ], "texture": "#brass" }
 			}
 		},
 		{
@@ -129,4 +131,3 @@
 		}
 	]
 }
-

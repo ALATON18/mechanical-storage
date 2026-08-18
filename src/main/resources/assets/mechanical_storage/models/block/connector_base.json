@@ -5,6 +5,7 @@
 		"particle": "create:block/encased_chain_drive",
 		"chain": "create:block/encased_chain_drive",
 		"gearbox": "create:block/gearbox",
+		"outer_frame": "create:block/gearbox",
 		"copper": "create:block/copper_casing",
 		"brass": "create:block/brass_casing",
 		"dark": "minecraft:block/deepslate_tiles"
@@ -17,7 +18,7 @@
 			"faces": {
 				"south": {
 					"uv": [ 0, 14, 16, 16 ],
-					"texture": "#gearbox"
+					"texture": "#outer_frame"
 				},
 				"west": {
 					"uv": [ 14, 0, 16, 16 ],
@@ -26,7 +27,7 @@
 				},
 				"north": {
 					"uv": [ 0, 14, 16, 16 ],
-					"texture": "#gearbox"
+					"texture": "#outer_frame"
 				},
 				"east": {
 					"uv": [ 0, 0, 2, 16 ],
@@ -53,7 +54,7 @@
 			"faces": {
 				"south": {
 					"uv": [ 0, 0, 16, 2 ],
-					"texture": "#gearbox"
+					"texture": "#outer_frame"
 				},
 				"west": {
 					"uv": [ 0, 0, 2, 16 ],
@@ -62,7 +63,7 @@
 				},
 				"north": {
 					"uv": [ 0, 0, 16, 2 ],
-					"texture": "#gearbox"
+					"texture": "#outer_frame"
 				},
 				"east": {
 					"uv": [ 14, 0, 16, 16 ],
@@ -88,7 +89,7 @@
 			"faces": {
 				"south": {
 					"uv": [ 14, 2, 16, 14 ],
-					"texture": "#gearbox"
+					"texture": "#outer_frame"
 				},
 				"west": {
 					"uv": [ 2, 0, 14, 16 ],
@@ -97,7 +98,7 @@
 				},
 				"north": {
 					"uv": [ 0, 2, 2, 14 ],
-					"texture": "#gearbox"
+					"texture": "#outer_frame"
 				},
 				"east": {
 					"uv": [ 2, 0, 14, 16 ],
@@ -114,7 +115,7 @@
 			"faces": {
 				"south": {
 					"uv": [ 0, 2, 2, 14 ],
-					"texture": "#gearbox"
+					"texture": "#outer_frame"
 				},
 				"west": {
 					"uv": [ 2, 0, 14, 16 ],
@@ -123,7 +124,7 @@
 				},
 				"north": {
 					"uv": [ 14, 2, 16, 14 ],
-					"texture": "#gearbox"
+					"texture": "#outer_frame"
 				},
 				"east": {
 					"uv": [ 2, 0, 14, 16 ],
