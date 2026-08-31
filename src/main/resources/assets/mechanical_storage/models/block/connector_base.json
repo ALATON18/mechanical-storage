@@ -6,6 +6,7 @@
 		"chain": "create:block/encased_chain_drive",
 		"gearbox": "create:block/gearbox",
 		"outer_frame": "create:block/gearbox",
+		"side_frame": "create:block/encased_chain_drive",
 		"copper": "create:block/copper_casing",
 		"brass": "create:block/brass_casing",
 		"dark": "minecraft:block/deepslate_tiles"
@@ -169,6 +170,106 @@
 			"from": [ 6, 6, 15.19 ],
 			"to": [ 10, 10, 15.2 ],
 			"faces": { "south": { "texture": "#dark" } }
+		},
+
+		{
+			"name": "West outer frame bottom",
+			"from": [ -0.01, 0, 0 ],
+			"to": [ 0, 2, 16 ],
+			"faces": { "west": { "uv": [ 0, 14, 16, 16 ], "texture": "#side_frame", "cullface": "west" } }
+		},
+		{
+			"name": "West outer frame top",
+			"from": [ -0.01, 14, 0 ],
+			"to": [ 0, 16, 16 ],
+			"faces": { "west": { "uv": [ 0, 0, 16, 2 ], "texture": "#side_frame", "cullface": "west" } }
+		},
+		{
+			"name": "West outer frame rear",
+			"from": [ -0.01, 2, 0 ],
+			"to": [ 0, 14, 2 ],
+			"faces": { "west": { "uv": [ 0, 2, 2, 14 ], "texture": "#side_frame", "cullface": "west" } }
+		},
+		{
+			"name": "West outer frame front",
+			"from": [ -0.01, 2, 14 ],
+			"to": [ 0, 14, 16 ],
+			"faces": { "west": { "uv": [ 14, 2, 16, 14 ], "texture": "#side_frame", "cullface": "west" } }
+		},
+
+		{
+			"name": "East outer frame bottom",
+			"from": [ 16, 0, 0 ],
+			"to": [ 16.01, 2, 16 ],
+			"faces": { "east": { "uv": [ 0, 14, 16, 16 ], "texture": "#side_frame", "cullface": "east" } }
+		},
+		{
+			"name": "East outer frame top",
+			"from": [ 16, 14, 0 ],
+			"to": [ 16.01, 16, 16 ],
+			"faces": { "east": { "uv": [ 0, 0, 16, 2 ], "texture": "#side_frame", "cullface": "east" } }
+		},
+		{
+			"name": "East outer frame rear",
+			"from": [ 16, 2, 0 ],
+			"to": [ 16.01, 14, 2 ],
+			"faces": { "east": { "uv": [ 14, 2, 16, 14 ], "texture": "#side_frame", "cullface": "east" } }
+		},
+		{
+			"name": "East outer frame front",
+			"from": [ 16, 2, 14 ],
+			"to": [ 16.01, 14, 16 ],
+			"faces": { "east": { "uv": [ 0, 2, 2, 14 ], "texture": "#side_frame", "cullface": "east" } }
+		},
+
+		{
+			"name": "Top outer frame rear",
+			"from": [ 0, 16, 0 ],
+			"to": [ 16, 16.01, 2 ],
+			"faces": { "up": { "uv": [ 0, 0, 16, 2 ], "texture": "#side_frame", "cullface": "up" } }
+		},
+		{
+			"name": "Top outer frame front",
+			"from": [ 0, 16, 14 ],
+			"to": [ 16, 16.01, 16 ],
+			"faces": { "up": { "uv": [ 0, 14, 16, 16 ], "texture": "#side_frame", "cullface": "up" } }
+		},
+		{
+			"name": "Top outer frame west",
+			"from": [ 0, 16, 2 ],
+			"to": [ 2, 16.01, 14 ],
+			"faces": { "up": { "uv": [ 0, 2, 2, 14 ], "texture": "#side_frame", "cullface": "up" } }
+		},
+		{
+			"name": "Top outer frame east",
+			"from": [ 14, 16, 2 ],
+			"to": [ 16, 16.01, 14 ],
+			"faces": { "up": { "uv": [ 14, 2, 16, 14 ], "texture": "#side_frame", "cullface": "up" } }
+		},
+
+		{
+			"name": "Bottom outer frame rear",
+			"from": [ 0, -0.01, 0 ],
+			"to": [ 16, 0, 2 ],
+			"faces": { "down": { "uv": [ 0, 14, 16, 16 ], "texture": "#side_frame", "cullface": "down" } }
+		},
+		{
+			"name": "Bottom outer frame front",
+			"from": [ 0, -0.01, 14 ],
+			"to": [ 16, 0, 16 ],
+			"faces": { "down": { "uv": [ 0, 0, 16, 2 ], "texture": "#side_frame", "cullface": "down" } }
+		},
+		{
+			"name": "Bottom outer frame west",
+			"from": [ 0, -0.01, 2 ],
+			"to": [ 2, 0, 14 ],
+			"faces": { "down": { "uv": [ 0, 2, 2, 14 ], "texture": "#side_frame", "cullface": "down" } }
+		},
+		{
+			"name": "Bottom outer frame east",
+			"from": [ 14, -0.01, 2 ],
+			"to": [ 16, 0, 14 ],
+			"faces": { "down": { "uv": [ 14, 2, 16, 14 ], "texture": "#side_frame", "cullface": "down" } }
 		}
 	]
 }
