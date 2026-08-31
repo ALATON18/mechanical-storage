@@ -161,7 +161,7 @@
 			"name": "Front intake brass",
 			"from": [ 5, 5, 15.14 ],
 			"to": [ 11, 11, 15.15 ],
-			"faces": { "south": { "texture": "#brass" } }
+			"faces": { "south": { "uv": [ 0, 0, 16, 16 ], "texture": "#brass" } }
 		},
 
 		{

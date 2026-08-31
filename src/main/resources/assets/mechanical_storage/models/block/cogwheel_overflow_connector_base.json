@@ -3,6 +3,7 @@
 	"textures": {
 		"particle": "create:block/copper_casing",
 		"outer_frame": "create:block/copper_casing",
+		"reveal": "mechanical_storage:block/terminal_copper_chain_drive",
 		"side_frame": "create:block/copper_casing",
 		"rear_frame": "create:block/copper_casing"
 	}
