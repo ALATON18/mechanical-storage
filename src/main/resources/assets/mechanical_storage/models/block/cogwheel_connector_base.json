@@ -6,7 +6,7 @@
 		"particle": "create:block/andesite_casing",
 		"casing": "create:block/andesite_casing",
 		"side": "create:block/andesite_encased_cogwheel_side",
-		"inner": "create:block/andesite_casing",
+		"inner": "minecraft:block/stripped_spruce_log_top",
 		"outer_frame": "create:block/gearbox",
 		"reveal": "create:block/encased_chain_drive",
 		"side_frame": "create:block/andesite_encased_cogwheel_side",

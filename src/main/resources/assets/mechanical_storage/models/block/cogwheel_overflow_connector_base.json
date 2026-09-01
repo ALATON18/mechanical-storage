@@ -2,6 +2,7 @@
 	"parent": "mechanical_storage:block/cogwheel_connector_base",
 	"textures": {
 		"particle": "create:block/copper_casing",
+		"side": "mechanical_storage:block/copper_encased_cogwheel_side",
 		"outer_frame": "create:block/copper_casing",
 		"reveal": "mechanical_storage:block/terminal_copper_chain_drive",
 		"side_frame": "create:block/copper_casing",
