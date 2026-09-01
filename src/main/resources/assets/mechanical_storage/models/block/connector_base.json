@@ -5,6 +5,7 @@
 		"particle": "create:block/encased_chain_drive",
 		"chain": "create:block/encased_chain_drive",
 		"gearbox": "create:block/gearbox",
+		"outer_frame": "create:block/gearbox",
 		"copper": "create:block/copper_casing",
 		"brass": "create:block/brass_casing",
 		"dark": "minecraft:block/deepslate_tiles"
@@ -17,20 +18,20 @@
 			"faces": {
 				"south": {
 					"uv": [ 0, 14, 16, 16 ],
-					"texture": "#gearbox"
+					"texture": "#outer_frame"
 				},
 				"west": {
-					"uv": [ 14, 0, 16, 16 ],
-					"rotation": 90,
+					"uv": [ 0, 0, 2, 16 ],
+					"rotation": 270,
 					"texture": "#chain"
 				},
 				"north": {
 					"uv": [ 0, 14, 16, 16 ],
-					"texture": "#gearbox"
+					"texture": "#outer_frame"
 				},
 				"east": {
-					"uv": [ 0, 0, 2, 16 ],
-					"rotation": 270,
+					"uv": [ 14, 0, 16, 16 ],
+					"rotation": 90,
 					"texture": "#chain"
 				},
 				"up": {
@@ -53,20 +54,20 @@
 			"faces": {
 				"south": {
 					"uv": [ 0, 0, 16, 2 ],
-					"texture": "#gearbox"
+					"texture": "#outer_frame"
 				},
 				"west": {
-					"uv": [ 0, 0, 2, 16 ],
-					"rotation": 90,
+					"uv": [ 14, 0, 16, 16 ],
+					"rotation": 270,
 					"texture": "#chain"
 				},
 				"north": {
 					"uv": [ 0, 0, 16, 2 ],
-					"texture": "#gearbox"
+					"texture": "#outer_frame"
 				},
 				"east": {
-					"uv": [ 14, 0, 16, 16 ],
-					"rotation": 270,
+					"uv": [ 0, 0, 2, 16 ],
+					"rotation": 90,
 					"texture": "#chain"
 				},
 				"up": {
@@ -87,8 +88,8 @@
 			"to": [ 2, 14, 16 ],
 			"faces": {
 				"south": {
-					"uv": [ 14, 2, 16, 14 ],
-					"texture": "#gearbox"
+					"uv": [ 0, 2, 2, 14 ],
+					"texture": "#outer_frame"
 				},
 				"west": {
 					"uv": [ 2, 0, 14, 16 ],
@@ -96,8 +97,8 @@
 					"texture": "#chain"
 				},
 				"north": {
-					"uv": [ 0, 2, 2, 14 ],
-					"texture": "#gearbox"
+					"uv": [ 14, 2, 16, 14 ],
+					"texture": "#outer_frame"
 				},
 				"east": {
 					"uv": [ 2, 0, 14, 16 ],
@@ -113,21 +114,21 @@
 			"to": [ 16, 14, 16 ],
 			"faces": {
 				"south": {
-					"uv": [ 0, 2, 2, 14 ],
-					"texture": "#gearbox"
+					"uv": [ 14, 2, 16, 14 ],
+					"texture": "#outer_frame"
 				},
 				"west": {
 					"uv": [ 2, 0, 14, 16 ],
-					"rotation": 90,
+					"rotation": 270,
 					"texture": "#chain"
 				},
 				"north": {
-					"uv": [ 14, 2, 16, 14 ],
-					"texture": "#gearbox"
+					"uv": [ 0, 2, 2, 14 ],
+					"texture": "#outer_frame"
 				},
 				"east": {
 					"uv": [ 2, 0, 14, 16 ],
-					"rotation": 270,
+					"rotation": 90,
 					"texture": "#chain"
 				}
 			}
@@ -157,10 +158,28 @@
 		},
 
 		{
-			"name": "Front intake brass",
-			"from": [ 5, 5, 15.14 ],
+			"name": "Front intake brass top",
+			"from": [ 5, 10, 15.14 ],
 			"to": [ 11, 11, 15.15 ],
-			"faces": { "south": { "texture": "#brass" } }
+			"faces": { "south": { "uv": [ 5, 1, 11, 2 ], "texture": "#brass" } }
+		},
+		{
+			"name": "Front intake brass bottom",
+			"from": [ 5, 5, 15.14 ],
+			"to": [ 11, 6, 15.15 ],
+			"faces": { "south": { "uv": [ 5, 14, 11, 15 ], "texture": "#brass" } }
+		},
+		{
+			"name": "Front intake brass left",
+			"from": [ 5, 6, 15.14 ],
+			"to": [ 6, 10, 15.15 ],
+			"faces": { "south": { "uv": [ 1, 6, 2, 10 ], "texture": "#brass" } }
+		},
+		{
+			"name": "Front intake brass right",
+			"from": [ 10, 6, 15.14 ],
+			"to": [ 11, 10, 15.15 ],
+			"faces": { "south": { "uv": [ 14, 6, 15, 10 ], "texture": "#brass" } }
 		},
 
 		{

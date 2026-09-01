@@ -132,7 +132,7 @@
 		{
 			"name": "Core",
 			"from": [ 2, 2, 0.95 ],
-			"to": [ 14, 14, 15.05 ],
+			"to": [ 14, 14, 14.95 ],
 			"faces": {
 				"north": {
 					"uv": [ 2, 2, 14, 14 ],
@@ -145,45 +145,134 @@
 			}
 		},
 		{
-			"name": "Front screen",
-			"from": [ 4, 5, 15.09 ],
-			"to": [ 12, 11, 15.1 ],
+			"name": "Top copper button 1",
+			"from": [ 4, 12, 15 ],
+			"to": [ 5, 13, 15.75 ],
 			"faces": {
-				"south": { "texture": "#screen" }
+				"north": { "uv": [ 13, 1, 14, 2 ], "texture": "#copper" },
+				"east": { "uv": [ 13, 1, 14, 2 ], "texture": "#copper" },
+				"south": { "uv": [ 13, 1, 14, 2 ], "texture": "#copper" },
+				"west": { "uv": [ 13, 1, 14, 2 ], "texture": "#copper" },
+				"up": { "uv": [ 13, 1, 14, 2 ], "texture": "#copper" },
+				"down": { "uv": [ 13, 1, 14, 2 ], "texture": "#copper" }
 			}
 		},
 		{
-			"name": "Top copper strip",
-			"from": [ 4, 12, 15.14 ],
-			"to": [ 12, 13, 15.15 ],
+			"name": "Top copper button 2",
+			"from": [ 5, 12, 15 ],
+			"to": [ 6, 13, 15.25 ],
 			"faces": {
-				"south": { "texture": "#copper" }
+				"north": { "uv": [ 14, 0, 15, 1 ], "texture": "#copper" },
+				"east": { "uv": [ 14, 0, 15, 1 ], "texture": "#copper" },
+				"south": { "uv": [ 14, 0, 15, 1 ], "texture": "#copper" },
+				"west": { "uv": [ 14, 0, 15, 1 ], "texture": "#copper" },
+				"up": { "uv": [ 14, 0, 15, 1 ], "texture": "#copper" },
+				"down": { "uv": [ 14, 0, 15, 1 ], "texture": "#copper" }
 			}
 		},
 		{
-			"name": "Button left",
-			"from": [ 4, 3, 15.14 ],
-			"to": [ 5, 4, 15.15 ],
+			"name": "Top copper button 3",
+			"from": [ 6, 12, 15 ],
+			"to": [ 7, 13, 16 ],
 			"faces": {
-				"south": { "texture": "#copper" }
+				"north": { "uv": [ 14, 10, 15, 11 ], "texture": "#copper" },
+				"east": { "uv": [ 14, 10, 15, 11 ], "texture": "#copper" },
+				"south": { "uv": [ 14, 10, 15, 11 ], "texture": "#copper" },
+				"west": { "uv": [ 14, 10, 15, 11 ], "texture": "#copper" },
+				"up": { "uv": [ 14, 10, 15, 11 ], "texture": "#copper" },
+				"down": { "uv": [ 14, 10, 15, 11 ], "texture": "#copper" }
 			}
 		},
 		{
-			"name": "Button middle",
-			"from": [ 7, 3, 15.14 ],
-			"to": [ 9, 4, 15.15 ],
+			"name": "Top copper button 4",
+			"from": [ 7, 12, 15 ],
+			"to": [ 8, 13, 15.5 ],
 			"faces": {
-				"south": { "texture": "#copper" }
+				"north": { "uv": [ 15, 0, 16, 1 ], "texture": "#copper" },
+				"east": { "uv": [ 15, 0, 16, 1 ], "texture": "#copper" },
+				"south": { "uv": [ 15, 0, 16, 1 ], "texture": "#copper" },
+				"west": { "uv": [ 15, 0, 16, 1 ], "texture": "#copper" },
+				"up": { "uv": [ 15, 0, 16, 1 ], "texture": "#copper" },
+				"down": { "uv": [ 15, 0, 16, 1 ], "texture": "#copper" }
 			}
 		},
 		{
-			"name": "Button right",
-			"from": [ 11, 3, 15.14 ],
-			"to": [ 12, 4, 15.15 ],
+			"name": "Top copper button 5",
+			"from": [ 8, 12, 15 ],
+			"to": [ 9, 13, 15.25 ],
 			"faces": {
-				"south": { "texture": "#copper" }
+				"north": { "uv": [ 14, 11, 15, 12 ], "texture": "#copper" },
+				"east": { "uv": [ 14, 11, 15, 12 ], "texture": "#copper" },
+				"south": { "uv": [ 14, 11, 15, 12 ], "texture": "#copper" },
+				"west": { "uv": [ 14, 11, 15, 12 ], "texture": "#copper" },
+				"up": { "uv": [ 14, 11, 15, 12 ], "texture": "#copper" },
+				"down": { "uv": [ 14, 11, 15, 12 ], "texture": "#copper" }
+			}
+		},
+		{
+			"name": "Top copper button 6",
+			"from": [ 9, 12, 15 ],
+			"to": [ 10, 13, 15.75 ],
+			"faces": {
+				"north": { "uv": [ 15, 14, 16, 15 ], "texture": "#copper" },
+				"east": { "uv": [ 15, 14, 16, 15 ], "texture": "#copper" },
+				"south": { "uv": [ 15, 14, 16, 15 ], "texture": "#copper" },
+				"west": { "uv": [ 15, 14, 16, 15 ], "texture": "#copper" },
+				"up": { "uv": [ 15, 14, 16, 15 ], "texture": "#copper" },
+				"down": { "uv": [ 15, 14, 16, 15 ], "texture": "#copper" }
+			}
+		},
+		{
+			"name": "Top copper button 7",
+			"from": [ 10, 12, 15 ],
+			"to": [ 11, 13, 15.5 ],
+			"faces": {
+				"north": { "uv": [ 14, 14, 15, 15 ], "texture": "#copper" },
+				"east": { "uv": [ 14, 14, 15, 15 ], "texture": "#copper" },
+				"south": { "uv": [ 14, 14, 15, 15 ], "texture": "#copper" },
+				"west": { "uv": [ 14, 14, 15, 15 ], "texture": "#copper" },
+				"up": { "uv": [ 14, 14, 15, 15 ], "texture": "#copper" },
+				"down": { "uv": [ 14, 14, 15, 15 ], "texture": "#copper" }
+			}
+		},
+		{
+			"name": "Top copper button 8",
+			"from": [ 11, 12, 15 ],
+			"to": [ 12, 13, 16 ],
+			"faces": {
+				"north": { "uv": [ 15, 15, 16, 16 ], "texture": "#copper" },
+				"east": { "uv": [ 15, 15, 16, 16 ], "texture": "#copper" },
+				"south": { "uv": [ 15, 15, 16, 16 ], "texture": "#copper" },
+				"west": { "uv": [ 15, 15, 16, 16 ], "texture": "#copper" },
+				"up": { "uv": [ 15, 15, 16, 16 ], "texture": "#copper" },
+				"down": { "uv": [ 15, 15, 16, 16 ], "texture": "#copper" }
+			}
+		},
+		{
+			"name": "Bottom left button",
+			"from": [ 4, 3, 15 ],
+			"to": [ 5, 4, 15.75 ],
+			"faces": {
+				"north": { "uv": [ 14, 10, 15, 11 ], "texture": "#copper" },
+				"east": { "uv": [ 14, 10, 15, 11 ], "texture": "#copper" },
+				"south": { "uv": [ 14, 10, 15, 11 ], "texture": "#copper" },
+				"west": { "uv": [ 14, 10, 15, 11 ], "texture": "#copper" },
+				"up": { "uv": [ 14, 10, 15, 11 ], "texture": "#copper" },
+				"down": { "uv": [ 14, 10, 15, 11 ], "texture": "#copper" }
+			}
+		},
+		{
+			"name": "Bottom right button",
+			"from": [ 11, 3, 15 ],
+			"to": [ 12, 4, 15.5 ],
+			"faces": {
+				"north": { "uv": [ 14, 14, 15, 15 ], "texture": "#copper" },
+				"east": { "uv": [ 14, 14, 15, 15 ], "texture": "#copper" },
+				"south": { "uv": [ 14, 14, 15, 15 ], "texture": "#copper" },
+				"west": { "uv": [ 14, 14, 15, 15 ], "texture": "#copper" },
+				"up": { "uv": [ 14, 14, 15, 15 ], "texture": "#copper" },
+				"down": { "uv": [ 14, 14, 15, 15 ], "texture": "#copper" }
 			}
 		}
 	]
 }
-

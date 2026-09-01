@@ -37,6 +37,14 @@ public interface StorageConnectorEndpoint {
 		return getTargetPos();
 	}
 
+	/**
+	 * Whether this connector may receive an item when no inventory already
+	 * contains that item type. Standard connectors remain matching-only.
+	 */
+	default boolean acceptsUnmatchedItems() {
+		return false;
+	}
+
 	@Nullable
 	IItemHandler getTargetItemHandler();
 

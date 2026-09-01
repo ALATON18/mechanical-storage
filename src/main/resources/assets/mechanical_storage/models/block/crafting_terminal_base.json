@@ -131,7 +131,7 @@
 		{
 			"name": "Front and rear core",
 			"from": [ 2, 2, 0.95 ],
-			"to": [ 14, 14, 15.05 ],
+			"to": [ 14, 14, 14.95 ],
 			"faces": {
 				"north": {
 					"uv": [ 2, 2, 14, 14 ],
@@ -190,43 +190,133 @@
 			}
 		},
 		{
-			"name": "Front screen",
-			"from": [ 4, 5, 15.09 ],
-			"to": [ 12, 11, 15.1 ],
+			"name": "Top brass button 1",
+			"from": [ 4, 12, 15 ],
+			"to": [ 5, 13, 15.5 ],
 			"faces": {
-				"south": { "texture": "#screen" }
+				"north": { "uv": [ 14, 2, 15, 3 ], "texture": "#brass" },
+				"east": { "uv": [ 14, 2, 15, 3 ], "texture": "#brass" },
+				"south": { "uv": [ 14, 2, 15, 3 ], "texture": "#brass" },
+				"west": { "uv": [ 14, 2, 15, 3 ], "texture": "#brass" },
+				"up": { "uv": [ 14, 2, 15, 3 ], "texture": "#brass" },
+				"down": { "uv": [ 14, 2, 15, 3 ], "texture": "#brass" }
 			}
 		},
 		{
-			"name": "Top brass strip",
-			"from": [ 4, 12, 15.14 ],
-			"to": [ 12, 13, 15.15 ],
+			"name": "Top brass button 2",
+			"from": [ 5, 12, 15 ],
+			"to": [ 6, 13, 16 ],
 			"faces": {
-				"south": { "texture": "#brass" }
+				"north": { "uv": [ 14, 13, 15, 14 ], "texture": "#brass" },
+				"east": { "uv": [ 14, 13, 15, 14 ], "texture": "#brass" },
+				"south": { "uv": [ 14, 13, 15, 14 ], "texture": "#brass" },
+				"west": { "uv": [ 14, 13, 15, 14 ], "texture": "#brass" },
+				"up": { "uv": [ 14, 13, 15, 14 ], "texture": "#brass" },
+				"down": { "uv": [ 14, 13, 15, 14 ], "texture": "#brass" }
 			}
 		},
 		{
-			"name": "Button left",
-			"from": [ 4, 3, 15.14 ],
-			"to": [ 5, 4, 15.15 ],
+			"name": "Top brass button 3",
+			"from": [ 6, 12, 15 ],
+			"to": [ 7, 13, 15.25 ],
 			"faces": {
-				"south": { "texture": "#brass" }
+				"north": { "uv": [ 14, 6, 15, 7 ], "texture": "#brass" },
+				"east": { "uv": [ 14, 6, 15, 7 ], "texture": "#brass" },
+				"south": { "uv": [ 14, 6, 15, 7 ], "texture": "#brass" },
+				"west": { "uv": [ 14, 6, 15, 7 ], "texture": "#brass" },
+				"up": { "uv": [ 14, 6, 15, 7 ], "texture": "#brass" },
+				"down": { "uv": [ 14, 6, 15, 7 ], "texture": "#brass" }
 			}
 		},
 		{
-			"name": "Button middle",
-			"from": [ 7, 3, 15.14 ],
-			"to": [ 9, 4, 15.15 ],
+			"name": "Top brass button 4",
+			"from": [ 7, 12, 15 ],
+			"to": [ 8, 13, 15.75 ],
 			"faces": {
-				"south": { "texture": "#brass" }
+				"north": { "uv": [ 14, 10, 15, 11 ], "texture": "#brass" },
+				"east": { "uv": [ 14, 10, 15, 11 ], "texture": "#brass" },
+				"south": { "uv": [ 14, 10, 15, 11 ], "texture": "#brass" },
+				"west": { "uv": [ 14, 10, 15, 11 ], "texture": "#brass" },
+				"up": { "uv": [ 14, 10, 15, 11 ], "texture": "#brass" },
+				"down": { "uv": [ 14, 10, 15, 11 ], "texture": "#brass" }
 			}
 		},
 		{
-			"name": "Button right",
-			"from": [ 11, 3, 15.14 ],
-			"to": [ 12, 4, 15.15 ],
+			"name": "Top brass button 5",
+			"from": [ 8, 12, 15 ],
+			"to": [ 9, 13, 16 ],
 			"faces": {
-				"south": { "texture": "#brass" }
+				"north": { "uv": [ 14, 2, 15, 3 ], "texture": "#brass" },
+				"east": { "uv": [ 14, 2, 15, 3 ], "texture": "#brass" },
+				"south": { "uv": [ 14, 2, 15, 3 ], "texture": "#brass" },
+				"west": { "uv": [ 14, 2, 15, 3 ], "texture": "#brass" },
+				"up": { "uv": [ 14, 2, 15, 3 ], "texture": "#brass" },
+				"down": { "uv": [ 14, 2, 15, 3 ], "texture": "#brass" }
+			}
+		},
+		{
+			"name": "Top brass button 6",
+			"from": [ 9, 12, 15 ],
+			"to": [ 10, 13, 15.5 ],
+			"faces": {
+				"north": { "uv": [ 14, 10, 15, 11 ], "texture": "#brass" },
+				"east": { "uv": [ 14, 10, 15, 11 ], "texture": "#brass" },
+				"south": { "uv": [ 14, 10, 15, 11 ], "texture": "#brass" },
+				"west": { "uv": [ 14, 10, 15, 11 ], "texture": "#brass" },
+				"up": { "uv": [ 14, 10, 15, 11 ], "texture": "#brass" },
+				"down": { "uv": [ 14, 10, 15, 11 ], "texture": "#brass" }
+			}
+		},
+		{
+			"name": "Top brass button 7",
+			"from": [ 10, 12, 15 ],
+			"to": [ 11, 13, 15.75 ],
+			"faces": {
+				"north": { "uv": [ 14, 13, 15, 14 ], "texture": "#brass" },
+				"east": { "uv": [ 14, 13, 15, 14 ], "texture": "#brass" },
+				"south": { "uv": [ 14, 13, 15, 14 ], "texture": "#brass" },
+				"west": { "uv": [ 14, 13, 15, 14 ], "texture": "#brass" },
+				"up": { "uv": [ 14, 13, 15, 14 ], "texture": "#brass" },
+				"down": { "uv": [ 14, 13, 15, 14 ], "texture": "#brass" }
+			}
+		},
+		{
+			"name": "Top brass button 8",
+			"from": [ 11, 12, 15 ],
+			"to": [ 12, 13, 15.25 ],
+			"faces": {
+				"north": { "uv": [ 14, 6, 15, 7 ], "texture": "#brass" },
+				"east": { "uv": [ 14, 6, 15, 7 ], "texture": "#brass" },
+				"south": { "uv": [ 14, 6, 15, 7 ], "texture": "#brass" },
+				"west": { "uv": [ 14, 6, 15, 7 ], "texture": "#brass" },
+				"up": { "uv": [ 14, 6, 15, 7 ], "texture": "#brass" },
+				"down": { "uv": [ 14, 6, 15, 7 ], "texture": "#brass" }
+			}
+		},
+		{
+			"name": "Bottom left button",
+			"from": [ 4, 3, 15 ],
+			"to": [ 5, 4, 15.5 ],
+			"faces": {
+				"north": { "uv": [ 14, 6, 15, 7 ], "texture": "#brass" },
+				"east": { "uv": [ 14, 6, 15, 7 ], "texture": "#brass" },
+				"south": { "uv": [ 14, 6, 15, 7 ], "texture": "#brass" },
+				"west": { "uv": [ 14, 6, 15, 7 ], "texture": "#brass" },
+				"up": { "uv": [ 14, 6, 15, 7 ], "texture": "#brass" },
+				"down": { "uv": [ 14, 6, 15, 7 ], "texture": "#brass" }
+			}
+		},
+		{
+			"name": "Bottom right button",
+			"from": [ 11, 3, 15 ],
+			"to": [ 12, 4, 15.75 ],
+			"faces": {
+				"north": { "uv": [ 14, 13, 15, 14 ], "texture": "#brass" },
+				"east": { "uv": [ 14, 13, 15, 14 ], "texture": "#brass" },
+				"south": { "uv": [ 14, 13, 15, 14 ], "texture": "#brass" },
+				"west": { "uv": [ 14, 13, 15, 14 ], "texture": "#brass" },
+				"up": { "uv": [ 14, 13, 15, 14 ], "texture": "#brass" },
+				"down": { "uv": [ 14, 13, 15, 14 ], "texture": "#brass" }
 			}
 		}
 	]

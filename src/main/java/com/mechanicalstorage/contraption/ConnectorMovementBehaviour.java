@@ -1,5 +1,6 @@
 package com.mechanicalstorage.contraption;
 
+import com.mechanicalstorage.block.MechanicalStorageConnectorBlock;
 import com.mechanicalstorage.block.OrientedConnectorBlock;
 import com.mechanicalstorage.network.StorageConnectorEndpoint;
 import com.mechanicalstorage.network.StorageNetworkKey;
@@ -89,6 +90,7 @@ public class ConnectorMovementBehaviour implements MovementBehaviour {
 		private final BlockPos localTargetPos;
 		private final StorageNetworkKey networkKey;
 		private final MovingStorageIdentity storageIdentity;
+		private final boolean acceptsUnmatchedItems;
 		@Nullable
 		private final MountedItemStorage mountedItems;
 		@Nullable
@@ -105,6 +107,8 @@ public class ConnectorMovementBehaviour implements MovementBehaviour {
 			Direction localFacing = context.state.getValue(OrientedConnectorBlock.FACING);
 			this.localTargetPos = context.localPos.relative(localFacing);
 			this.storageIdentity = new MovingStorageIdentity(networkKey, localTargetPos);
+			this.acceptsUnmatchedItems = context.state.getBlock() instanceof MechanicalStorageConnectorBlock connectorBlock
+					&& connectorBlock.acceptsUnmatchedItems();
 			this.mountedItems = context.contraption.getStorage().getAllItemStorages().get(localTargetPos);
 			this.mountedFluids = context.contraption.getStorage().getFluids().storages.get(localTargetPos);
 			update();
@@ -152,6 +156,11 @@ public class ConnectorMovementBehaviour implements MovementBehaviour {
 		@Override
 		public Object getStorageIdentity() {
 			return storageIdentity;
+		}
+
+		@Override
+		public boolean acceptsUnmatchedItems() {
+			return acceptsUnmatchedItems;
 		}
 
 		@Override

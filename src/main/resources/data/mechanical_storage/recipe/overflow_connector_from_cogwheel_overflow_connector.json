@@ -1,0 +1,13 @@
+{
+	"type": "minecraft:crafting_shapeless",
+	"category": "redstone",
+	"ingredients": [
+		{
+			"item": "mechanical_storage:cogwheel_overflow_connector"
+		}
+	],
+	"result": {
+		"id": "mechanical_storage:overflow_connector",
+		"count": 1
+	}
+}

@@ -21,8 +21,19 @@ import net.neoforged.neoforge.common.Tags.Items;
 import org.jetbrains.annotations.Nullable;
 
 public class MechanicalStorageConnectorBlock extends OrientedConnectorBlock implements EntityBlock {
+    private final boolean acceptsUnmatchedItems;
+
     public MechanicalStorageConnectorBlock(Properties properties) {
+        this(properties, false);
+    }
+
+    public MechanicalStorageConnectorBlock(Properties properties, boolean acceptsUnmatchedItems) {
         super(properties);
+        this.acceptsUnmatchedItems = acceptsUnmatchedItems;
+    }
+
+    public boolean acceptsUnmatchedItems() {
+        return acceptsUnmatchedItems;
     }
 
     @Nullable

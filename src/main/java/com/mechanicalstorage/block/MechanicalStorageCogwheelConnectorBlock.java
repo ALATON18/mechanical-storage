@@ -8,11 +8,15 @@ import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
- * Connector variant driven by a shaftless, andesite-encased small cogwheel.
+ * Connector variant driven by a shaftless, casing-encased small cogwheel.
  */
 public class MechanicalStorageCogwheelConnectorBlock extends MechanicalStorageConnectorBlock implements ICogWheel {
 	public MechanicalStorageCogwheelConnectorBlock(Properties properties) {
-		super(properties);
+		this(properties, false);
+	}
+
+	public MechanicalStorageCogwheelConnectorBlock(Properties properties, boolean acceptsUnmatchedItems) {
+		super(properties, acceptsUnmatchedItems);
 	}
 
 	@Override

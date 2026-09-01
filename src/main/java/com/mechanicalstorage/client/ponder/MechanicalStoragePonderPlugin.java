@@ -16,6 +16,8 @@ public final class MechanicalStoragePonderPlugin implements PonderPlugin {
 		helper.forComponents(
 				MechanicalStorage.CONNECTOR.getId(),
 				MechanicalStorage.COGWHEEL_CONNECTOR.getId(),
+				MechanicalStorage.OVERFLOW_CONNECTOR.getId(),
+				MechanicalStorage.COGWHEEL_OVERFLOW_CONNECTOR.getId(),
 				MechanicalStorage.TERMINAL.getId(),
 				MechanicalStorage.CRAFTING_TERMINAL.getId())
 			.addStoryBoard("storage_network", MechanicalStoragePonderScenes::storageNetwork);

@@ -1,5 +1,15 @@
 {
-	"parent": "mechanical_storage:block/terminal_base",
+	"parent": "minecraft:block/block",
+	"loader": "neoforge:composite",
+	"render_type": "minecraft:cutout_mipped",
+	"children": {
+		"body": {
+			"parent": "mechanical_storage:block/terminal_base"
+		},
+		"screen": {
+			"parent": "mechanical_storage:block/terminal_screen_frame_0"
+		}
+	},
 	"display": {
 		"gui": {
 			"rotation": [ 30, 45, 0 ],
