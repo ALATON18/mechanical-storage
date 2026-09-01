@@ -190,12 +190,11 @@
 			}
 		},
 		{
-			"name": "Front screen",
+			"name": "Screen recess sidewalls",
 			"from": [ 4, 5, 15 ],
 			"to": [ 12, 11, 15.04 ],
 			"faces": {
 				"east": { "uv": [ 0.96, 5, 1, 11 ], "texture": "#screen" },
-				"south": { "uv": [ 4, 5, 12, 11 ], "texture": "#screen" },
 				"west": { "uv": [ 15, 5, 15.04, 11 ], "texture": "#screen" },
 				"up": { "uv": [ 4, 15, 12, 15.04 ], "texture": "#screen" },
 				"down": { "uv": [ 4, 0.96, 12, 1 ], "texture": "#screen" }
