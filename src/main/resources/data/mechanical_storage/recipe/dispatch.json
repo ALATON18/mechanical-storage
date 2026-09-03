@@ -1,0 +1,16 @@
+{
+	"neoforge:conditions": [
+		{ "type": "mechanical_storage:block_enabled", "block": "dispatch" }
+	],
+	"type": "minecraft:crafting_shapeless",
+	"category": "redstone",
+	"ingredients": [
+		{ "item": "create:stock_link" },
+		{ "item": "create:brass_funnel" },
+		{ "item": "create:shaft" }
+	],
+	"result": {
+		"id": "mechanical_storage:dispatch",
+		"count": 1
+	}
+}

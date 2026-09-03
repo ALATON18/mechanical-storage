@@ -4,6 +4,7 @@ import com.mechanicalstorage.block.DirectionalMachineBlock;
 import com.mechanicalstorage.block.MechanicalStorageCogwheelConnectorBlock;
 import com.mechanicalstorage.block.OrientedConnectorBlock;
 import com.mechanicalstorage.blockentity.TerminalBlockEntity;
+import com.mechanicalstorage.blockentity.MechanicalStorageLogisticsBlockEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.simibubi.create.AllPartialModels;
 import com.simibubi.create.content.kinetics.base.KineticBlockEntity;
@@ -30,7 +31,7 @@ public class MechanicalStorageShaftRenderer<T extends KineticBlockEntity> implem
 	private static final float RPM_PER_SCREEN_CYCLE = 16.0F;
 	private static final float MAX_SCREEN_CYCLES_PER_SECOND = 8.0F;
 
-	private final Map<TerminalBlockEntity, ScreenAnimationState> terminalScreenAnimations = new WeakHashMap<>();
+	private final Map<T, ScreenAnimationState> screenAnimations = new WeakHashMap<>();
 
 	public MechanicalStorageShaftRenderer(BlockEntityRendererProvider.Context context) {
 	}
@@ -60,19 +61,21 @@ public class MechanicalStorageShaftRenderer<T extends KineticBlockEntity> implem
 				.renderInto(poseStack, buffer.getBuffer(RenderType.cutoutMipped()));
 
 		if (be instanceof TerminalBlockEntity terminal) {
-			renderTerminalScreen(terminal, state, front, poseStack, buffer);
+			renderMachineScreen(be, terminal.isOnline(), state, front, poseStack, buffer);
+		} else if (be instanceof MechanicalStorageLogisticsBlockEntity logistics) {
+			renderMachineScreen(be, logistics.isOnline(), state, front, poseStack, buffer);
 		}
 	}
 
-	private void renderTerminalScreen(TerminalBlockEntity terminal, BlockState state, Direction front,
+	private void renderMachineScreen(T machine, boolean online, BlockState state, Direction front,
 			PoseStack poseStack, MultiBufferSource buffer) {
-		ScreenAnimationState animation = terminalScreenAnimations.computeIfAbsent(terminal,
+		ScreenAnimationState animation = screenAnimations.computeIfAbsent(machine,
 				ignored -> new ScreenAnimationState());
-		float renderTime = AnimationTickHolder.getRenderTime(terminal.getLevel());
+		float renderTime = AnimationTickHolder.getRenderTime(machine.getLevel());
 		float elapsedTicks = animation.updateRenderTime(renderTime);
 
-		if (terminal.isOnline() && elapsedTicks > 0) {
-			float speed = terminal.getSpeed();
+		if (online && elapsedTicks > 0) {
+			float speed = machine.getSpeed();
 			float cyclesPerSecond = Mth.clamp(Math.abs(speed) / RPM_PER_SCREEN_CYCLE,
 					0.0F, MAX_SCREEN_CYCLES_PER_SECOND);
 			animation.phase += elapsedTicks * cyclesPerSecond / 20.0F * Math.signum(speed);
@@ -102,4 +105,3 @@ public class MechanicalStorageShaftRenderer<T extends KineticBlockEntity> implem
 		}
 	}
 }
-

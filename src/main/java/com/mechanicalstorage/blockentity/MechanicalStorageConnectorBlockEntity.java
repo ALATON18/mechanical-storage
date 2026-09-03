@@ -3,6 +3,7 @@ package com.mechanicalstorage.blockentity;
 import com.mechanicalstorage.MechanicalStorage;
 import com.mechanicalstorage.block.MechanicalStorageConnectorBlock;
 import com.mechanicalstorage.block.OrientedConnectorBlock;
+import com.mechanicalstorage.config.MechanicalStorageConfig;
 import com.mechanicalstorage.network.StorageConnectorEndpoint;
 import com.mechanicalstorage.network.StorageNetworkKey;
 import com.mechanicalstorage.network.StorageNetworkRegistry;
@@ -32,7 +33,8 @@ public class MechanicalStorageConnectorBlockEntity extends FixedStressKineticBlo
 	}
 
 	public boolean isOnline() {
-		return isSpeedRequirementFulfilled() && hasNetwork();
+		return MechanicalStorageConfig.isBlockEnabled(getBlockState().getBlock())
+				&& isSpeedRequirementFulfilled() && hasNetwork();
 	}
 
 	@Override
@@ -76,6 +78,9 @@ public class MechanicalStorageConnectorBlockEntity extends FixedStressKineticBlo
 	}
 
 	public Component describeTargetInventory() {
+		if (!MechanicalStorageConfig.isBlockEnabled(getBlockState().getBlock())) {
+			return Component.translatable("status.mechanical_storage.disabled");
+		}
 		if (!isOnline()) {
 			if (isOverStressed()) {
 				return Component.translatable("status.mechanical_storage.overstressed");

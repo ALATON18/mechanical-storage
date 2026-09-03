@@ -2,6 +2,7 @@ package com.mechanicalstorage.contraption;
 
 import com.mechanicalstorage.block.MechanicalStorageConnectorBlock;
 import com.mechanicalstorage.block.OrientedConnectorBlock;
+import com.mechanicalstorage.config.MechanicalStorageConfig;
 import com.mechanicalstorage.network.StorageConnectorEndpoint;
 import com.mechanicalstorage.network.StorageNetworkKey;
 import com.mechanicalstorage.network.StorageNetworkRegistry;
@@ -143,7 +144,8 @@ public class ConnectorMovementBehaviour implements MovementBehaviour {
 
 		@Override
 		public boolean isEndpointAvailable(long gameTime) {
-			return gameTime - lastSeenTick <= ENDPOINT_GRACE_TICKS
+			return MechanicalStorageConfig.isBlockEnabled(context.state.getBlock())
+					&& gameTime - lastSeenTick <= ENDPOINT_GRACE_TICKS
 					&& context.contraption.entity != null
 					&& context.contraption.entity.isAlive();
 		}

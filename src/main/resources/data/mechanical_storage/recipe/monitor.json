@@ -1,0 +1,16 @@
+{
+	"neoforge:conditions": [
+		{ "type": "mechanical_storage:block_enabled", "block": "monitor" }
+	],
+	"type": "minecraft:crafting_shapeless",
+	"category": "redstone",
+	"ingredients": [
+		{ "item": "create:stock_link" },
+		{ "item": "create:display_board" },
+		{ "item": "create:shaft" }
+	],
+	"result": {
+		"id": "mechanical_storage:monitor",
+		"count": 1
+	}
+}

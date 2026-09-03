@@ -1,4 +1,8 @@
 {
+	"neoforge:conditions": [
+		{ "type": "mechanical_storage:block_enabled", "block": "connector" },
+		{ "type": "mechanical_storage:block_enabled", "block": "cogwheel_connector" }
+	],
 	"type": "minecraft:crafting_shapeless",
 	"category": "redstone",
 	"ingredients": [

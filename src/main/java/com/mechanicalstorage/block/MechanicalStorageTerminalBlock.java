@@ -1,6 +1,7 @@
 package com.mechanicalstorage.block;
 
 import com.mechanicalstorage.blockentity.TerminalBlockEntity;
+import com.mechanicalstorage.config.MechanicalStorageConfig;
 import com.mechanicalstorage.menu.TerminalMenu;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntityTicker;
 import net.minecraft.core.BlockPos;
@@ -37,6 +38,13 @@ public class MechanicalStorageTerminalBlock extends DirectionalMachineBlock impl
 
     @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
+		if (!MechanicalStorageConfig.isBlockEnabled(state.getBlock())) {
+			if (!level.isClientSide) {
+				player.displayClientMessage(net.minecraft.network.chat.Component.translatable(
+						"status.mechanical_storage.disabled"), true);
+			}
+			return InteractionResult.SUCCESS;
+		}
         if (!level.isClientSide && level.getBlockEntity(pos) instanceof TerminalBlockEntity terminal) {
 			if (player instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
 				serverPlayer.openMenu(terminal, buffer -> TerminalMenu.writeOpeningData(buffer, terminal));

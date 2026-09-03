@@ -1,4 +1,7 @@
 {
+	"neoforge:conditions": [
+		{ "type": "mechanical_storage:block_enabled", "block": "cogwheel_connector" }
+	],
 	"type": "minecraft:crafting_shaped",
 	"category": "redstone",
 	"pattern": [

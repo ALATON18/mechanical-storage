@@ -44,6 +44,9 @@ public final class MechanicalStorageClient {
 		event.registerBlockEntityRenderer(
 				MechanicalStorage.TERMINAL_BLOCK_ENTITY.get(),
 				MechanicalStorageShaftRenderer::new);
+		event.registerBlockEntityRenderer(
+				MechanicalStorage.LOGISTICS_BLOCK_ENTITY.get(),
+				MechanicalStorageShaftRenderer::new);
 	}
 
 	private static void addMachineItemTooltip(ItemTooltipEvent event) {
@@ -58,10 +61,25 @@ public final class MechanicalStorageClient {
 				|| stack.is(MechanicalStorage.OVERFLOW_CONNECTOR.get().asItem())
 				|| stack.is(MechanicalStorage.COGWHEEL_OVERFLOW_CONNECTOR.get().asItem())
 				|| stack.is(MechanicalStorage.TERMINAL.get().asItem())
-				|| stack.is(MechanicalStorage.CRAFTING_TERMINAL.get().asItem());
+				|| stack.is(MechanicalStorage.CRAFTING_TERMINAL.get().asItem())
+				|| stack.is(MechanicalStorage.MONITOR.get().asItem())
+				|| stack.is(MechanicalStorage.DISPATCH.get().asItem());
 
 		if (!inTerminal && !mechanicalStorageItem) {
 			return;
+		}
+		if (!inTerminal && stack.is(MechanicalStorage.MONITOR.get().asItem())) {
+			event.getToolTip().add(Component.translatable("tooltip.mechanical_storage.monitor")
+					.withStyle(ChatFormatting.GRAY));
+			event.getToolTip().add(Component.translatable("tooltip.mechanical_storage.rear_shaft")
+					.withStyle(ChatFormatting.DARK_GRAY));
+		} else if (!inTerminal && stack.is(MechanicalStorage.DISPATCH.get().asItem())) {
+			event.getToolTip().add(Component.translatable("tooltip.mechanical_storage.dispatch")
+					.withStyle(ChatFormatting.GRAY));
+			event.getToolTip().add(Component.translatable("tooltip.mechanical_storage.dispatch_packager")
+					.withStyle(ChatFormatting.DARK_GRAY));
+			event.getToolTip().add(Component.translatable("tooltip.mechanical_storage.rear_shaft")
+					.withStyle(ChatFormatting.DARK_GRAY));
 		}
 
 		String modId = stack.getItem().getCreatorModId(stack);

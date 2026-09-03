@@ -10,6 +10,8 @@ The goal is a Create-style mechanical storage network where Create shafts/cogs a
 - Copper-trimmed Overflow Connector and Cogwheel Overflow Connector for fallback storage
 - Mechanical Storage Terminal
 - Mechanical Crafting Terminal with a private per-player 3x3 crafting grid
+- Monitor bridge that exposes Mechanical Storage stock to Create logistics without allowing extraction
+- Request-gated Dispatch bridge that lets an attached Create Packager withdraw only Create logistics orders
 - Create kinetic-network membership with no artificial distance limit
 - Loaded connectors only, with a 64-connector limit per network
 - Component-aware item grouping that keeps differently tagged items separate
@@ -24,6 +26,7 @@ The goal is a Create-style mechanical storage network where Create shafts/cogs a
 - Live disconnected and overstressed terminal states
 - In-game Create Ponder guide for all six Mechanical Storage blocks
 - JEI recipe transfer support for the Crafting Terminal
+- Per-block common-config switches for operation, recipes, JEI and creative-tab visibility
 
 ## Network rules
 
@@ -36,6 +39,17 @@ The goal is a Create-style mechanical storage network where Create shafts/cogs a
 - Standard Connectors accept only item types already present in their inventory.
 - Overflow Connectors accept new item types and leftovers after matching storage is tried.
 - No cross-dimensional storage.
+- A Monitor may sit anywhere on the powered Mechanical Storage network; tune it to the same Create logistics network as the requesting Factory Gauge.
+- A Dispatch must face an adjacent Packager. The Packager faces the same direction, draws from the Dispatch behind it and outputs packages ahead.
+- Monitor and Dispatch accept a shaft only on their rear face and may be rotated to any of the six directions.
+
+## Block configuration
+
+Every block is enabled by default. Modpack creators can disable blocks individually in
+`config/mechanical_storage-common.toml` under `[blocks]`. Disabled blocks stay registered
+for save compatibility, but stop operating and are omitted from the mod creative tab,
+JEI, recipes and the recipe book. Restart or reload datapacks after changing recipe-facing
+settings.
 
 ## Roadmap
 

@@ -1,6 +1,8 @@
 package com.mechanicalstorage.compat.jei;
 
 import com.mechanicalstorage.MechanicalStorage;
+import com.mechanicalstorage.config.MechanicalStorageConfig;
+import com.tterrag.registrate.util.entry.BlockEntry;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.registration.IExtraIngredientRegistration;
@@ -10,6 +12,7 @@ import mezz.jei.api.runtime.IJeiRuntime;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
+import java.util.ArrayList;
 
 @JeiPlugin
 public class MechanicalStorageJeiPlugin implements IModPlugin {
@@ -23,20 +26,30 @@ public class MechanicalStorageJeiPlugin implements IModPlugin {
 
 	@Override
 	public void registerExtraIngredients(IExtraIngredientRegistration registration) {
-		registration.addExtraItemStacks(List.of(
-				MechanicalStorage.CONNECTOR.get().asItem().getDefaultInstance(),
-				MechanicalStorage.COGWHEEL_CONNECTOR.get().asItem().getDefaultInstance(),
-				MechanicalStorage.OVERFLOW_CONNECTOR.get().asItem().getDefaultInstance(),
-				MechanicalStorage.COGWHEEL_OVERFLOW_CONNECTOR.get().asItem().getDefaultInstance(),
-				MechanicalStorage.TERMINAL.get().asItem().getDefaultInstance(),
-				MechanicalStorage.CRAFTING_TERMINAL.get().asItem().getDefaultInstance()
-		));
+		List<net.minecraft.world.item.ItemStack> enabledBlocks = new ArrayList<>();
+		List<BlockEntry<?>> blocks = List.of(
+				MechanicalStorage.CONNECTOR,
+				MechanicalStorage.COGWHEEL_CONNECTOR,
+				MechanicalStorage.OVERFLOW_CONNECTOR,
+				MechanicalStorage.COGWHEEL_OVERFLOW_CONNECTOR,
+				MechanicalStorage.TERMINAL,
+				MechanicalStorage.CRAFTING_TERMINAL,
+				MechanicalStorage.MONITOR,
+				MechanicalStorage.DISPATCH);
+		for (BlockEntry<?> block : blocks) {
+			if (MechanicalStorageConfig.isBlockEnabled(block.get())) {
+				enabledBlocks.add(block.asStack());
+			}
+		}
+		registration.addExtraItemStacks(enabledBlocks);
 	}
 
 	@Override
 	public void registerRecipeTransferHandlers(IRecipeTransferRegistration registration) {
-		registration.addUniversalRecipeTransferHandler(
-				new CraftingTerminalJeiTransferHandler(registration.getTransferHelper()));
+		if (MechanicalStorageConfig.isBlockEnabled(MechanicalStorage.CRAFTING_TERMINAL.get())) {
+			registration.addUniversalRecipeTransferHandler(
+					new CraftingTerminalJeiTransferHandler(registration.getTransferHelper()));
+		}
 	}
 
 	@Override

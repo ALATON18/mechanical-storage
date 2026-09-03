@@ -54,6 +54,18 @@ public final class StorageNetworkRegistry {
 		if (level == null || level.isClientSide || !terminal.isOnline() || networkKey == null) {
 			return List.of();
 		}
+		return findConnectors(level, networkKey, limit);
+	}
+
+	/**
+	 * Finds the unique storage targets visible to any online machine on a
+	 * Mechanical Storage network.
+	 */
+	public static synchronized List<StorageConnectorEndpoint> findConnectors(Level level,
+			StorageNetworkKey networkKey, int limit) {
+		if (level == null || level.isClientSide || networkKey == null || limit <= 0) {
+			return List.of();
+		}
 
 		Set<StorageConnectorEndpoint> registered = CONNECTORS_BY_LEVEL.get(level);
 		if (registered == null || registered.isEmpty()) {

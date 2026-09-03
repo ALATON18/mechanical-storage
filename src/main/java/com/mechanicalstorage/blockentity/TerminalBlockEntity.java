@@ -1,6 +1,7 @@
 package com.mechanicalstorage.blockentity;
 
 import com.mechanicalstorage.MechanicalStorage;
+import com.mechanicalstorage.config.MechanicalStorageConfig;
 import com.mechanicalstorage.menu.TerminalMenu;
 import com.mechanicalstorage.network.StorageConnectorEndpoint;
 import com.mechanicalstorage.network.StorageNetworkKey;
@@ -207,6 +208,9 @@ public class TerminalBlockEntity extends FixedStressKineticBlockEntity implement
 	}
 
 	public boolean isOnline() {
+		if (!MechanicalStorageConfig.isBlockEnabled(getBlockState().getBlock())) {
+			return false;
+		}
 		if (movingNetworkKey != null) {
 			return level != null && isMovingEndpointAvailable(level.getGameTime());
 		}

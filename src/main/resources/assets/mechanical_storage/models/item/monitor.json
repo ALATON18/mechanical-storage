@@ -1,0 +1,16 @@
+{
+	"parent": "minecraft:block/block",
+	"loader": "neoforge:composite",
+	"render_type": "minecraft:cutout_mipped",
+	"children": {
+		"body": { "parent": "mechanical_storage:block/monitor_base" },
+		"screen": { "parent": "mechanical_storage:block/terminal_screen_frame_0" }
+	},
+	"display": {
+		"gui": {
+			"rotation": [ 30, 45, 0 ],
+			"translation": [ 0, 0, 0 ],
+			"scale": [ 0.625, 0.625, 0.625 ]
+		}
+	}
+}
