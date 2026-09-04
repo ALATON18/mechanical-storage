@@ -74,6 +74,10 @@ neoForge {
 	}
 }
 
+configurations {
+	runtimeClasspath.extendsFrom localRuntime
+}
+
 dependencies {
 	implementation("com.simibubi.create:create-${minecraft_version}:${create_version}:slim") {
 		transitive = false
@@ -84,6 +88,8 @@ dependencies {
 	implementation "com.tterrag.registrate:Registrate:${registrate_version}"
 	compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
 	compileOnly "mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}"
+	// Available in runClient for integration testing, but never bundled in the release jar.
+	localRuntime "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
 	jarJar(api("dev.ryanhcode.sable-companion:sable-companion-common-${minecraft_version}:[1.6.0,)")) {
 		version {
 			prefer("1.6.0")

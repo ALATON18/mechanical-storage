@@ -25,6 +25,7 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.CreativeModeTab;
@@ -54,7 +55,8 @@ public class MechanicalStorage {
 	public static final String MODID = "mechanical_storage";
 	public static final Logger LOGGER = LogUtils.getLogger();
 
-	public static final CreateRegistrate REGISTRATE = CreateRegistrate.create(MODID);
+	public static final CreateRegistrate REGISTRATE = CreateRegistrate.create(MODID)
+			.defaultCreativeTab((ResourceKey<CreativeModeTab>) null);
 	public static final DeferredRegister<MenuType<?>> MENU_TYPES = DeferredRegister.create(Registries.MENU, MODID);
 	public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
 	public static final DeferredRegister<MapCodec<? extends ICondition>> CONDITION_CODECS =
